@@ -5,6 +5,8 @@ import ProtectedRoute from "./components/common/ProtectedRoute";
 import Login from "./pages/auth/Login";
 import RecruiterSignup from "./pages/auth/RecruiterSignup";
 import JoineeSignup from "./pages/auth/JoineeSignup";
+import AdminDashboard from "./pages/admin/AdminDashboard";
+import Home from "./pages/Home";
 
 // ── Dashboard placeholder ─────────────────────────────────────────────────────
 
@@ -108,6 +110,7 @@ export default function App() {
       <BrowserRouter>
         <Routes>
           {/* Public */}
+          <Route path="/"                element={<Home />} />
           <Route path="/login"            element={<Login />} />
           <Route path="/signup/recruiter" element={<RecruiterSignup />} />
           <Route path="/signup/joinee"    element={<JoineeSignup />} />
@@ -115,7 +118,7 @@ export default function App() {
 
           {/* Protected: Admin */}
           <Route element={<ProtectedRoute allowedRoles={["admin"]} />}>
-            <Route path="/admin/dashboard" element={<Dashboard role="admin" />} />
+            <Route path="/admin/dashboard" element={<AdminDashboard />} />
           </Route>
 
           {/* Protected: Recruiter */}

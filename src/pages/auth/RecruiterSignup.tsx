@@ -269,7 +269,7 @@ function TfIcon() {
   );
 }
 
-function Field({ label, error, color, children }: { label: string; error?: string; color: string; children: React.ReactNode }) {
+function Field({ label, error,children }: { label: string; error?: string; color: string; children: React.ReactNode }) {
   return (
     <div>
       <label className="block text-sm font-medium text-gray-700 mb-1.5" style={{ color: error ? "#DC2626" : "#374151" }}>{label}</label>

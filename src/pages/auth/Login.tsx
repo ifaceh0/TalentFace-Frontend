@@ -6,9 +6,9 @@ import { useAuth } from "../../context/useAuth";
 type Role = "admin" | "recruiter" | "joinee";
 
 const ROLE_CONFIG: Record<Role, { label: string; placeholder: string; color: string; bg: string }> = {
-  admin:     { label: "Admin",     placeholder: "admin@company.com",     color: "#1D4ED8", bg: "#EFF6FF" },
-  recruiter: { label: "Recruiter", placeholder: "recruiter@company.com", color: "#1D4ED8", bg: "#EFF6FF" },
-  joinee:    { label: "Joinee",    placeholder: "you@email.com",         color: "#DC2626", bg: "#FEF2F2" },
+  admin:     { label: "Admin",     placeholder: "[EMAIL_ADDRESS]",     color: "#1D4ED8", bg: "#EFF6FF" },
+  recruiter: { label: "Recruiter", placeholder: "[EMAIL_ADDRESS]", color: "#1D4ED8", bg: "#EFF6FF" },
+  joinee:    { label: "Joinee",    placeholder: "[EMAIL_ADDRESS]",         color: "#DC2626", bg: "#FEF2F2" },
 };
 
 export default function Login() {
