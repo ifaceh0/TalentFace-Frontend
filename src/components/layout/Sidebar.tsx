@@ -2,7 +2,8 @@ import { LayoutDashboard, Users, Briefcase, LogOut } from 'lucide-react';
 
 interface SidebarProps {
   activePage: string;
-  setActivePage: (page: string) => void;
+  setActivePage: React.Dispatch<React.SetStateAction<string>>;
+  role?: string;
 }
 
 const navItems = [
