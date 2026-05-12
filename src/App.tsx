@@ -5,7 +5,7 @@
 // import DashboardPage from './pages/DashboardPage';
 // import CandidatesPage from './pages/CandidatesPage';
 // import JobsPage from './pages/JobsPage';
-// =======
+
 // import { BrowserRouter, Routes, Route, Navigate, useNavigate } from "react-router-dom";
 // import { AuthProvider } from "./context/AuthContext";
 // import { useAuth } from "./context/useAuth";
@@ -15,7 +15,7 @@
 // import JoineeSignup from "./pages/auth/JoineeSignup";
 // import AdminDashboard from "./pages/admin/AdminDashboard";
 // import Home from "./pages/Home";
-// >>>>>>> Aryan
+
 
 // export default function App() {
 //   const [activePage, setActivePage] = useState('dashboard');
@@ -43,9 +43,9 @@
 //       </div>
 //     </div>
 //   );
-// <<<<<<< HEAD
+
 // }
-// =======
+
 // }
 
 // // ── 403 page ──────────────────────────────────────────────────────────────────
@@ -100,7 +100,7 @@
 //     </AuthProvider>
 //   );
 // }
-// >>>>>>> Aryan
+
 
 import { useState } from "react";
 import {
@@ -245,8 +245,6 @@ export default function App() {
             />
           </Route>
 
-
-
           {/* Recruiter Routes */}
           <Route
             element={<ProtectedRoute allowedRoles={["recruiter"]} />}
@@ -257,22 +255,14 @@ export default function App() {
             />
           </Route>
 
-<<<<<<< HEAD
-
-
           {/* Joinee Routes */}
           <Route
             element={<ProtectedRoute allowedRoles={["joinee"]} />}
           >
             <Route
               path="/joinee/dashboard"
-              element={<Dashboard role="joinee" />}
+              element={<JoineeDashboard />}
             />
-=======
-          {/* Protected: Joinee */}
-          <Route element={<ProtectedRoute allowedRoles={["joinee"]} />}>
-            <Route path="/joinee/dashboard" element={<JoineeDashboard />} />
->>>>>>> sakshi
           </Route>
 
 
