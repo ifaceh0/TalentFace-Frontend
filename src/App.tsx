@@ -5,6 +5,7 @@ import ProtectedRoute from "./components/common/ProtectedRoute";
 import Login from "./pages/auth/Login";
 import RecruiterSignup from "./pages/auth/RecruiterSignup";
 import JoineeSignup from "./pages/auth/JoineeSignup";
+import JoineeDashboard from "./pages/joinee/JoineeDashboard";
 
 // ── Dashboard placeholder ─────────────────────────────────────────────────────
 
@@ -125,7 +126,7 @@ export default function App() {
 
           {/* Protected: Joinee */}
           <Route element={<ProtectedRoute allowedRoles={["joinee"]} />}>
-            <Route path="/joinee/dashboard" element={<Dashboard role="joinee" />} />
+            <Route path="/joinee/dashboard" element={<JoineeDashboard />} />
           </Route>
 
           {/* Catch-all */}
