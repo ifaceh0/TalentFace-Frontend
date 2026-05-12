@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TalentFace Change Log — 11–12 May 2026</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    font-size: 13px;
+    line-height: 1.6;
+    color: #1a1a2e;
+    background: #fff;
+    padding: 40px 48px;
+    max-width: 900px;
+    margin: auto;
+  }
+  h1 { font-size: 22px; color: #7f1d1d; border-bottom: 3px solid #7f1d1d; padding-bottom: 6px; margin: 28px 0 12px; }
+  h2 { font-size: 17px; color: #1e293b; border-left: 4px solid #ef4444; padding-left: 10px; margin: 22px 0 10px; }
+  h3 { font-size: 14px; color: #334155; margin: 18px 0 8px; }
+  h4, h5, h6 { font-size: 13px; color: #475569; margin: 14px 0 6px; }
+  p { margin: 6px 0; color: #374151; }
+  hr { border: none; border-top: 1px solid #e2e8f0; margin: 20px 0; }
+  ul { margin: 8px 0 8px 20px; }
+  li { margin: 3px 0; color: #374151; }
+  code {
+    background: #f1f5f9;
+    color: #be123c;
+    padding: 1px 5px;
+    border-radius: 4px;
+    font-family: 'Cascadia Code', 'Consolas', monospace;
+    font-size: 12px;
+  }
+  pre {
+    background: #0f172a;
+    color: #e2e8f0;
+    padding: 14px 16px;
+    border-radius: 8px;
+    overflow-x: auto;
+    margin: 10px 0;
+    font-family: 'Cascadia Code', 'Consolas', monospace;
+    font-size: 12px;
+    line-height: 1.5;
+  }
+  pre code { background: none; color: inherit; padding: 0; }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 10px 0;
+    font-size: 12px;
+  }
+  th {
+    background: #1e293b;
+    color: #f8fafc;
+    padding: 7px 10px;
+    text-align: left;
+    font-weight: 600;
+  }
+  td {
+    padding: 6px 10px;
+    border-bottom: 1px solid #e2e8f0;
+    color: #374151;
+  }
+  tr:nth-child(even) td { background: #f8fafc; }
+  strong { color: #0f172a; }
+  @media print {
+    body { padding: 20px 30px; }
+    h1 { page-break-before: auto; }
+    pre, table { page-break-inside: avoid; }
+  }
+</style>
+</head>
+<body>
+<h1>TalentFace — Development Change Log</h1>
+<h2>Dates: 11 May 2026 (Session 1) + 12 May 2026 (Session 2)</h2>
+<h2>Project: Joinee Dashboard Frontend + Backend Fixes</h2>
+
+<hr>
+
+<h1>SESSION 1 — 11 May 2026 (13:41 IST)</h1>
+<h2>Goal: Build Joinee Dashboard Frontend from Scratch</h2>
+
+<hr>
+
+<h2>1.1 Research Phase</h2>
+<ul><li>Read backend: <code>Joinee.model.js</code>, <code>joinee.routes.js</code>, <code>joinee.controller.js</code></li>
+<li>Read frontend: <code>App.tsx</code>, <code>auth.service.ts</code>, <code>api.ts</code>, existing component structure</li>
+<li>Identified <strong>14 backend API sections</strong> to map to frontend</li>
+<p></ul></p>
+<hr>
+
+<h2>1.2 New Files Created — Frontend Types & Service</h2>
+
+<h3><code>src/types/joinee.types.ts</code> ➕ NEW</h3>
+<p>Complete TypeScript interfaces matching all Mongoose sub-schemas:</p>
+
+<table><thead><tr><th>Interface</th><th>Fields</th></tr></thead><tbody><tr><td><code>Education</code></td><td>degree, institution, board, startYear, endYear, percentage, cgpa, isCurrentlyStudying</td></tr><tr><td><code>WorkExperience</code></td><td>company, role, description, type, startDate, endDate, isCurrentlyWorking</td></tr><tr><td><code>Project</code></td><td>title, description, techStack, link, startDate, endDate, isOngoing</td></tr><tr><td><code>Accomplishment</code></td><td>type, title, issuer, date, description, link</td></tr><tr><td><code>Position</code></td><td>role, organization, description, startDate, endDate, isOngoing</td></tr><tr><td><code>Volunteering</code></td><td>organization, role, description, startDate, endDate, isOngoing</td></tr><tr><td><code>ExtraCurricular</code></td><td>activity, description, achievement</td></tr><tr><td><code>SocialProfile</code></td><td>platform, url</td></tr><tr><td><code>Language</code></td><td>language, proficiency</td></tr><tr><td><code>Guardian</code></td><td>name, relation, phone, email, occupation</td></tr><tr><td><code>Address</code></td><td>line1, city, district, state, country, pincode</td></tr><tr><td><code>Document</code></td><td>label, url, uploadedAt</td></tr><tr><td><code>JoineeProfile</code></td><td>All 14 sections + user ref, fullName, supersetId, collegeId, skills, subjects, languages, resumeUrl, documents, placementEnrollments</td></tr></tbody></table>
+<h3><code>src/services/joinee.service.ts</code> ➕ NEW</h3>
+<p>Typed Axios service covering all 14 backend routes:</p>
+<ul><li><code>getProfile</code>, <code>getProfileCompletion</code></li>
+<li><code>updateBasicDetails</code>, <code>updateSummary</code>, <code>updateAddress</code></li>
+<li><code>uploadProfilePhoto</code>, <code>uploadResume</code></li>
+<li>Full CRUD for: Education, WorkExperience, Projects, Accomplishments, Positions, Volunteering, ExtraCurriculars, Guardians</li>
+<li><code>updateSkillsSubjectsLanguages</code>, <code>updateSocialProfiles</code></li>
+<li><code>uploadDocument</code>, <code>deleteDocument</code></li>
+<p></ul></p>
+<hr>
+
+<h2>1.3 New Files Created — Shared UI Components</h2>
+
+<h3><code>src/components/ui/Modal.tsx</code> ➕ NEW</h3>
+<ul><li>Animated modal with backdrop</li>
+<li>ESC key to close, scroll lock</li>
+<li>Sizes: sm / md / lg</li>
+<p></ul></p>
+<h3><code>src/components/ui/TagInput.tsx</code> ➕ NEW</h3>
+<ul><li>Chip-based input (Enter or comma to add)</li>
+<li>Backspace to remove last tag</li>
+<li>Used for skills, tech stack, subjects</li>
+<p></ul></p>
+<h3><code>src/components/ui/FormField.tsx</code> ➕ NEW</h3>
+<ul><li>Polymorphic: renders <code><input></code>, <code><select></code>, or <code><textarea></code></li>
+<li>Consistent styling with error and hint support</li>
+<p></ul></p>
+<hr>
+
+<h2>1.4 New Files Created — Joinee Components</h2>
+
+<h3><code>src/components/joinee/CompletionRing.tsx</code> ➕ NEW</h3>
+<ul><li>Animated SVG circular progress ring</li>
+<li>Color shifts: red → amber → green based on score</li>
+<p></ul></p>
+<h3><code>src/components/joinee/Sidebar.tsx</code> ➕ NEW</h3>
+<ul><li>Dark slate sidebar (15 navigation sections)</li>
+<li>Profile photo with click-to-upload hover</li>
+<li>Displays completion ring + profile name/college</li>
+<p></ul></p>
+<h3><code>src/components/joinee/Overview.tsx</code> ➕ NEW</h3>
+<ul><li>Hero banner with name, college, department</li>
+<li>Stats grid: score, education count, work count, etc.</li>
+<li>Completeness checklist (15 checks)</li>
+<li>Social profiles display</li>
+<p></ul></p>
+<h3><code>src/components/joinee/BasicDetailsForm.tsx</code> ➕ NEW</h3>
+<ul><li>Fields: fullName, phone, dateOfBirth, gender, currentCollege, collegeId, department, course, supersetId</li>
+<li>Save with loading state + success/error toast</li>
+<p></ul></p>
+<h3><code>src/components/joinee/SummaryForm.tsx</code> ➕ NEW</h3>
+<ul><li>Textarea with character counter (max 1000)</li>
+<li>Real-time remaining characters display</li>
+<p></ul></p>
+<h3><code>src/components/joinee/AddressForm.tsx</code> ➕ NEW</h3>
+<ul><li>Dual-address form: Permanent + Current</li>
+<li>"Same as Permanent" toggle checkbox</li>
+<p></ul></p>
+<h3><code>src/components/joinee/EducationSection.tsx</code> ➕ NEW</h3>
+<ul><li>Lists education as cards</li>
+<li>Add/Edit via modal: degree, institution, board, years, percentage/CGPA, currently studying toggle</li>
+<li>Delete with loading state</li>
+<p></ul></p>
+<h3><code>src/components/joinee/WorkExpSection.tsx</code> ➕ NEW</h3>
+<ul><li>Cards with type badge (Internship / Full-time / Part-time / Freelance)</li>
+<li>Modal form: company, role, type, dates, isCurrentlyWorking, description</li>
+<p></ul></p>
+<h3><code>src/components/joinee/SkillsSection.tsx</code> ➕ NEW</h3>
+<ul><li>TagInput for Skills + Subjects</li>
+<li>Language picker with proficiency level (basic/conversational/fluent/native)</li>
+<p></ul></p>
+<h3><code>src/components/joinee/ProjectsSection.tsx</code> ➕ NEW</h3>
+<ul><li>Cards with tech stack badges and live project link</li>
+<li>Modal form: title, description, tech stack (TagInput), URL, dates, isOngoing</li>
+<p></ul></p>
+<h3><code>src/components/joinee/AccomplishmentsSection.tsx</code> ➕ NEW</h3>
+<ul><li>Type-based color badges (Award / Certification / Publication / Patent / Competition)</li>
+<li>Fields: type, title, issuer, date, description, link</li>
+<p></ul></p>
+<h3><code>src/components/joinee/PositionsSection.tsx</code> ➕ NEW</h3>
+<ul><li>Leadership/club positions with date range and ongoing toggle</li>
+<p></ul></p>
+<h3><code>src/components/joinee/VolunteeringSection.tsx</code> ➕ NEW</h3>
+<ul><li>NGO/community service entries with organization, role, dates</li>
+<p></ul></p>
+<h3><code>src/components/joinee/ExtraCurricularsSection.tsx</code> ➕ NEW</h3>
+<ul><li>2-column card grid with achievement badge display</li>
+<p></ul></p>
+<h3><code>src/components/joinee/SocialProfilesForm.tsx</code> ➕ NEW</h3>
+<ul><li>Inline URL inputs for 7 platforms (LinkedIn, GitHub, Twitter, Portfolio, HackerRank, LeetCode, Other)</li>
+<li>Live "open in new tab" icon when URL is filled</li>
+<p></ul></p>
+<h3><code>src/components/joinee/GuardiansSection.tsx</code> ➕ NEW</h3>
+<ul><li>Guardian cards with avatar initials</li>
+<li>Fields: name, relation, phone, email, occupation</li>
+<p></ul></p>
+<h3><code>src/components/joinee/DocumentsSection.tsx</code> ➕ NEW</h3>
+<ul><li>Resume upload with replace support</li>
+<li>Additional documents with label + delete</li>
+<p></ul></p>
+<hr>
+
+<h2>1.5 New Files Created — Page & Routing</h2>
+
+<h3><code>src/pages/joinee/JoineeDashboard.tsx</code> ➕ NEW</h3>
+<ul><li>Loads profile on mount via <code>getProfile()</code></li>
+<li>Sidebar + scrollable main content area</li>
+<li>Section router for all 15 sections</li>
+<li>Profile photo upload from sidebar</li>
+<li>Smooth fade-in animation on section change</li>
+<li>Top bar with breadcrumb + email + sign-out</li>
+<p></ul></p>
+<h3><code>src/App.tsx</code> ✏️ MODIFIED</h3>
+<p>``<code>diff</p>
+<p>+ import JoineeDashboard from "./pages/joinee/JoineeDashboard";</p>
+<ul><li><Route path="/joinee/dashboard" element={<Dashboard role="joinee" />} /></li>
+<p></ul>+ <Route path="/joinee/dashboard" element={<JoineeDashboard />} /></p>
+<p></code>`<code></p>
+
+<hr>
+
+<h2>1.6 TypeScript Errors Fixed (Build Verification)</h2>
+
+<table><thead><tr><th>File</th><th>Error</th><th>Fix</th></tr></thead><tbody><tr><td></code>BasicDetailsForm.tsx<code></td><td></code>string<code> not assignable to gender union type</td><td>Cast </code>form.gender as JoineeProfile['gender']<code></td></tr><tr><td></code>RecruiterSignup.tsx<code></td><td></code>color<code> declared but never read (TS6133)</td><td>Made </code>color<code> prop optional (</code>color?: string<code>)</td></tr></tbody></table>
+<p><strong>Final build result:</strong> ✅ 105 modules, 0 errors</p>
+
+<hr>
+
+<hr>
+
+<h1>SESSION 2 — 12 May 2026 (01:28 IST)</h1>
+<h2>Goal: Fix Dashboard Not Showing (404 → 500 → ✅)</h2>
+
+<hr>
+
+<h2>2.1 User-Made Backend Changes (Detected via Diff)</h2>
+
+<h3></code>src/models/Joinee.model.js<code> ✏️ MODIFIED (by user)</h3>
+
+<p><strong>Major refactor — Standalone model → Mongoose Discriminator:</strong></p>
+
+<p></code>`<code>js</p>
+<p>// BEFORE</p>
+<p>const Joinee = mongoose.model('Joinee', joineeSchema);</p>
+
+<p>// AFTER</p>
+<p>import User from './User.model.js';</p>
+<p>const Joinee = User.discriminator('joinee', joineeSchema);</p>
+<p></code>`<code></p>
+
+<p>The discriminator key is </code>role<code> (set in User schema options). This means Joinee shares the same </code>_id<code> and </code>users<code> collection with the User base model — there is no longer a separate </code>user<code> reference field.</p>
+
+<p><strong>Sub-schemas removed:</strong></p>
+
+<table><thead><tr><th>Removed</th><th>Reason</th></tr></thead><tbody><tr><td></code>accomplishmentSchema<code></td><td>Simplified for current phase</td></tr><tr><td></code>positionOfResponsibilitySchema<code></td><td>Simplified</td></tr><tr><td></code>volunteeringSchema<code></td><td>Simplified</td></tr><tr><td></code>extraCurricularSchema<code></td><td>Simplified</td></tr><tr><td></code>guardianSchema<code></td><td>Simplified</td></tr></tbody></table>
+<p><strong>Fields removed from joineeSchema:</strong></p>
+
+<table><thead><tr><th>Removed Field</th><th>Notes</th></tr></thead><tbody><tr><td></code>user<code> (ObjectId ref)</td><td>No longer needed — discriminator IS the user</td></tr><tr><td></code>fullName<code></td><td>Now </code>name<code> on User base schema</td></tr><tr><td></code>supersetId<code></td><td>Removed</td></tr><tr><td></code>collegeId<code></td><td>Removed</td></tr><tr><td></code>permanentAddress<code> / </code>currentAddress<code> / </code>sameAsPermanent<code></td><td>Replaced by single </code>address<code> object</td></tr><tr><td></code>subjects<code></td><td>Removed</td></tr><tr><td></code>languages<code></td><td>Removed</td></tr><tr><td></code>accomplishments[]<code></td><td>Removed</td></tr><tr><td></code>positionsOfResponsibility[]<code></td><td>Removed</td></tr><tr><td></code>volunteering[]<code></td><td>Removed</td></tr><tr><td></code>extraCurriculars[]<code></td><td>Removed</td></tr><tr><td></code>guardians[]<code></td><td>Removed</td></tr><tr><td></code>documents[]<code></td><td>Removed</td></tr><tr><td></code>placementEnrollments[]<code></td><td>Removed</td></tr></tbody></table>
+<p><strong>Fields added:</strong></p>
+<ul><li></code>experience: Number<code> — years of experience</li>
+<li></code>address: { line1, city, state, pincode, country }<code> — single address object</li>
+<p></ul></p>
+<p><strong>Completion score updated (10 checks, threshold 60%):</strong></p>
+<p></code>`<code></p>
+<p>phone, dateOfBirth, gender, summary, currentCollege,</p>
+<p>profilePhoto, resumeUrl, skills.length > 0,</p>
+<p>education.length > 0, socialProfiles.length > 0</p>
+<p></code>`<code></p>
+
+<h3></code>src/routes/joinee.routes.js<code> ✏️ MODIFIED (by user)</h3>
+<p></code>`<code>diff</p>
+<ul><li>import { authenticate } from '../middleware/auth.middleware.js';</li>
+<li>import { authorizeRoles } from '../middleware/role.middleware.js';</li>
+<p></ul>+ import { protect } from '../middleware/auth.middleware.js';</p>
+<p>+ import { allowRoles } from '../middleware/role.middleware.js';</p>
+
+<ul><li>router.use(authenticate, authorizeRoles('joinee'));</li>
+<p></ul>+ router.use(protect, allowRoles('joinee'));</p>
+<p></code>`<code></p>
+
+<h3></code>src/middleware/upload.middleware.js<code> ✏️ MODIFIED (by user)</h3>
+<ul><li>File size limit: 5 MB → <strong>10 MB</strong></li>
+<li>Added </code>image/gif<code> to allowed types</li>
+<li>Removed </code>uploadMultiple<code> export</li>
+<p></ul></p>
+<h3></code>src/dropIndex.js<code> ➕ NEW (by user)</h3>
+<p>One-time script to drop stale </code>user_1<code> MongoDB index after discriminator migration.</p>
+
+<hr>
+
+<h2>2.2 Bug 1 — Dashboard Returns 404</h2>
+
+<p><strong>Error:</strong> </code>GET /api/joinee/profile<code> → 404 "Profile not found"</p>
+
+<p><strong>Root Cause:</strong></p>
+<p></code>`<code>js</p>
+<p>// BEFORE (broken)</p>
+<p>const findJoinee = async (userId) => Joinee.findOne({ user: userId });</p>
+<p>// The 'user' field no longer exists → always returns null → 404</p>
+<p></code>`<code></p>
+
+<p><strong>Fix applied to </code>joinee.controller.js<code>:</strong></p>
+<p></code>`<code>js</p>
+<p>// AFTER — Joinee IS the User, look up by _id directly</p>
+<p>const findJoinee = async (userId) => Joinee.findById(userId);</p>
+
+<p>// Also fixed in getProfile():</p>
+<p>const joinee = await Joinee.findById(req.user._id); // removed .findOne({ user: ... })</p>
+<p></code>`<code></p>
+
+<hr>
+
+<h2>2.3 Bug 2 — Signup Fails: </code>TypeError: next is not a function<code></h2>
+
+<p><strong>Error:</strong> Thrown at </code>Joinee.model.js:120<code> during </code>Joinee.create()<code></p>
+
+<p><strong>Root Cause:</strong>  </p>
+<p>A "fix" had added </code>function (next)<code> to the synchronous pre-save hook. In Mongoose 7+ with discriminators, function arity determines execution mode. Declaring </code>next<code> as a parameter signals async callback-style, but discriminator hooks receive </code>next = undefined<code>.</p>
+
+<table><thead><tr><th>Declaration</th><th>Mongoose Mode</th><th></code>next<code> value</th></tr></thead><tbody><tr><td></code>function ()<code></td><td>Synchronous (auto-calls next)</td><td>N/A</td></tr><tr><td></code>function (next)<code></td><td>Async callback-style</td><td>Should be a function, but discriminators pass </code>undefined<code></td></tr><tr><td></code>async function ()<code></td><td>Promise-style</td><td>N/A</td></tr></tbody></table>
+<p><strong>Fix applied to </code>Joinee.model.js<code>:</strong></p>
+<p></code>`<code>js</p>
+<p>// BEFORE (broken — next is undefined with discriminators)</p>
+<p>joineeSchema.pre('save', function (next) {</p>
+<p>    this.computeCompletionScore();</p>
+<p>    next(); // TypeError: next is not a function</p>
+<p>});</p>
+
+<p>// AFTER (correct — synchronous, Mongoose calls next automatically)</p>
+<p>joineeSchema.pre('save', function () {</p>
+<p>    this.computeCompletionScore();</p>
+<p>});</p>
+<p></code>`<code></p>
+
+<hr>
+
+<h2>2.4 Bug 3 — Dashboard Returns 500</h2>
+
+<p><strong>Error:</strong> </code>GET /api/joinee/profile<code> → 500 "Failed to fetch profile"</p>
+
+<p><strong>Root Cause:</strong></p>
+<p></code>`<code>js</p>
+<p>// BEFORE (broken)</p>
+<p>const joinee = await Joinee.findById(req.user._id).populate('appliedJobs');</p>
+<p>// appliedJobs references ref: 'Application' — model not registered anywhere</p>
+<p>// Mongoose throws: MissingSchemaError: Schema hasn't been registered for model "Application"</p>
+<p>// Silently caught → sendError(500)</p>
+<p></code>`<code></p>
+
+<p><strong>Fix applied to </code>joinee.controller.js<code>:</strong></p>
+<p></code>`<code>js</p>
+<p>// AFTER — removed populate, added error logging</p>
+<p>const joinee = await Joinee.findById(req.user._id);</p>
+<p>// appliedJobs returns raw ObjectId array until Application model is built</p>
+
+<p>} catch (err) {</p>
+<p>    console.error('[getProfile]', err.message); // ← now visible in nodemon</p>
+<p>    return sendError(res, 500, 'Failed to fetch profile.');</p>
+<p>}</p>
+<p></code>`<code></p>
+
+<hr>
+
+<h2>2.5 Controller Field Updates — </code>updateBasicDetails<code> & </code>updateAddress<code></h2>
+
+<h3></code>updateBasicDetails<code> — allowed fields updated:</h3>
+<p></code>`<code>js</p>
+<p>// BEFORE (included removed fields)</p>
+<p>const allowed = ['fullName', 'phone', 'dateOfBirth', 'gender',</p>
+<p>                 'currentCollege', 'department', 'course', 'collegeId'];</p>
+
+<p>// AFTER (matches new schema)</p>
+<p>const allowed = ['name', 'phone', 'dateOfBirth', 'gender',</p>
+<p>                 'currentCollege', 'department', 'course', 'experience'];</p>
+<p></code>`<code></p>
+
+<h3></code>updateAddress<code> — simplified to single object:</h3>
+<p></code>`<code>js</p>
+<p>// BEFORE (dual address)</p>
+<p>const { permanentAddress, currentAddress, sameAsPermanent } = req.body;</p>
+<p>// complex merging logic...</p>
+
+<p>// AFTER (single address)</p>
+<p>const { address } = req.body;</p>
+<p>if (address) joinee.address = address;</p>
+<p>return sendSuccess(res, 200, 'Address updated.', { address: joinee.address });</p>
+<p></code>`<code></p>
+
+<hr>
+
+<h2>2.6 Frontend Updates — Matching New Schema</h2>
+
+<h3></code>src/types/joinee.types.ts<code> ✏️ REWRITTEN</h3>
+<ul><li>Removed interfaces: </code>Accomplishment<code>, </code>Position<code>, </code>Volunteering<code>, </code>ExtraCurricular<code>, </code>Guardian<code>, </code>Document<code>, </code>Language<code></li>
+<li></code>Address<code>: simplified to </code>{ line1, city, state, pincode, country }<code></li>
+<li></code>SocialProfile<code>: removed </code>_id<code> (schema uses </code>_id: false<code>)</li>
+<li></code>JoineeProfile<code>: uses </code>name<code> instead of </code>fullName<code>, added </code>experience<code>, removed all deleted sections</li>
+<p></ul></p>
+<h3></code>src/services/joinee.service.ts<code> ✏️ REWRITTEN</h3>
+<p><strong>Removed methods:</strong> updateSkillsSubjectsLanguages, all accomplishment/position/volunteering/extra-curricular/guardian/document CRUD  </p>
+<p><strong>Updated:</strong> </code>updateAddress<code> now sends </code>{ address }<code>, </code>updateSkills<code> sends just skills array</p>
+
+<h3></code>src/components/joinee/Sidebar.tsx<code> ✏️ REWRITTEN</h3>
+<p>Sections reduced from 15 → <strong>10 active sections:</strong></p>
+
+<table><thead><tr><th>#</th><th>Section</th><th>Icon</th></tr></thead><tbody><tr><td>1</td><td>Overview</td><td>📊</td></tr><tr><td>2</td><td>Basic Details</td><td>👤</td></tr><tr><td>3</td><td>Summary</td><td>📝</td></tr><tr><td>4</td><td>Address</td><td>🏠</td></tr><tr><td>5</td><td>Education</td><td>🎓</td></tr><tr><td>6</td><td>Work Experience</td><td>💼</td></tr><tr><td>7</td><td>Skills</td><td>🛠️</td></tr><tr><td>8</td><td>Projects</td><td>🚀</td></tr><tr><td>9</td><td>Social Profiles</td><td>🔗</td></tr><tr><td>10</td><td>Resume</td><td>📄</td></tr></tbody></table>
+<h3></code>src/components/joinee/Overview.tsx<code> ✏️ UPDATED</h3>
+<ul><li>Checklist matches the 10 backend completion checks</li>
+<li>Uses </code>profile.name<code> instead of </code>profile.fullName<code></li>
+<p></ul></p>
+<h3></code>src/components/joinee/BasicDetailsForm.tsx<code> ✏️ UPDATED</h3>
+<ul><li></code>fullName<code> → </code>name<code></li>
+<li>Removed </code>supersetId<code>, </code>collegeId<code></li>
+<li>Added </code>experience<code> (years) field</li>
+<p></ul></p>
+<h3></code>src/components/joinee/AddressForm.tsx<code> ✏️ REWRITTEN</h3>
+<ul><li>Single </code>address<code> object form</li>
+<li>Removed permanent/current dual form and </code>sameAsPermanent<code> toggle</li>
+<p></ul></p>
+<h3></code>src/components/joinee/SkillsSection.tsx<code> ✏️ SIMPLIFIED</h3>
+<ul><li>Skills array only</li>
+<li>Removed subjects TagInput and language picker</li>
+<p></ul></p>
+<h3></code>src/components/joinee/SocialProfilesForm.tsx<code> ✏️ UPDATED</h3>
+<ul><li>Uses new </code>SocialProfile<code> type without </code>_id<code></li>
+<p></ul></p>
+<h3></code>src/components/joinee/ResumeSection.tsx<code> ➕ NEW</h3>
+<ul><li>Replaces </code>DocumentsSection.tsx<code></li>
+<li>Resume upload/replace with view link and resume tips card</li>
+<p></ul></p>
+<h3></code>src/pages/joinee/JoineeDashboard.tsx<code> ✏️ REWRITTEN</h3>
+<ul><li>Removed all deleted section imports and cases</li>
+<li>Routes: overview, basic, summary, address, education, work, skills, projects, social, resume</li>
+<p></ul></p>
+<hr>
+
+<h2>2.7 Final State</h2>
+
+<table><thead><tr><th>Item</th><th>Status</th></tr></thead><tbody><tr><td>Joinee Signup</td><td>✅ Working</td></tr><tr><td>Joinee Login</td><td>✅ Working</td></tr><tr><td>Dashboard loads</td><td>✅ Working</td></tr><tr><td>Profile fetch (GET /api/joinee/profile)</td><td>✅ 200 OK</td></tr><tr><td>TypeScript compilation</td><td>✅ 0 errors</td></tr></tbody></table>
+<hr>
+
+<h2>Full File Change Summary</h2>
+
+<h3>Backend (</code>D:\new backened\TalentFace_Backend<code>)</h3>
+
+<table><thead><tr><th>File</th><th>Who</th><th>Change</th></tr></thead><tbody><tr><td></code>src/models/Joinee.model.js<code></td><td>User + AI</td><td>Discriminator refactor, schema simplified, pre-save hook fixed</td></tr><tr><td></code>src/routes/joinee.routes.js<code></td><td>User</td><td>authenticate → protect, authorizeRoles → allowRoles</td></tr><tr><td></code>src/controllers/joinee.controller.js<code></td><td>AI</td><td>findJoinee → findById, updateBasicDetails fields, updateAddress simplified, populate removed, error logging added</td></tr><tr><td></code>src/middleware/upload.middleware.js<code></td><td>User</td><td>5MB → 10MB, added gif, removed uploadMultiple</td></tr><tr><td></code>src/dropIndex.js<code></td><td>User</td><td>One-time index cleanup script</td></tr></tbody></table>
+<h3>Frontend (</code>d:\new frontend\TalentFace-Frontend<code>)</h3>
+
+<table><thead><tr><th>File</th><th>Status</th><th>Session</th><th>Summary</th></tr></thead><tbody><tr><td></code>src/types/joinee.types.ts<code></td><td>➕ New → Rewritten</td><td>S1 + S2</td><td>Full types, then simplified to match new schema</td></tr><tr><td></code>src/services/joinee.service.ts<code></td><td>➕ New → Rewritten</td><td>S1 + S2</td><td>All 14 endpoints, then trimmed to 10 active ones</td></tr><tr><td></code>src/App.tsx<code></td><td>✏️ Modified</td><td>S1</td><td>Wired /joinee/dashboard to JoineeDashboard</td></tr><tr><td></code>src/components/ui/Modal.tsx<code></td><td>➕ New</td><td>S1</td><td>Animated modal</td></tr><tr><td></code>src/components/ui/TagInput.tsx<code></td><td>➕ New</td><td>S1</td><td>Chip tag input</td></tr><tr><td></code>src/components/ui/FormField.tsx<code></td><td>➕ New</td><td>S1</td><td>Polymorphic form field</td></tr><tr><td></code>src/components/joinee/CompletionRing.tsx<code></td><td>➕ New</td><td>S1</td><td>SVG progress ring</td></tr><tr><td></code>src/components/joinee/Sidebar.tsx<code></td><td>➕ New → Rewritten</td><td>S1 + S2</td><td>15 sections, then 10 active</td></tr><tr><td></code>src/components/joinee/Overview.tsx<code></td><td>➕ New → Updated</td><td>S1 + S2</td><td>Stats/checklist, updated for new schema</td></tr><tr><td></code>src/components/joinee/BasicDetailsForm.tsx<code></td><td>➕ New → Updated</td><td>S1 + S2</td><td>Fields updated for discriminator schema</td></tr><tr><td></code>src/components/joinee/SummaryForm.tsx<code></td><td>➕ New</td><td>S1</td><td>Textarea with char count</td></tr><tr><td></code>src/components/joinee/AddressForm.tsx<code></td><td>➕ New → Rewritten</td><td>S1 + S2</td><td>Dual → single address</td></tr><tr><td></code>src/components/joinee/EducationSection.tsx<code></td><td>➕ New</td><td>S1</td><td>Education CRUD</td></tr><tr><td></code>src/components/joinee/WorkExpSection.tsx<code></td><td>➕ New</td><td>S1</td><td>Work experience CRUD</td></tr><tr><td></code>src/components/joinee/SkillsSection.tsx<code></td><td>➕ New → Simplified</td><td>S1 + S2</td><td>Skills + subjects + languages → skills only</td></tr><tr><td></code>src/components/joinee/ProjectsSection.tsx<code></td><td>➕ New</td><td>S1</td><td>Projects CRUD</td></tr><tr><td></code>src/components/joinee/AccomplishmentsSection.tsx<code></td><td>➕ New</td><td>S1</td><td>Built (inactive — schema removed)</td></tr><tr><td></code>src/components/joinee/PositionsSection.tsx<code></td><td>➕ New</td><td>S1</td><td>Built (inactive — schema removed)</td></tr><tr><td></code>src/components/joinee/VolunteeringSection.tsx<code></td><td>➕ New</td><td>S1</td><td>Built (inactive — schema removed)</td></tr><tr><td></code>src/components/joinee/ExtraCurricularsSection.tsx<code></td><td>➕ New</td><td>S1</td><td>Built (inactive — schema removed)</td></tr><tr><td></code>src/components/joinee/SocialProfilesForm.tsx<code></td><td>➕ New → Updated</td><td>S1 + S2</td><td>7 platforms, updated type</td></tr><tr><td></code>src/components/joinee/GuardiansSection.tsx<code></td><td>➕ New</td><td>S1</td><td>Built (inactive — schema removed)</td></tr><tr><td></code>src/components/joinee/DocumentsSection.tsx<code></td><td>➕ New</td><td>S1</td><td>Replaced by ResumeSection</td></tr><tr><td></code>src/components/joinee/ResumeSection.tsx<code></td><td>➕ New</td><td>S2</td><td>Resume only upload</td></tr><tr><td></code>src/pages/joinee/JoineeDashboard.tsx<code></td><td>➕ New → Rewritten</td><td>S1 + S2</td><td>Full dashboard shell</td></tr><tr><td></code>src/pages/auth/RecruiterSignup.tsx<code></td><td>✏️ Modified</td><td>S1</td><td>Fixed unused </code>color` prop (pre-existing TS error)</td></tr></tbody></table>
+<hr>
+
+<p>*Generated: 12 May 2026 — TalentFace Platform*</p>
+
+<div style="margin-top:40px;padding-top:12px;border-top:1px solid #e2e8f0;font-size:11px;color:#94a3b8;text-align:center;">
+  TalentFace Platform &mdash; Development Change Log &mdash; Generated 12 May 2026
+</div>
+</body>
+</html>

@@ -123,6 +123,7 @@ import JobsPage from "./pages/JobsPage";
 import Login from "./pages/auth/Login";
 import RecruiterSignup from "./pages/auth/RecruiterSignup";
 import JoineeSignup from "./pages/auth/JoineeSignup";
+import JoineeDashboard from "./pages/joinee/JoineeDashboard";
 
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import Home from "./pages/Home";
@@ -256,6 +257,7 @@ export default function App() {
             />
           </Route>
 
+<<<<<<< HEAD
 
 
           {/* Joinee Routes */}
@@ -266,6 +268,11 @@ export default function App() {
               path="/joinee/dashboard"
               element={<Dashboard role="joinee" />}
             />
+=======
+          {/* Protected: Joinee */}
+          <Route element={<ProtectedRoute allowedRoles={["joinee"]} />}>
+            <Route path="/joinee/dashboard" element={<JoineeDashboard />} />
+>>>>>>> sakshi
           </Route>
 
 
