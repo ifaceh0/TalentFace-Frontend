@@ -39,12 +39,22 @@ export const updateAddress = async (address: Address): Promise<{ address: Addres
   return data.data;
 };
 
+// export const uploadProfilePhoto = async (file: File): Promise<{ profilePhoto: string }> => {
+//   const form = new FormData();
+//   form.append('photo', file);
+//   const { data } = await api.post<ApiEnvelope<{ profilePhoto: string }>>('/joinee/profile/photo', form, {
+//     headers: { 'Content-Type': 'multipart/form-data' },
+//   });
+//   return data.data;
+// };
 export const uploadProfilePhoto = async (file: File): Promise<{ profilePhoto: string }> => {
   const form = new FormData();
   form.append('photo', file);
-  const { data } = await api.post<ApiEnvelope<{ profilePhoto: string }>>('/joinee/profile/photo', form, {
-    headers: { 'Content-Type': 'multipart/form-data' },
-  });
+  const { data } = await api.post<ApiEnvelope<{ profilePhoto: string }>>(
+    '/joinee/profile/photo',
+    form
+    // ← no headers needed; axios + browser sets the correct multipart boundary automatically
+  );
   return data.data;
 };
 
@@ -130,11 +140,20 @@ export const updateSocialProfiles = async (socialProfiles: SocialProfile[]): Pro
 
 // ─── 7. Resume ────────────────────────────────────────────────────────────────
 
+// export const uploadResume = async (file: File): Promise<{ resumeUrl: string }> => {
+//   const form = new FormData();
+//   form.append('resume', file);
+//   const { data } = await api.post<ApiEnvelope<{ resumeUrl: string }>>('/joinee/resume', form, {
+//     headers: { 'Content-Type': 'multipart/form-data' },
+//   });
+//   return data.data;
+// };
 export const uploadResume = async (file: File): Promise<{ resumeUrl: string }> => {
   const form = new FormData();
   form.append('resume', file);
-  const { data } = await api.post<ApiEnvelope<{ resumeUrl: string }>>('/joinee/resume', form, {
-    headers: { 'Content-Type': 'multipart/form-data' },
-  });
+  const { data } = await api.post<ApiEnvelope<{ resumeUrl: string }>>(
+    '/joinee/resume',
+    form
+  );
   return data.data;
 };
