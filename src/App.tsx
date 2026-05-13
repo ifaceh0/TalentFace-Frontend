@@ -131,7 +131,7 @@ import Home from "./pages/Home";
 
 // ───────────────── Dashboard Layout ─────────────────
 
-function Dashboard({ role }) {
+function Dashboard({ role }: { role: string }) {
   const [activePage, setActivePage] = useState("dashboard");
 
   const renderPage = () => {
