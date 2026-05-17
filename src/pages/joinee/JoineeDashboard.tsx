@@ -45,6 +45,16 @@ export default function JoineeDashboard() {
     navigate('/login', { replace: true });
   };
 
+  // const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  //   const file = e.target.files?.[0];
+  //   if (!file || !profile) return;
+  //   setPhotoUploading(true);
+  //   try {
+  //     const res = await uploadProfilePhoto(file);
+  //     setProfile((p) => (p ? { ...p, profilePhoto: res.profilePhoto } : p));
+  //   } catch { /* silent */ }
+  //   finally { setPhotoUploading(false); }
+  // };
   const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !profile) return;
@@ -52,8 +62,12 @@ export default function JoineeDashboard() {
     try {
       const res = await uploadProfilePhoto(file);
       setProfile((p) => (p ? { ...p, profilePhoto: res.profilePhoto } : p));
-    } catch { /* silent */ }
-    finally { setPhotoUploading(false); }
+    } catch (err) {
+      console.error('Photo upload failed:', err); 
+    } finally {
+        setPhotoUploading(false);
+        if (photoInputRef.current) photoInputRef.current.value = ''; 
+      }
   };
 
   const updateProfile = (updated: JoineeProfile) => setProfile(updated);

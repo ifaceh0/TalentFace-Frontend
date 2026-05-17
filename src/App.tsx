@@ -132,7 +132,7 @@ import JoineeHomepage from "./components/joinee/Joineehomepage";
 
 // ───────────────── Dashboard Layout ─────────────────
 
-function Dashboard({ role }) {
+function Dashboard({ role }: { role: string }) {
   const [activePage, setActivePage] = useState("dashboard");
 
   const renderPage = () => {
