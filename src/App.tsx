@@ -123,10 +123,11 @@ import JobsPage from "./pages/JobsPage";
 import Login from "./pages/auth/Login";
 import RecruiterSignup from "./pages/auth/RecruiterSignup";
 import JoineeSignup from "./pages/auth/JoineeSignup";
-import JoineeDashboard from "./pages/joinee/JoineeDashboard";
+
 
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import Home from "./pages/Home";
+import JoineeHomepage from "./components/joinee/Joineehomepage";
 
 
 // ───────────────── Dashboard Layout ─────────────────
@@ -261,7 +262,7 @@ export default function App() {
           >
             <Route
               path="/joinee/dashboard"
-              element={<JoineeDashboard />}
+              element={<JoineeHomepage />}
             />
           </Route>
 
