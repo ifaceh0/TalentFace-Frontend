@@ -326,7 +326,7 @@ export default function JoineeHomepage() {
                             {profile?.initials ?? "?"}
                         </div>
                         <span style={{ fontSize: 13, fontWeight: 600, color: "#0D1B3E" }}>
-                            {profile ? profile.name.split(" ")[0] : "…"}
+                            {profile?.name?.split(" ")[0] ?? "…"}
                         </span>
                         <svg width="11" height="11" viewBox="0 0 12 12" fill="none">
                             <path d="M2 4l4 4 4-4" stroke="#6B7280" strokeWidth="1.5" strokeLinecap="round" />
