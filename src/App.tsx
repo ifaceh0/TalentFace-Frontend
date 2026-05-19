@@ -128,6 +128,7 @@ import JoineeSignup from "./pages/auth/JoineeSignup";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import Home from "./pages/Home";
 import JoineeHomepage from "./components/joinee/Joineehomepage";
+import JoineeDashboard from "./pages/joinee/JoineeDashboard";
 
 
 // ───────────────── Dashboard Layout ─────────────────
@@ -257,14 +258,23 @@ export default function App() {
           </Route>
 
           {/* Joinee Routes */}
+          {/* Joinee Routes */}
           <Route
             element={<ProtectedRoute allowedRoles={["joinee"]} />}
           >
             <Route
-              path="/joinee/dashboard"
+              path="/joinee/home"
               element={<JoineeHomepage />}
             />
+
+
+            <Route
+              path="/joinee/dashboard"
+              element={<JoineeDashboard />}
+
+            />
           </Route>
+
 
 
 
