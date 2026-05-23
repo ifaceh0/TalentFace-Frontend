@@ -1,25 +1,7 @@
 import { useState } from "react";
+import { useAdminData } from "./useAdminData";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
-
-interface StatCard {
-  label: string;
-  value: string;
-  delta: string;
-  positive: boolean;
-  icon: React.ReactNode;
-  accent: string;
-}
-
-interface User {
-  id: string;
-  name: string;
-  email: string;
-  role: "recruiter" | "joinee";
-  status: "active" | "inactive";
-  joined: string;
-  avatar: string;
-}
 
 interface NavItem {
   id: string;
@@ -27,81 +9,6 @@ interface NavItem {
   icon: React.ReactNode;
 }
 
-// ─── Mock data ────────────────────────────────────────────────────────────────
-
-const STATS: StatCard[] = [
-  {
-    label: "Total Users",
-    value: "2,847",
-    delta: "+12.4%",
-    positive: true,
-    accent: "#E53E3E",
-    icon: (
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" />
-        <path d="M23 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" />
-      </svg>
-    ),
-  },
-  {
-    label: "Recruiters",
-    value: "384",
-    delta: "+5.2%",
-    positive: true,
-    accent: "#1D4ED8",
-    icon: (
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-        <rect x="2" y="7" width="20" height="14" rx="2" /><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2" />
-        <line x1="12" y1="12" x2="12" y2="16" /><line x1="10" y1="14" x2="14" y2="14" />
-      </svg>
-    ),
-  },
-  {
-    label: "Joinees",
-    value: "2,463",
-    delta: "+18.7%",
-    positive: true,
-    accent: "#E53E3E",
-    icon: (
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" />
-      </svg>
-    ),
-  },
-  {
-    label: "Active Jobs",
-    value: "1,204",
-    delta: "-3.1%",
-    positive: false,
-    accent: "#1D4ED8",
-    icon: (
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-        <polyline points="14 2 14 8 20 8" /><line x1="16" y1="13" x2="8" y2="13" />
-        <line x1="16" y1="17" x2="8" y2="17" /><polyline points="10 9 9 9 8 9" />
-      </svg>
-    ),
-  },
-];
-
-const USERS: User[] = [
-  { id: "1", name: "Peter Parker", email: "peter@dailybugle.com", role: "recruiter", status: "active", joined: "Jan 12, 2025", avatar: "PP" },
-  { id: "2", name: "Miles Morales", email: "miles@brooklyn.edu", role: "joinee", status: "active", joined: "Feb 3, 2025", avatar: "MM" },
-  { id: "3", name: "Mary Jane Watson", email: "mj@vogue.com", role: "recruiter", status: "inactive", joined: "Mar 18, 2025", avatar: "MJ" },
-  { id: "4", name: "Gwen Stacy", email: "gwen@science.edu", role: "joinee", status: "active", joined: "Apr 5, 2025", avatar: "GS" },
-  { id: "5", name: "Harry Osborn", email: "harry@oscorp.com", role: "recruiter", status: "active", joined: "Apr 22, 2025", avatar: "HO" },
-  { id: "6", name: "Ned Leeds", email: "ned@midtown.edu", role: "joinee", status: "inactive", joined: "May 1, 2025", avatar: "NL" },
-];
-
-const NAV_ITEMS: NavItem[] = [
-  { id: "dashboard", label: "Dashboard", icon: <IconHome /> },
-  { id: "users", label: "Manage Users", icon: <IconUsers /> },
-  { id: "jobs", label: "Manage Jobs", icon: <IconBriefcase /> },
-  { id: "analytics", label: "Analytics", icon: <IconChart /> },
-  { id: "settings", label: "Settings", icon: <IconSettings /> },
-];
-
-const MONTHLY = [42, 58, 45, 72, 88, 65, 94, 78, 110, 96, 128, 142];
 const MONTHS = ["J","F","M","A","M","J","J","A","S","O","N","D"];
 
 // ─── Main Component ───────────────────────────────────────────────────────────
@@ -109,25 +16,34 @@ const MONTHS = ["J","F","M","A","M","J","J","A","S","O","N","D"];
 export default function AdminDashboard() {
   const [activeNav, setActiveNav] = useState("dashboard");
   const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [roleFilter, setRoleFilter] = useState<"all" | "recruiter" | "joinee">("all");
-  const [users, setUsers] = useState<User[]>(USERS);
+  const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
 
-  const filteredUsers = users.filter((u) => {
-    const matchSearch =
-      u.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      u.email.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchRole = roleFilter === "all" || u.role === roleFilter;
-    return matchSearch && matchRole;
-  });
+  const {
+    stats, users, totalUsers: totalCount, currentPage, totalPages,
+    loading, statsLoading, error,
+    searchQuery, roleFilter,
+    setSearchQuery, setRoleFilter, setCurrentPage,
+    toggleStatus, removeUser,
+  } = useAdminData();
 
-  const toggleStatus = (id: string) => {
-    setUsers((prev) =>
-      prev.map((u) =>
-        u.id === id ? { ...u, status: u.status === "active" ? "inactive" : "active" } : u
-      )
-    );
-  };
+  // Build stat cards from live data
+  const STATS = [
+    { label: "Total Users", value: stats?.totalUsers ?? 0, delta: stats?.activeUsersChange ?? 0, accent: "#E53E3E", icon: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></svg> },
+    { label: "Recruiters", value: stats?.totalRecruiters ?? 0, delta: 0, accent: "#1D4ED8", icon: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><rect x="2" y="7" width="20" height="14" rx="2" /><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2" /><line x1="12" y1="12" x2="12" y2="16" /><line x1="10" y1="14" x2="14" y2="14" /></svg> },
+    { label: "Joinees", value: stats?.totalJoinees ?? 0, delta: 0, accent: "#E53E3E", icon: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg> },
+    { label: "Active Users", value: stats?.activeUsers ?? 0, delta: 0, accent: "#1D4ED8", icon: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M22 11.08V12a10 10 0 11-5.93-9.14" /><polyline points="22 4 12 14.01 9 11.01" /></svg> },
+  ];
+
+  const monthlyData = stats?.monthlyGrowth ?? Array(12).fill(0);
+  const maxMonthly = Math.max(...monthlyData, 1);
+
+  const NAV_ITEMS: NavItem[] = [
+    { id: "dashboard", label: "Dashboard", icon: <IconHome /> },
+    { id: "users", label: "Manage Users", icon: <IconUsers /> },
+    { id: "jobs", label: "Manage Jobs", icon: <IconBriefcase /> },
+    { id: "analytics", label: "Analytics", icon: <IconChart /> },
+    { id: "settings", label: "Settings", icon: <IconSettings /> },
+  ];
 
   return (
     <div className="flex h-screen bg-[#F8F9FF] font-['Rajdhani',sans-serif] overflow-hidden">
@@ -290,6 +206,13 @@ export default function AdminDashboard() {
         {/* Scrollable content */}
         <main className="flex-1 overflow-y-auto p-6 space-y-6">
 
+          {/* ── Error Banner ── */}
+          {error && (
+            <div className="rounded-xl p-4 bg-red-50 border border-red-200 flex items-center gap-3">
+              <span className="text-red-500 font-bold text-sm">⚠ {error}</span>
+            </div>
+          )}
+
           {/* ── Stat Cards ─────────────────────────────────────────── */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
             {STATS.map((stat, i) => (
@@ -323,10 +246,14 @@ export default function AdminDashboard() {
                   {stat.icon}
                 </div>
                 <p className="text-gray-400 text-xs font-bold uppercase tracking-widest mb-1">{stat.label}</p>
-                <p className="text-gray-900 text-2xl font-black">{stat.value}</p>
-                <p className={`text-xs font-bold mt-1 flex items-center gap-1 ${stat.positive ? "text-green-500" : "text-red-400"}`}>
-                  <span>{stat.positive ? "▲" : "▼"}</span>
-                  {stat.delta} this month
+                {statsLoading ? (
+                  <div className="h-8 w-20 bg-gray-200 rounded animate-pulse" />
+                ) : (
+                  <p className="text-gray-900 text-2xl font-black">{stat.value.toLocaleString()}</p>
+                )}
+                <p className={`text-xs font-bold mt-1 flex items-center gap-1 ${stat.delta >= 0 ? "text-green-500" : "text-red-400"}`}>
+                  <span>{stat.delta >= 0 ? "▲" : "▼"}</span>
+                  {Math.abs(stat.delta)}% this month
                 </p>
               </div>
             ))}
@@ -356,8 +283,8 @@ export default function AdminDashboard() {
               </div>
 
               <div className="flex items-end gap-2 h-36">
-                {MONTHLY.map((val, i) => {
-                  const pct = (val / 142) * 100;
+                {monthlyData.map((val, i) => {
+                  const pct = (val / maxMonthly) * 100;
                   const isRed = i % 2 === 0;
                   return (
                     <div key={i} className="flex-1 flex flex-col items-center gap-1 group">
@@ -442,7 +369,7 @@ export default function AdminDashboard() {
             <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
               <div>
                 <h2 className="text-gray-900 font-black text-base uppercase tracking-wider">Recent Users</h2>
-                <p className="text-gray-400 text-xs mt-0.5">{filteredUsers.length} users found</p>
+                <p className="text-gray-400 text-xs mt-0.5">{totalCount} users found</p>
               </div>
               <div className="flex items-center gap-3">
                 {/* Role filter */}
@@ -480,15 +407,27 @@ export default function AdminDashboard() {
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredUsers.length === 0 ? (
+                  {loading ? (
+                    <tr>
+                      <td colSpan={5} className="px-6 py-12 text-center">
+                        <div className="flex items-center justify-center gap-3">
+                          <div className="w-5 h-5 border-2 border-red-500 border-t-transparent rounded-full animate-spin" />
+                          <span className="text-gray-400 font-bold uppercase tracking-wider text-sm">Loading users...</span>
+                        </div>
+                      </td>
+                    </tr>
+                  ) : users.length === 0 ? (
                     <tr>
                       <td colSpan={5} className="px-6 py-12 text-center text-gray-400 font-bold uppercase tracking-wider text-sm">
                         No users found
                       </td>
                     </tr>
-                  ) : filteredUsers.map((user) => (
+                  ) : users.map((user) => {
+                    const initials = user.name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
+                    const joinedDate = new Date(user.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+                    return (
                     <tr
-                      key={user.id}
+                      key={user._id}
                       className="border-b border-gray-50 hover:bg-red-50/30 transition-colors"
                     >
                       {/* User */}
@@ -502,7 +441,7 @@ export default function AdminDashboard() {
                                 : "linear-gradient(135deg,#E53E3E,#FC8181)",
                             }}
                           >
-                            {user.avatar}
+                            {initials}
                           </div>
                           <div>
                             <p className="text-gray-900 font-bold text-sm">{user.name}</p>
@@ -529,68 +468,113 @@ export default function AdminDashboard() {
                         <div className="flex items-center gap-2">
                           <div
                             className="w-2 h-2 rounded-full"
-                            style={{ background: user.status === "active" ? "#22C55E" : "#9CA3AF" }}
+                            style={{ background: user.isActive ? "#22C55E" : "#9CA3AF" }}
                           />
                           <span
                             className="text-xs font-bold uppercase tracking-wider"
-                            style={{ color: user.status === "active" ? "#22C55E" : "#9CA3AF" }}
+                            style={{ color: user.isActive ? "#22C55E" : "#9CA3AF" }}
                           >
-                            {user.status}
+                            {user.isActive ? "active" : "inactive"}
                           </span>
                         </div>
                       </td>
 
                       {/* Joined */}
                       <td className="px-6 py-4">
-                        <span className="text-gray-500 text-xs font-bold">{user.joined}</span>
+                        <span className="text-gray-500 text-xs font-bold">{joinedDate}</span>
                       </td>
 
                       {/* Actions */}
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-2">
                           <button
-                            onClick={() => toggleStatus(user.id)}
+                            onClick={() => toggleStatus(user._id)}
                             className="px-3 py-1.5 rounded-lg text-xs font-black uppercase tracking-wider border transition-all hover:opacity-80"
                             style={{
-                              borderColor: user.status === "active" ? "#FCA5A5" : "#86EFAC",
-                              color: user.status === "active" ? "#E53E3E" : "#22C55E",
-                              background: user.status === "active" ? "#FEF2F2" : "#F0FDF4",
+                              borderColor: user.isActive ? "#FCA5A5" : "#86EFAC",
+                              color: user.isActive ? "#E53E3E" : "#22C55E",
+                              background: user.isActive ? "#FEF2F2" : "#F0FDF4",
                               fontFamily: "Rajdhani, sans-serif",
                             }}
                           >
-                            {user.status === "active" ? "Deactivate" : "Activate"}
+                            {user.isActive ? "Deactivate" : "Activate"}
                           </button>
-                          <button
-                            className="p-1.5 rounded-lg border border-gray-200 text-gray-400 hover:text-red-500 hover:border-red-200 transition-all"
-                          >
-                            <IconTrash />
-                          </button>
+                          {deleteConfirm === user._id ? (
+                            <div className="flex items-center gap-1">
+                              <button
+                                onClick={async () => { await removeUser(user._id); setDeleteConfirm(null); }}
+                                className="px-2 py-1 rounded-lg text-[10px] font-black uppercase bg-red-500 text-white hover:bg-red-600 transition-all"
+                              >
+                                Confirm
+                              </button>
+                              <button
+                                onClick={() => setDeleteConfirm(null)}
+                                className="px-2 py-1 rounded-lg text-[10px] font-black uppercase border border-gray-300 text-gray-500 hover:bg-gray-100 transition-all"
+                              >
+                                Cancel
+                              </button>
+                            </div>
+                          ) : (
+                            <button
+                              onClick={() => setDeleteConfirm(user._id)}
+                              className="p-1.5 rounded-lg border border-gray-200 text-gray-400 hover:text-red-500 hover:border-red-200 transition-all"
+                            >
+                              <IconTrash />
+                            </button>
+                          )}
                         </div>
                       </td>
                     </tr>
-                  ))}
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
 
-            {/* Table footer */}
+            {/* Table footer — real pagination */}
             <div className="px-6 py-3 border-t border-gray-100 flex items-center justify-between">
-              <span className="text-xs text-gray-400 font-bold">Showing {filteredUsers.length} of {users.length} users</span>
+              <span className="text-xs text-gray-400 font-bold">
+                Page {currentPage} of {totalPages} · {totalCount} total
+              </span>
               <div className="flex gap-2">
-                {["←", "1", "2", "3", "→"].map((p, i) => (
-                  <button
-                    key={i}
-                    className="w-7 h-7 rounded-lg text-xs font-black border transition-all"
-                    style={{
-                      borderColor: p === "1" ? "#E53E3E" : "#E5E7EB",
-                      background: p === "1" ? "#E53E3E" : "transparent",
-                      color: p === "1" ? "#fff" : "#6B7280",
-                      fontFamily: "Rajdhani, sans-serif",
-                    }}
-                  >
-                    {p}
-                  </button>
-                ))}
+                <button
+                  disabled={currentPage <= 1}
+                  onClick={() => setCurrentPage(currentPage - 1)}
+                  className="w-7 h-7 rounded-lg text-xs font-black border border-gray-200 transition-all disabled:opacity-30"
+                  style={{ fontFamily: "Rajdhani, sans-serif", color: "#6B7280" }}
+                >
+                  ←
+                </button>
+                {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
+                  let pageNum: number;
+                  if (totalPages <= 5) { pageNum = i + 1; }
+                  else if (currentPage <= 3) { pageNum = i + 1; }
+                  else if (currentPage >= totalPages - 2) { pageNum = totalPages - 4 + i; }
+                  else { pageNum = currentPage - 2 + i; }
+                  return (
+                    <button
+                      key={pageNum}
+                      onClick={() => setCurrentPage(pageNum)}
+                      className="w-7 h-7 rounded-lg text-xs font-black border transition-all"
+                      style={{
+                        borderColor: currentPage === pageNum ? "#E53E3E" : "#E5E7EB",
+                        background: currentPage === pageNum ? "#E53E3E" : "transparent",
+                        color: currentPage === pageNum ? "#fff" : "#6B7280",
+                        fontFamily: "Rajdhani, sans-serif",
+                      }}
+                    >
+                      {pageNum}
+                    </button>
+                  );
+                })}
+                <button
+                  disabled={currentPage >= totalPages}
+                  onClick={() => setCurrentPage(currentPage + 1)}
+                  className="w-7 h-7 rounded-lg text-xs font-black border border-gray-200 transition-all disabled:opacity-30"
+                  style={{ fontFamily: "Rajdhani, sans-serif", color: "#6B7280" }}
+                >
+                  →
+                </button>
               </div>
             </div>
           </div>
