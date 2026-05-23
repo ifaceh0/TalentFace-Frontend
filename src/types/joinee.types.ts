@@ -50,6 +50,11 @@ export interface Address {
 // ─── Main profile type (discriminator — inherits name/email/role from User) ───
 
 export interface JoineeProfile {
+  title: string;
+  completionPercent: number;
+  initials: string;
+  applications: number;
+  savedJobs: number;
   _id?: string;
 
   // From User base schema
