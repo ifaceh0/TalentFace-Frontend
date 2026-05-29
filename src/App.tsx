@@ -28,6 +28,7 @@ import JoineeDashboard from "./pages/joinee/JoineeDashboard";
 import JobSwipe from "./pages/joinee/JobSwipe";
 
 import ChatWidget from "./components/ChatWidget/ChatWidget";
+import SavedJobs from "./components/joinee/SavedJob";
 
 
 // ───────────────── Dashboard Layout ─────────────────
@@ -191,6 +192,7 @@ export default function App() {
             <Route path="/joinee/home"      element={<JoineeLayout><JoineeHomepage /></JoineeLayout>} />
             <Route path="/joinee/dashboard" element={<JoineeLayout><JoineeDashboard /></JoineeLayout>} />
             <Route path="/joinee/swipe"     element={<JoineeLayout><JobSwipe /></JoineeLayout>} />
+            <Route path="/joinee/saved" element={<SavedJobs />} />
           </Route>
 
 

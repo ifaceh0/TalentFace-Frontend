@@ -32,8 +32,8 @@ export interface Project {
   description?: string;
   techStack?: string[];
   link?: string;
-  startDate?: string;
-  endDate?: string;
+  startDate?: string | null;
+  endDate?: string | null;
   isOngoing?: boolean;
 }
 
@@ -53,6 +53,7 @@ export interface Address {
 // ─── Main profile type (discriminator — inherits name/email/role from User) ───
 
 export interface JoineeProfile {
+  resume: any;
   title: string;
   completionPercent: number;
   initials: string;

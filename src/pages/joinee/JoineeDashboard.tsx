@@ -282,7 +282,7 @@ function ProfileScoreGate({
   onClose: () => void;
   onGoComplete: () => void;
 }) {
-  const remaining = 85 - score;
+  const remaining = 50 - score;
   const circumference = 2 * Math.PI * 36; // r=36
   const dash = (score / 100) * circumference;
 
@@ -346,7 +346,7 @@ function ProfileScoreGate({
         </h2>
         <p style={{ fontSize: 14, color: '#6B7280', lineHeight: 1.65, margin: '0 0 20px' }}>
           Your profile score is currently <strong style={{ color: '#D62B2B' }}>{score}%</strong>.
-          You need at least <strong style={{ color: '#0D1B3E' }}>85%</strong> to be visible in the Recruiter Section
+          You need at least <strong style={{ color: '#0D1B3E' }}>50%</strong> to be visible in the Recruiter Section
           and get hired.
         </p>
 
@@ -354,7 +354,7 @@ function ProfileScoreGate({
         <div style={{ background: '#F0F4FF', borderRadius: 99, height: 10, marginBottom: 8, overflow: 'hidden' }}>
           <div style={{
             height: '100%',
-            width: `${(score / 85) * 100}%`,
+            width: `${(score / 50) * 100}%`,
             background: 'linear-gradient(90deg,#D62B2B,#1C3FA8)',
             borderRadius: 99,
             transition: 'width 0.6s ease',
@@ -366,7 +366,7 @@ function ProfileScoreGate({
 
         {/* What to complete */}
         <div style={{ background: '#FFF5F5', border: '1px solid #FECDD3', borderRadius: 12, padding: '14px 16px', textAlign: 'left', marginBottom: 24 }}>
-          <p style={{ fontSize: 12, fontWeight: 600, color: '#D62B2B', margin: '0 0 8px' }}>Complete these sections to reach 85%:</p>
+          <p style={{ fontSize: 12, fontWeight: 600, color: '#D62B2B', margin: '0 0 8px' }}>Complete these sections to reach 50%:</p>
           <ul style={{ fontSize: 12, color: '#4A5568', lineHeight: 1.8, margin: 0, paddingLeft: 16 }}>
             <li>Basic Details (name, phone, date of birth, gender)</li>
             <li>Profile Summary</li>
@@ -405,7 +405,7 @@ function ProfileScoreGate({
 
 // ─── Score Badge (shown in header when score < 85) ────────────────────────────
 function ScoreWarningBadge({ score, onClick }: { score: number; onClick: () => void }) {
-  if (score >= 85) return null;
+  if (score >= 50) return null;
   return (
     <button
       onClick={onClick}
@@ -501,7 +501,7 @@ export default function JoineeDashboard() {
   };
 
   const profileScore = computeScore(profile);
-  const canAccessRecruiter = profileScore >= 85;
+  const canAccessRecruiter = profileScore >= 50;
 
   // ── Handle recruiter section click ────────────────────────────────────────
   const handleSectionSelect = (section: ExtendedSection) => {
@@ -779,7 +779,7 @@ function EnhancedSidebar({
               Recruiter Section
             </div>
             <div style={{ fontSize: 10, color: canAccessRecruiter ? '#86EFAC' : '#FCA5A5', marginTop: 1 }}>
-              {canAccessRecruiter ? '✓ Your resume is live' : `Needs ${85 - profileScore}% more`}
+              {canAccessRecruiter ? '✓ Your resume is live' : `Needs ${50 - profileScore}% more`}
             </div>
           </div>
 
@@ -803,12 +803,12 @@ function EnhancedSidebar({
           <div style={{ marginTop: 8, padding: '0 12px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
               <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.4)' }}>Profile Score</span>
-              <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.4)' }}>85% needed</span>
+              <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.4)' }}>50% needed</span>
             </div>
             <div style={{ height: 3, background: 'rgba(255,255,255,0.1)', borderRadius: 99, overflow: 'hidden' }}>
               <div style={{
                 height: '100%',
-                width: `${(profileScore / 85) * 100}%`,
+                width: `${(profileScore / 50) * 100}%`,
                 background: 'linear-gradient(90deg,#D62B2B,#F59E0B)',
                 borderRadius: 99,
                 transition: 'width 0.6s ease',
