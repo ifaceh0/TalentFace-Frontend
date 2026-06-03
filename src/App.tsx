@@ -119,6 +119,9 @@ import Header from "./components/layout/Header";
 import DashboardPage from "./pages/DashboardPage";
 import CandidatesPage from "./pages/CandidatesPage";
 import JobsPage from "./pages/JobsPage";
+import ProfilePage from './pages/profile/ProfilePage';
+import SettingsPage from './pages/settings/SettingsPage';
+import ChangePassword from './pages/auth/ChangePassword';
 
 import Login from "./pages/auth/Login";
 import RecruiterSignup from "./pages/auth/RecruiterSignup";
@@ -253,6 +256,9 @@ export default function App() {
               path="/recruiter/dashboard"
               element={<Dashboard role="recruiter" />}
             />
+            <Route path="/recruiter/profile" element={<ProfilePage />} />
+            <Route path="/recruiter/settings" element={<SettingsPage />} />
+            <Route path="/recruiter/change-password" element={<ChangePassword />} />
           </Route>
 
           {/* Joinee Routes */}

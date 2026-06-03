@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useStore } from '../../store/useStore';
 import type { Job } from '../../store/useStore';
-import { Plus, Trash2, Users } from 'lucide-react';
+import { Plus, Trash2, Users, Loader } from 'lucide-react';
 
 const statusColors: Record<Job['status'], string> = {
   Active: 'bg-green-100 text-green-700',
@@ -10,28 +10,30 @@ const statusColors: Record<Job['status'], string> = {
 };
 
 export default function JobList() {
-  const { jobs, addJob, deleteJob } = useStore();
+  const { jobs, loading, fetchJobs, createJob, deleteJob } = useStore();
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({
     title: '',
     department: '',
     location: '',
+    description: '',
   });
 
-  const handleAdd = () => {
+  useEffect(() => {
+    fetchJobs();
+  }, [fetchJobs]);
+
+  const handleAdd = async () => {
     if (!form.title || !form.department || !form.location) return;
-    const newJob: Job = {
-      id: Date.now().toString(),
+    const jobData = {
       title: form.title,
       department: form.department,
       location: form.location,
-      applicants: 0,
-      status: 'Active',
-      postedDate: new Date().toISOString().split('T')[0],
-      description: '',
+      description: form.description,
+      status: 'Active' as const,
     };
-    addJob(newJob);
-    setForm({ title: '', department: '', location: '' });
+    await createJob(jobData);
+    setForm({ title: '', department: '', location: '', description: '' });
     setShowForm(false);
   };
 
@@ -75,6 +77,13 @@ export default function JobList() {
             onChange={(e) => setForm({ ...form, location: e.target.value })}
             className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-indigo-300"
           />
+          <textarea
+            placeholder="Description"
+            value={form.description}
+            onChange={(e) => setForm({ ...form, description: e.target.value })}
+            className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-indigo-300 resize-none"
+            rows={3}
+          />
           <div className="flex gap-2">
             <button
               onClick={handleAdd}
@@ -92,9 +101,17 @@ export default function JobList() {
         </div>
       )}
 
+      {/* Loading State */}
+      {loading && jobs.length === 0 && (
+        <div className="text-center py-12">
+          <Loader size={24} className="animate-spin text-indigo-600 mx-auto mb-2" />
+          <p className="text-sm text-gray-500">Loading jobs...</p>
+        </div>
+      )}
+
       {/* Job Items */}
       <div className="divide-y divide-gray-50">
-        {jobs.length === 0 ? (
+        {!loading && jobs.length === 0 ? (
           <div className="text-center py-12 text-gray-400">
             <p className="text-sm">No jobs posted yet.</p>
             <p className="text-xs mt-1">Click "+ Add Job" to get started.</p>

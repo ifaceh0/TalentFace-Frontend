@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react';
 import {
   DndContext,
   PointerSensor,
@@ -23,13 +24,31 @@ const columns: { id: CandidateStatus; label: string; color: string; dot: string 
 ];
 
 export default function PipelineBoard() {
-  const { candidates, updateCandidateStatus } = useStore();
+  const { candidates, fetchCandidates, updateCandidateStatus } = useStore();
+
+  useEffect(() => {
+    fetchCandidates();
+  }, [fetchCandidates]);
+
+  const scrollContainerRef = useRef<HTMLDivElement | null>(null);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: { distance: 5 },
     })
   );
+
+  const handleWheel = (event: React.WheelEvent<HTMLDivElement>) => {
+    const container = scrollContainerRef.current;
+    if (!container) return;
+
+    if (Math.abs(event.deltaX) > Math.abs(event.deltaY)) {
+      return;
+    }
+
+    event.preventDefault();
+    container.scrollLeft += event.deltaY;
+  };
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
@@ -72,7 +91,11 @@ export default function PipelineBoard() {
       onDragEnd={handleDragEnd}
       onDragOver={handleDragOver}
     >
-      <div className="flex gap-4 overflow-x-auto pb-4">
+      <div
+        ref={scrollContainerRef}
+        className="flex gap-4 overflow-x-auto overflow-y-hidden pb-4"
+        onWheel={handleWheel}
+      >
         {columns.map((col) => {
           const columnCandidates = candidates.filter((c) => c.status === col.id);
           return (

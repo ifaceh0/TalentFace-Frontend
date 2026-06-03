@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { Briefcase, Users, Calendar, UserCheck } from 'lucide-react';
 import StatsCard from '../components/dashboard/StatsCard';
 import PipelineBoard from '../components/pipeline/PipelineBoard';
@@ -7,7 +8,12 @@ import HiringChart from '../components/dashboard/HiringChart';
 import { useStore } from '../store/useStore';
 
 export default function DashboardPage() {
-  const { candidates, jobs } = useStore();
+  const { candidates, jobs, fetchJobs, fetchCandidates } = useStore();
+
+  useEffect(() => {
+    fetchJobs();
+    fetchCandidates();
+  }, [fetchJobs, fetchCandidates]);
 
   const stats = [
     { title: 'Total Jobs Posted', value: jobs.length, icon: Briefcase, color: 'text-blue-600', bgColor: 'bg-blue-100' },
