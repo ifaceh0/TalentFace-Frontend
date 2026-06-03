@@ -4,20 +4,75 @@ import type { JoineeProfile } from '../../types/joinee.types';
 type Section =
   | 'overview' | 'basic' | 'summary' | 'address'
   | 'education' | 'work' | 'skills' | 'projects'
-  | 'social' | 'resume';
+  | 'social' | 'resume' | 'recruiter';
 
-const NAV_ITEMS: { id: Section; label: string; icon: string }[] = [
-  { id: 'overview',  label: 'Overview',         icon: '📊' },
-  { id: 'basic',     label: 'Basic Details',     icon: '👤' },
-  { id: 'summary',   label: 'Summary',           icon: '📝' },
-  { id: 'address',   label: 'Address',           icon: '🏠' },
-  { id: 'education', label: 'Education',         icon: '🎓' },
-  { id: 'work',      label: 'Work Experience',   icon: '💼' },
-  { id: 'skills',    label: 'Skills',            icon: '🛠️' },
-  { id: 'projects',  label: 'Projects',          icon: '🚀' },
-  { id: 'social',    label: 'Social Profiles',   icon: '🔗' },
-  { id: 'resume',    label: 'Resume',            icon: '📄' },
+type BadgeStatus = 'done' | 'partial' | 'empty' | 'locked';
+
+const BASE_NAV_ITEMS: { id: Section; label: string; icon: string; pts: number }[] = [
+  { id: 'overview',  label: 'Overview',        icon: '📊', pts: 0  },
+  { id: 'basic',     label: 'Basic Details',   icon: '👤', pts: 0  },
+  { id: 'summary',   label: 'Summary',         icon: '📝', pts: 10 },
+  { id: 'address',   label: 'Address',         icon: '🏠', pts: 0  },
+  { id: 'education', label: 'Education',       icon: '🎓', pts: 10 },
+  { id: 'work',      label: 'Work Experience', icon: '💼', pts: 5  },
+  { id: 'skills',    label: 'Skills',          icon: '🛠️', pts: 10 },
+  { id: 'projects',  label: 'Projects',        icon: '🚀', pts: 10 },
+  { id: 'social',    label: 'Social Profiles', icon: '🔗', pts: 5  },
+  { id: 'resume',    label: 'Resume',          icon: '📄', pts: 10 },
+  { id: 'recruiter', label: 'Recruiter View',  icon: '🧑‍💼', pts: 0  },
 ];
+
+function getStatus(id: Section, profile: JoineeProfile | null): BadgeStatus {
+  if (!profile) return id === 'overview' || id === 'basic' ? 'done' : 'empty';
+
+  const score = profile.profileCompletionScore ?? 0;
+
+  switch (id) {
+    case 'overview':  return 'done';
+    case 'basic':     return profile.name && profile.email ? 'done' : 'partial';
+    case 'summary':   return profile.summary ? 'done' : 'empty';
+    case 'address':   return profile.address ? 'done' : 'empty';
+    case 'education': return (profile.education?.length ?? 0) > 0 ? 'done' : 'empty';
+    case 'work':      return (profile.workExperience?.length ?? 0) > 0 ? 'done' : 'partial';
+    case 'skills':    return (profile.skills?.length ?? 0) > 0 ? 'done' : 'empty';
+    case 'projects':  return (profile.projects?.length ?? 0) > 0 ? 'done' : 'empty';
+    case 'social':    return profile.socialProfiles ? 'partial' : 'empty';
+    case 'resume':    return profile.resume ? 'done' : 'empty';
+    case 'recruiter': return score >= 50 ? 'done' : 'locked';
+    default:          return 'empty';
+  }
+}
+
+function SectionBadge({ status, pts, active }: { status: BadgeStatus; pts: number; active: boolean }) {
+  if (active) return null;
+
+  if (status === 'locked') {
+    return (
+      <span className="ml-auto text-[10px] font-medium px-1.5 py-0.5 rounded-md bg-slate-700 text-slate-500 shrink-0">
+        🔒
+      </span>
+    );
+  }
+  if (status === 'done') {
+    return (
+      <span className="ml-auto text-[10px] font-medium px-1.5 py-0.5 rounded-md bg-green-900/40 text-green-400 shrink-0">
+        ✓
+      </span>
+    );
+  }
+  if (status === 'partial') {
+    return (
+      <span className="ml-auto text-[10px] font-medium px-1.5 py-0.5 rounded-md bg-amber-900/30 text-amber-400 shrink-0">
+        +{pts}
+      </span>
+    );
+  }
+  return (
+    <span className="ml-auto text-[10px] font-medium px-1.5 py-0.5 rounded-md bg-red-900/20 text-red-400 shrink-0">
+      +{pts}
+    </span>
+  );
+}
 
 interface SidebarProps {
   profile: JoineeProfile | null;
@@ -75,20 +130,34 @@ export default function Sidebar({ profile, activeSection, onSelect, onPhotoClick
 
       {/* Nav */}
       <nav className="flex-1 overflow-y-auto py-3 px-2">
-        {NAV_ITEMS.map(({ id, label, icon }) => {
+        {score < 50 && (
+          <p className="text-[10px] text-slate-500 px-3 pb-2">
+            Fill sections below to reach <span className="text-amber-400 font-medium">50%</span>
+          </p>
+        )}
+
+        {BASE_NAV_ITEMS.map(({ id, label, icon, pts }) => {
+          const status = getStatus(id, profile);
           const active = id === activeSection;
+          const isLocked = status === 'locked';
+
           return (
             <button
               key={id}
-              onClick={() => onSelect(id)}
+              onClick={() => !isLocked && onSelect(id)}
+              disabled={isLocked}
+              title={isLocked ? 'Reach 50% profile score to unlock' : undefined}
               className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl mb-0.5 text-left transition-all text-sm
                 ${active
                   ? 'bg-red-500 text-white font-medium shadow-sm'
-                  : 'text-slate-400 hover:text-white hover:bg-slate-800'
+                  : isLocked
+                    ? 'text-slate-600 cursor-not-allowed opacity-60'
+                    : 'text-slate-400 hover:text-white hover:bg-slate-800'
                 }`}
             >
-              <span className="text-base leading-none">{icon}</span>
-              <span className="leading-tight">{label}</span>
+              <span className="text-base leading-none shrink-0">{icon}</span>
+              <span className="leading-tight flex-1">{label}</span>
+              <SectionBadge status={status} pts={pts} active={active} />
             </button>
           );
         })}

@@ -26,16 +26,28 @@ export default function ProjectsSection({ items, onChange }: ProjectsSectionProp
   const openEdit = (item: Project) => { setEditing(item); setForm({ ...item }); setShowModal(true); };
 
   const handleSave = async () => {
-    setLoading(true);
-    try {
-      const updated = editing?._id
-        ? await updateProject(editing._id, form)
-        : await addProject(form);
-      onChange(updated);
-      setShowModal(false);
-    } catch { /* */ }
-    finally { setLoading(false); }
-  };
+  setLoading(true);
+
+  try {
+    const payload = {
+      ...form,
+      startDate: form.startDate || null,
+      endDate: form.endDate || null,
+    };
+
+    const updated = editing?._id
+      ? await updateProject(editing._id, payload)
+      : await addProject(payload);
+
+    onChange(updated);
+    setShowModal(false);
+
+  } catch (err) {
+    console.error(err);
+  } finally {
+    setLoading(false);
+  }
+};
 
   const handleDelete = async (id: string) => {
     setDeleting(id);
