@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { getSavedJobIds, unsaveJob } from "../../services/joinee.service";
+import { getSavedJobs } from "../../services/joinee.service";
 
 export default function SavedJobs() {
     const navigate = useNavigate();
@@ -9,12 +10,11 @@ export default function SavedJobs() {
     const [toast, setToast] = useState("");
 
     useEffect(() => {
-        getSavedJobIds()
-            .then(setJobs)
-            .catch(() => showToast("Failed to load saved jobs."))
-            .finally(() => setLoading(false));
-    }, []);
-
+    getSavedJobs()
+        .then(setJobs)
+        .catch(() => showToast("Failed to load saved jobs."))
+        .finally(() => setLoading(false));
+}, []);
     const handleUnsave = async (id: string) => {
         setJobs((prev) => prev.filter((j) => j.id !== id));
         try {

@@ -258,8 +258,8 @@ export default function RecruiterSection({ profile }: RecruiterSectionProps) {
               </p>
             )}
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
-              {profile.email  && <ContactChip icon="✉️" text={profile.email} />}
-              {profile.phone  && <ContactChip icon="📞" text={profile.phone} />}
+              {profile.email  && <ContactChip icon="✉️" text={profile.email}  href={`mailto:${profile.email}`} />}
+              {profile.phone  && <ContactChip icon="📞" text={profile.phone}  href={`tel:${profile.phone}`} />}
               {location       && <ContactChip icon="📍" text={location} />}
               {linkedIn       && <ContactChip icon="🔗" text="LinkedIn"  href={linkedIn} />}
               {github         && <ContactChip icon="🐙" text="GitHub"    href={github} />}
