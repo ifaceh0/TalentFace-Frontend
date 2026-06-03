@@ -33,11 +33,11 @@ import {
   RotateCcw,
   Shuffle,
   Sliders,
-  MapPin,
+  // MapPin,
   Building2,
   Wifi,
-  ToggleLeft,
-  ToggleRight,
+  // ToggleLeft,
+  // ToggleRight,
   Volume2,
 } from "lucide-react";
 
@@ -344,7 +344,8 @@ const handleLogout = async () => {
               setConfirm({
                 title: "Logout from all devices?",
                 message: "You'll be signed out from all other active sessions. This action cannot be undone.",
-                onConfirm: async () => { setConfirm(null); await logout(); navigate('/login', { replace: true }); },
+                onConfirm: handleLogout,
+                // onConfirm: async () => { setConfirm(null); await logout(); navigate('/login', { replace: true }); },
               })
             }
             className="px-4 py-2 text-sm font-medium text-gray-700 border border-gray-200 rounded-xl hover:bg-gray-50 whitespace-nowrap transition-all"
@@ -391,7 +392,7 @@ const handleLogout = async () => {
     return (
       <SectionCard title="Notification Preferences" description="Choose what you want to be notified about">
         <div className="divide-y divide-gray-50">
-          {items.map(({ key, label, desc, icon: Icon }) => (
+          {items.map(({ key, label, desc }) => (
             <div key={key} className="py-4 first:pt-0 last:pb-0">
               <SettingRow label={label} description={desc}>
                 <Toggle checked={notifications[key]} onChange={() => toggleNotification(key)} />
