@@ -16,6 +16,7 @@ export default function SavedJobs() {
         .finally(() => setLoading(false));
 }, []);
     const handleUnsave = async (id: string) => {
+        
         setJobs((prev) => prev.filter((j) => j.id !== id));
         try {
               await unsaveJob(id.toString());
