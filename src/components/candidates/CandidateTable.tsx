@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useStore } from '../../store/useStore';
 import type { CandidateStatus } from '../../store/useStore';
 import { Filter, Loader } from 'lucide-react';
+import LocationSelect from '../ui/LocationSelect';
 
 const statusColors: Record<CandidateStatus, string> = {
   Applied: 'bg-blue-100 text-blue-700',
@@ -36,7 +37,7 @@ export default function CandidateTable() {
         : true;
 
     const matchLocation = locationFilter
-      ? c.location.toLowerCase().includes(locationFilter.toLowerCase())
+      ? c.location.toLowerCase() === locationFilter.toLowerCase()
       : true;
 
     return matchSkill && matchExp && matchLocation;
@@ -68,13 +69,13 @@ export default function CandidateTable() {
             <option value="2-5">2–5 Years</option>
             <option value="5+">5+ Years</option>
           </select>
-          <input
-            type="text"
-            placeholder="Filter by location..."
-            value={locationFilter}
-            onChange={(e) => setLocationFilter(e.target.value)}
-            className="text-sm border border-gray-200 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-indigo-300 w-40"
-          />
+          <div className="w-40">
+            <LocationSelect
+              value={locationFilter}
+              onChange={setLocationFilter}
+              placeholder="Filter by location..."
+            />
+          </div>
           {(skillFilter || expFilter || locationFilter) && (
             <button
               onClick={() => {

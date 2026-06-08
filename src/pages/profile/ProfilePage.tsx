@@ -37,66 +37,82 @@ export default function ProfilePage() {
     .toUpperCase();
 
   return (
-    <div className="max-w-5xl">
-      <div className="bg-white rounded-xl shadow-sm border p-6 mb-6">
-        <div className="flex items-center gap-6">
-          <div className="w-20 h-20 rounded-full bg-gradient-to-br from-red-500 to-red-600 flex items-center justify-center text-white text-2xl font-bold">
-            {initials}
+    <div className="mx-auto max-w-4xl px-4 pb-10 sm:px-6 lg:px-8 space-y-6">
+      <div className="rounded-3xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+        <div className="bg-gradient-to-r from-red-600 to-blue-600 px-6 py-5">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-center gap-4">
+              <div className="flex h-16 w-16 items-center justify-center rounded-2xl border border-white/20 bg-white/15 text-2xl font-semibold text-white">
+                {initials}
+              </div>
+              <div>
+                <p className="text-sm uppercase tracking-[0.24em] text-blue-100">Recruiter profile</p>
+                <h1 className="mt-1 text-2xl font-semibold text-white">{user.name}</h1>
+                <p className="text-sm text-blue-100/90">{user.email}</p>
+              </div>
+            </div>
+            <button
+              onClick={() => setTab('edit')}
+              className="inline-flex items-center justify-center rounded-full bg-white px-4 py-2 text-sm font-semibold text-slate-900 shadow-sm transition hover:bg-slate-100"
+            >
+              Edit profile
+            </button>
           </div>
-          <div className="flex-1">
-            <h1 className="text-2xl font-semibold text-gray-900">{user.name}</h1>
-            <p className="text-sm text-gray-500">{user.email}</p>
-            <p className="mt-2 text-sm text-gray-600">{profile.bio || 'Recruiter at your company. Add a bio to tell candidates more about yourself.'}</p>
-          </div>
-          <div>
-            <button onClick={() => { setTab('edit'); }} className="px-4 py-2 bg-white border rounded-lg text-sm font-medium hover:shadow">Edit Profile</button>
+        </div>
+
+        <div className="px-6 py-5 border-t border-slate-200">
+          <div className="grid gap-4 sm:grid-cols-3">
+            <StatCard label="Role" value="Recruiter" />
+            <StatCard label="Company" value={profile.companyName || '—'} />
+            <StatCard label="Status" value="Active" />
           </div>
         </div>
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm border">
-        {/* Tabs */}
-        <div className="flex items-center gap-2 px-4 py-3 border-b">
-          <TabButton active={tab === 'overview'} onClick={() => { setTab('overview'); }}>Overview</TabButton>
-          <TabButton active={tab === 'company'} onClick={() => { setTab('company'); }}>Company</TabButton>
-          <TabButton active={tab === 'edit'} onClick={() => { setTab('edit'); }}>Edit</TabButton>
+      <div className="rounded-3xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+        <div className="flex flex-col gap-3 border-b border-slate-200 px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-500">Profile sections</p>
+            <h2 className="mt-1 text-xl font-semibold text-slate-900">Manage details</h2>
+          </div>
+          <p className="text-sm text-slate-500">Fast access to your recruiter profile and company settings.</p>
         </div>
 
-        {/* Content */}
-        <div className="p-6">
-          {tab === 'overview' && (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="md:col-span-2">
-                <h3 className="text-lg font-semibold mb-3">Recruiter Summary</h3>
-                <p className="text-sm text-gray-700">{profile.bio || 'No summary available.'}</p>
-                <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <InfoCard label="Name" value={user.name} />
-                  <InfoCard label="Email" value={user.email} />
-                  <InfoCard label="Designation" value={profile.designation || '—'} />
-                  <InfoCard label="Phone" value={profile.phone || '—'} />
-                </div>
-              </div>
+        <div className="p-6 space-y-6">
+          <div className="flex flex-wrap gap-2 rounded-full border border-slate-200 bg-slate-50 p-1">
+            <TabButton active={tab === 'overview'} onClick={() => setTab('overview')}>Overview</TabButton>
+            <TabButton active={tab === 'company'} onClick={() => setTab('company')}>Company</TabButton>
+            <TabButton active={tab === 'edit'} onClick={() => setTab('edit')}>Edit</TabButton>
+          </div>
 
-              <div className="md:col-span-1">
-                <h3 className="text-lg font-semibold mb-3">Quick Actions</h3>
-                <div className="flex flex-col gap-3">
-                  <button className="px-3 py-2 bg-red-50 text-red-700 border rounded">View your postings</button>
-                  <button className="px-3 py-2 bg-gray-50 border rounded">Manage integrations</button>
-                </div>
+          {tab === 'overview' && (
+            <div className="grid gap-6">
+              <div className="grid gap-4 sm:grid-cols-2">
+                <InfoCard label="Name" value={user.name} />
+                <InfoCard label="Email" value={user.email} />
+                <InfoCard label="Designation" value={profile.designation || '—'} />
+                <InfoCard label="Phone" value={profile.phone || '—'} />
+              </div>
+              <div className="rounded-3xl border border-slate-200 bg-slate-50 p-5">
+                <h3 className="text-base font-semibold text-slate-900">Recruiter summary</h3>
+                <p className="mt-3 text-sm leading-6 text-slate-700">{profile.bio || 'No summary available. Add a short bio to let candidates know more about your hiring approach and company values.'}</p>
+              </div>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <ActionButton label="View job postings" variant="solid" />
+                <ActionButton label="Manage integrations" variant="outline" />
               </div>
             </div>
           )}
 
           {tab === 'company' && (
-            <div>
-              <h3 className="text-lg font-semibold mb-3">Company Details</h3>
-              <p className="text-sm"><strong>Company:</strong> {profile.companyName || '—'}</p>
-              <p className="text-sm"><strong>Website:</strong> {profile.companyWebsite || '—'}</p>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <DetailRow label="Company" value={profile.companyName || '—'} />
+              <DetailRow label="Website" value={profile.companyWebsite || '—'} />
             </div>
           )}
 
           {tab === 'edit' && (
-            <ProfileEditor initial={profile} onCancel={() => { setTab('overview'); }} onSave={save} />
+            <ProfileEditor initial={profile} onCancel={() => setTab('overview')} onSave={save} />
           )}
         </div>
       </div>
@@ -106,34 +122,104 @@ export default function ProfilePage() {
 
 function TabButton({ active, children, onClick }: { active: boolean; children: React.ReactNode; onClick: () => void }) {
   return (
-    <button onClick={onClick} className={`px-4 py-2 rounded-t-lg text-sm font-medium ${active ? 'bg-white border-b-2 border-red-500 text-gray-900' : 'text-gray-600 hover:bg-gray-50'}`}>
+    <button
+      onClick={onClick}
+      className={`rounded-full px-4 py-2 text-sm font-semibold transition ${active ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-600 hover:bg-white'}`}
+    >
       {children}
     </button>
   );
 }
 
-function InfoCard({ label, value }: { label: string; value: string }) {
+function StatCard({ label, value }: { label: string; value: string }) {
   return (
-    <div className="p-3 rounded-lg border bg-gray-50">
-      <p className="text-xs text-gray-500">{label}</p>
-      <p className="text-sm font-medium text-gray-800">{value}</p>
+    <div className="rounded-3xl border border-slate-200 bg-slate-50 p-4 text-sm">
+      <p className="uppercase tracking-[0.18em] text-slate-500">{label}</p>
+      <p className="mt-3 text-xl font-semibold text-slate-900">{value}</p>
     </div>
   );
 }
 
-function ProfileEditor({ initial, onSave, onCancel }: { initial: RecruiterProfile; onSave: (p: RecruiterProfile) => void; onCancel: () => void; }) {
+function InfoCard({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-3xl border border-slate-200 bg-white p-4">
+      <p className="text-xs text-slate-500">{label}</p>
+      <p className="mt-2 text-sm font-semibold text-slate-900">{value}</p>
+    </div>
+  );
+}
+
+function DetailRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-3xl border border-slate-200 bg-slate-50 p-4">
+      <p className="text-xs text-slate-500">{label}</p>
+      <p className="mt-2 text-sm font-semibold text-slate-900">{value}</p>
+    </div>
+  );
+}
+
+function ActionButton({ label, variant }: { label: string; variant: 'solid' | 'outline' }) {
+  return (
+    <button
+      className={`w-full rounded-3xl px-4 py-3 text-sm font-semibold transition ${variant === 'solid' ? 'bg-blue-600 text-white shadow-sm hover:bg-blue-700' : 'border border-slate-200 bg-white text-slate-700 hover:bg-slate-50'}`}
+    >
+      {label}
+    </button>
+  );
+}
+
+function ProfileEditor({ initial, onSave, onCancel }: { initial: RecruiterProfile; onSave: (p: RecruiterProfile) => void; onCancel: () => void }) {
   const [form, setForm] = useState<RecruiterProfile>(initial || {});
 
   return (
-    <div className="grid gap-3">
-      <input value={form.companyName || ''} onChange={(e) => setForm({ ...form, companyName: e.target.value })} placeholder="Company name" className="border p-2 rounded" />
-      <input value={form.companyWebsite || ''} onChange={(e) => setForm({ ...form, companyWebsite: e.target.value })} placeholder="Company website" className="border p-2 rounded" />
-      <input value={form.designation || ''} onChange={(e) => setForm({ ...form, designation: e.target.value })} placeholder="Designation" className="border p-2 rounded" />
-      <input value={form.phone || ''} onChange={(e) => setForm({ ...form, phone: e.target.value })} placeholder="Phone" className="border p-2 rounded" />
-      <textarea value={form.bio || ''} onChange={(e) => setForm({ ...form, bio: e.target.value })} placeholder="Short bio" className="border p-2 rounded h-28" />
-      <div className="flex gap-2 mt-2">
-        <button className="px-4 py-2 bg-blue-600 text-white rounded" onClick={() => onSave(form)}>Save</button>
-        <button className="px-3 py-2 border rounded" onClick={onCancel}>Cancel</button>
+    <div className="grid gap-4">
+      <div className="grid gap-4 sm:grid-cols-2">
+        <input
+          value={form.companyName || ''}
+          onChange={(e) => setForm({ ...form, companyName: e.target.value })}
+          placeholder="Company name"
+          className="rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-blue-500"
+        />
+        <input
+          value={form.companyWebsite || ''}
+          onChange={(e) => setForm({ ...form, companyWebsite: e.target.value })}
+          placeholder="Company website"
+          className="rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-blue-500"
+        />
+      </div>
+      <div className="grid gap-4 sm:grid-cols-2">
+        <input
+          value={form.designation || ''}
+          onChange={(e) => setForm({ ...form, designation: e.target.value })}
+          placeholder="Designation"
+          className="rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-blue-500"
+        />
+        <input
+          value={form.phone || ''}
+          onChange={(e) => setForm({ ...form, phone: e.target.value })}
+          placeholder="Phone"
+          className="rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-blue-500"
+        />
+      </div>
+      <textarea
+        value={form.bio || ''}
+        onChange={(e) => setForm({ ...form, bio: e.target.value })}
+        placeholder="Short bio"
+        className="min-h-[120px] rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-blue-500"
+      />
+      <div className="flex flex-col gap-3 sm:flex-row">
+        <button
+          className="w-full rounded-3xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700"
+          onClick={() => onSave(form)}
+        >
+          Save changes
+        </button>
+        <button
+          className="w-full rounded-3xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+          onClick={onCancel}
+        >
+          Cancel
+        </button>
       </div>
     </div>
   );

@@ -102,7 +102,7 @@
 // }
 
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   BrowserRouter,
   Routes,
@@ -111,6 +111,7 @@ import {
 } from "react-router-dom";
 
 import { AuthProvider } from "./context/AuthContext";
+import { useAuth } from "./context/useAuth";
 import ProtectedRoute from "./components/common/ProtectedRoute";
 
 import Sidebar from "./components/layout/Sidebar";
@@ -130,12 +131,25 @@ import JoineeDashboard from "./pages/joinee/JoineeDashboard";
 
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import Home from "./pages/Home";
+import { restoreAppState, saveAppState } from "./store/useStore";
+import { applyFontSize, loadUserSettings } from './utils/settings';
 
 
 // ───────────────── Dashboard Layout ─────────────────
 
+const DASHBOARD_VIEW_KEY = 'tf_dashboard_active_page';
+
 function Dashboard({ role }: { role: string }) {
-  const [activePage, setActivePage] = useState("dashboard");
+  const [activePage, setActivePage] = useState<string>(() => {
+    if (typeof window === 'undefined') return 'dashboard';
+    const saved = localStorage.getItem(DASHBOARD_VIEW_KEY);
+    return saved === 'candidates' || saved === 'jobs' ? saved : 'dashboard';
+  });
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    localStorage.setItem(DASHBOARD_VIEW_KEY, activePage);
+  }, [activePage]);
 
   const renderPage = () => {
     switch (activePage) {
@@ -154,17 +168,17 @@ function Dashboard({ role }: { role: string }) {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex">
+    <div className="min-h-screen bg-gray-50 flex overflow-x-hidden">
       <Sidebar
         activePage={activePage}
         setActivePage={setActivePage}
         role={role}
       />
 
-      <div className="flex-1 ml-64">
+      <div className="flex-1 min-w-0 pl-64">
         <Header activePage={activePage} />
 
-        <main className="mt-16 p-6">
+        <main className="mt-16 p-6 min-w-0">
           {renderPage()}
         </main>
 
@@ -182,8 +196,8 @@ function Dashboard({ role }: { role: string }) {
 function Unauthorized() {
   return (
     <div
-      className="min-h-screen bg-gray-50 flex items-center justify-center"
-      style={{ fontFamily: "'Inter', sans-serif" }}
+      className="min-h-screen bg-gray-50 dark:bg-slate-950 dark:text-slate-100 flex items-center justify-center"
+      style={{ fontFamily: "'Times New Roman', Times, serif" }}
     >
       <div className="text-center">
         <p className="text-8xl font-black text-red-600">403</p>
@@ -210,11 +224,24 @@ function Unauthorized() {
 
 // ───────────────── Main App ─────────────────
 
-export default function App() {
+function AppRoutes() {
+  const { user, loading } = useAuth();
+
+  useEffect(() => {
+    if (!loading && user) {
+      restoreAppState(user._id);
+      const settings = loadUserSettings(user._id);
+      applyFontSize(settings.fontSize);
+    }
+  }, [loading, user]);
+
+  useEffect(() => {
+    const interval = window.setInterval(() => saveAppState(user?._id), 30000);
+    return () => window.clearInterval(interval);
+  }, [user]);
+
   return (
-    <AuthProvider>
-      <BrowserRouter>
-        <Routes>
+    <Routes>
 
           {/* Public Routes */}
           <Route path="/" element={<Home />} />
@@ -280,6 +307,14 @@ export default function App() {
           />
 
         </Routes>
+  );
+}
+
+export default function App() {
+  return (
+    <AuthProvider>
+      <BrowserRouter>
+        <AppRoutes />
       </BrowserRouter>
     </AuthProvider>
   );

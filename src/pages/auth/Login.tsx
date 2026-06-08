@@ -45,7 +45,7 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex" style={{ fontFamily: "'Inter', sans-serif" }}>
+    <div className="min-h-screen bg-gray-50 flex" style={{ fontFamily: "'Times New Roman', Times, serif" }}>
 
       {/* ── Left brand panel ── */}
       <div

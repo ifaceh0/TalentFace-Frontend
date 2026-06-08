@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useStore } from '../../store/useStore';
 import type { Job } from '../../store/useStore';
 import { Plus, Trash2, Users, Loader } from 'lucide-react';
+import LocationSelect from '../ui/LocationSelect';
 
 const statusColors: Record<Job['status'], string> = {
   Active: 'bg-green-100 text-green-700',
@@ -12,6 +13,7 @@ const statusColors: Record<Job['status'], string> = {
 export default function JobList() {
   const { jobs, loading, fetchJobs, createJob, deleteJob } = useStore();
   const [showForm, setShowForm] = useState(false);
+  const [deletingJobId, setDeletingJobId] = useState<string | null>(null);
   const [form, setForm] = useState({
     title: '',
     department: '',
@@ -22,6 +24,22 @@ export default function JobList() {
   useEffect(() => {
     fetchJobs();
   }, [fetchJobs]);
+
+  const handleDelete = async (id: string) => {
+    const confirmed = window.confirm('Delete this job posting? This will remove it from the database.');
+    if (!confirmed) return;
+
+    setDeletingJobId(id);
+    try {
+      await deleteJob(id);
+      await fetchJobs();
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unable to delete job.';
+      window.alert(message);
+    } finally {
+      setDeletingJobId(null);
+    }
+  };
 
   const handleAdd = async () => {
     if (!form.title || !form.department || !form.location) return;
@@ -70,12 +88,10 @@ export default function JobList() {
             onChange={(e) => setForm({ ...form, department: e.target.value })}
             className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-indigo-300"
           />
-          <input
-            type="text"
-            placeholder="Location"
+          <LocationSelect
             value={form.location}
-            onChange={(e) => setForm({ ...form, location: e.target.value })}
-            className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-indigo-300"
+            onChange={(location) => setForm({ ...form, location })}
+            placeholder="Location"
           />
           <textarea
             placeholder="Description"
@@ -122,8 +138,10 @@ export default function JobList() {
               <div className="flex items-start justify-between mb-1">
                 <p className="text-sm font-semibold text-gray-800">{job.title}</p>
                 <button
-                  onClick={() => deleteJob(job.id)}
+                  type="button"
+                  onClick={() => handleDelete(job.id)}
                   className="text-gray-300 hover:text-red-500 transition"
+                  disabled={deletingJobId === job.id}
                 >
                   <Trash2 size={15} />
                 </button>

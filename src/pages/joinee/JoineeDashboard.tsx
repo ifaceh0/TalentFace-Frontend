@@ -167,7 +167,7 @@ export default function JoineeDashboard() {
   // ─── Render ─────────────────────────────────────────────────────────────────
 
   return (
-    <div className="flex min-h-screen bg-slate-50" style={{ fontFamily: "'Inter', system-ui, sans-serif" }}>
+    <div className="flex min-h-screen bg-slate-50" style={{ fontFamily: "'Times New Roman', Times, serif" }}>
       {/* Sidebar */}
       <Sidebar
         profile={profile}

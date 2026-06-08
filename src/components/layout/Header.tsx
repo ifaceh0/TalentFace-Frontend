@@ -81,78 +81,72 @@ export default function Header({ activePage }: HeaderProps) {
               />
               
               {/* Dropdown */}
-              <div className="absolute right-0 mt-2 w-64 bg-white rounded-xl shadow-lg border border-gray-200 z-50 overflow-hidden">
+              <div className="absolute right-0 mt-2 w-72 bg-white rounded-3xl shadow-2xl border border-blue-100 z-50 overflow-hidden ring-1 ring-black/5">
                 {/* Profile Header */}
-                <div className="bg-gradient-to-r from-red-500 to-red-600 p-4 text-white">
+                <div className="bg-gradient-to-r from-blue-900 via-blue-700 to-red-600 p-4 text-white">
                   <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 rounded-full bg-white flex items-center justify-center text-red-600 text-lg font-bold">
+                    <div className="w-12 h-12 rounded-full bg-white flex items-center justify-center text-blue-900 text-lg font-bold">
                       {initials}
                     </div>
                     <div>
-                      <p className="font-semibold">{user?.name || 'User'}</p>
-                      <p className="text-xs text-red-100">{user?.email || 'email@example.com'}</p>
+                      <p className="font-semibold text-white">{user?.name || 'User'}</p>
+                      <p className="text-xs text-blue-100">{user?.email || 'email@example.com'}</p>
                     </div>
                   </div>
                 </div>
 
                 {/* Menu Items */}
-                <div className="py-2">
-                  {/* View Profile */}
+                <div className="py-2 bg-slate-50">
                   <button
                     onClick={() => {
                       navigate('/recruiter/profile');
                       setIsProfileOpen(false);
                     }}
-                    className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition"
+                    className="w-full flex items-center gap-3 px-4 py-3 text-sm text-slate-800 hover:bg-blue-50 transition"
                   >
-                    <User size={16} className="text-gray-400" />
+                    <User size={16} className="text-blue-600" />
                     <span>View Profile</span>
                   </button>
 
-                  {/* Settings */}
                   <button
                     onClick={() => {
                       navigate('/recruiter/settings');
                       setIsProfileOpen(false);
                     }}
-                    className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition"
+                    className="w-full flex items-center gap-3 px-4 py-3 text-sm text-slate-800 hover:bg-blue-50 transition"
                   >
-                    <Settings size={16} className="text-gray-400" />
+                    <Settings size={16} className="text-blue-600" />
                     <span>Settings</span>
                   </button>
 
-                  {/* Change Password */}
                   <button
                     onClick={() => {
                       navigate('/recruiter/change-password');
                       setIsProfileOpen(false);
                     }}
-                    className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition"
+                    className="w-full flex items-center gap-3 px-4 py-3 text-sm text-slate-800 hover:bg-blue-50 transition"
                   >
-                    <Lock size={16} className="text-gray-400" />
+                    <Lock size={16} className="text-blue-600" />
                     <span>Change Password</span>
                   </button>
 
-                  {/* Help */}
                   <button
                     onClick={() => {
                       setIsProfileOpen(false);
                     }}
-                    className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition"
+                    className="w-full flex items-center gap-3 px-4 py-3 text-sm text-slate-800 hover:bg-blue-50 transition"
                   >
-                    <HelpCircle size={16} className="text-gray-400" />
+                    <HelpCircle size={16} className="text-blue-600" />
                     <span>Help & Support</span>
                   </button>
 
-                  {/* Divider */}
-                  <div className="h-px bg-gray-200 my-2" />
+                  <div className="h-px bg-blue-100 my-2" />
 
-                  {/* Logout */}
                   <button
                     onClick={handleLogout}
-                    className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition font-medium"
+                    className="w-full flex items-center gap-3 px-4 py-3 text-sm text-red-700 hover:bg-red-50 transition font-medium"
                   >
-                    <LogOut size={16} />
+                    <LogOut size={16} className="text-red-600" />
                     <span>Logout</span>
                   </button>
                 </div>
