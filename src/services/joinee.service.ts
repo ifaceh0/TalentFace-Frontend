@@ -157,3 +157,81 @@ export const uploadResume = async (file: File): Promise<{ resumeUrl: string }> =
   );
   return data.data;
 };
+// ── Jobs ──────────────────────────────────────────────────────────────────────
+
+/**
+ * GET /api/jobs
+ * Params: status, page, limit, q (search), type (Full-time | Part-time | Contract | remote)
+ * Returns: { jobs: Job[], hasNextPage: boolean, total: number }
+ */
+export const getJobs = async (
+  params: Record<string, string> = {}
+): Promise<{ jobs: any[]; hasNextPage: boolean; total: number }> => {
+  const qs = new URLSearchParams(params).toString();
+  const { data } = await api.get<ApiEnvelope<{ jobs: any[]; hasNextPage: boolean; total: number }>>(
+    `/jobs${qs ? `?${qs}` : ''}`
+  );
+  return data.data; // ✅ unwrap the envelope
+};
+
+/**
+ * GET /api/jobs/stats
+ * Returns: { open: number, companies: number, remote: number }
+ */
+export const getJobStats = async (): Promise<{ open: number; companies: number; remote: number }> => {
+  const { data } = await api.get<ApiEnvelope<{ open: number; companies: number; remote: number }>>('/jobs/stats');
+  return data.data; // ✅
+};
+// ── Save / Unsave ─────────────────────────────────────────────────────────────
+
+/**
+ * POST /api/jobs/:id/save
+ * Saves a job to the current user's saved list
+ */
+export const saveJob = async (id: string) => {
+    await api.post(`/jobs/${id}/save`);        // ← was /joinee/jobs/
+};
+
+/**
+ * DELETE /api/jobs/:id/save
+ * Removes a job from the current user's saved list
+ */
+export const unsaveJob = async (id: string) => {
+    await api.delete(`/jobs/${id}/save`);      // ← was /joinee/jobs/
+};
+
+/**
+ * GET /api/jobs/saved/ids
+ * Returns the list of job IDs the current user has saved
+ * Returns: number[]
+ *
+ * If your backend returns full saved job objects instead, map to IDs:
+ *   return res.data.map((j: any) => j.id);
+ */
+export const getSavedJobIds = async (): Promise<string[]> => {
+    const res = await api.get('/jobs/saved/ids');  // ← was /joinee/jobs/
+    return res.data.data.ids;
+};
+export const getSavedJobs = async () => {
+    const res = await api.get('/jobs/saved');      // ← was /joinee/jobs/
+    return res.data.data.jobs;
+};
+// ── Applications ──────────────────────────────────────────────────────────────
+
+/**
+ * POST /api/applications
+ * Body: { jobId: number }
+ * Returns 201 on success, 409 if already applied
+ * Throws with .status = 409 if duplicate
+ */export const applyToJob = async (jobId: string): Promise<void> =>  {
+  try {
+    await api.post("/applications", { jobId });
+  } catch (err: any) {
+    // Re-throw with status so the caller can detect 409 duplicate
+    const status = err?.response?.status;
+    const error = new Error(err?.response?.data?.message ?? "Application failed") as any;
+    error.status = status;
+    throw error;
+  }
+};
+

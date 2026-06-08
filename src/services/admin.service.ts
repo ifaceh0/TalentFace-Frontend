@@ -10,6 +10,7 @@ export interface AdminStats {
   newUsersThisMonth: number;
   newUsersLastMonth: number;
   activeUsersChange: number;
+  monthlyGrowth: number[];
 }
 
 export interface AdminUser {
@@ -41,7 +42,7 @@ export const getAdminStats = async (): Promise<AdminStats> => {
 };
 
 /**
- * GET /api/admin/users
+ * GET /api/admin/users?page=1&limit=10&role=recruiter&search=keyword
  */
 export const getAdminUsers = async (
   page = 1,
@@ -50,8 +51,8 @@ export const getAdminUsers = async (
   search?: string
 ): Promise<UsersResponse> => {
   const params: Record<string, string | number> = { page, limit };
-  if (role) params.role = role;
-  if (search) params.search = search;
+  if (role && role !== 'all') params.role = role;
+  if (search && search.trim()) params.search = search.trim();
 
   const { data } = await api.get<{ data: UsersResponse }>('/admin/users', { params });
   return data.data;
@@ -59,9 +60,10 @@ export const getAdminUsers = async (
 
 /**
  * PATCH /api/admin/users/:id/toggle-status
+ * Returns { userId, isActive }
  */
-export const toggleUserStatus = async (id: string): Promise<AdminUser> => {
-  const { data } = await api.patch<{ data: AdminUser }>(
+export const toggleUserStatus = async (id: string): Promise<{ userId: string; isActive: boolean }> => {
+  const { data } = await api.patch<{ data: { userId: string; isActive: boolean } }>(
     `/admin/users/${id}/toggle-status`
   );
   return data.data;

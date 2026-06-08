@@ -6,22 +6,22 @@ import { useAuth } from "../../context/useAuth";
 type Role = "admin" | "recruiter" | "joinee";
 
 const ROLE_CONFIG: Record<Role, { label: string; placeholder: string; color: string; bg: string }> = {
-  admin:     { label: "Admin",     placeholder: "[EMAIL_ADDRESS]",     color: "#1D4ED8", bg: "#EFF6FF" },
+  admin: { label: "Admin", placeholder: "[EMAIL_ADDRESS]", color: "#1D4ED8", bg: "#EFF6FF" },
   recruiter: { label: "Recruiter", placeholder: "[EMAIL_ADDRESS]", color: "#1D4ED8", bg: "#EFF6FF" },
-  joinee:    { label: "Joinee",    placeholder: "[EMAIL_ADDRESS]",         color: "#DC2626", bg: "#FEF2F2" },
+  joinee: { label: "Joinee", placeholder: "[EMAIL_ADDRESS]", color: "#DC2626", bg: "#FEF2F2" },
 };
 
 export default function Login() {
-  const [role, setRole]               = useState<Role>("joinee");
-  const [email, setEmail]             = useState("");
-  const [password, setPassword]       = useState("");
+  const [role, setRole] = useState<Role>("joinee");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [loading, setLoading]         = useState(false);
-  const [error, setError]             = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
-  const navigate    = useNavigate();
+  const navigate = useNavigate();
   const { setAuth } = useAuth();
-  const { color }   = ROLE_CONFIG[role];
+  const { color } = ROLE_CONFIG[role];
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -34,7 +34,7 @@ export default function Login() {
       const map: Record<string, string> = {
         admin: "/admin/dashboard",
         recruiter: "/recruiter/dashboard",
-        joinee: "/joinee/dashboard",
+        joinee: "/joinee/home",
       };
       navigate(map[user.role] ?? "/login", { replace: true });
     } catch (err: unknown) {

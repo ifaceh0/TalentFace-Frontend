@@ -3,17 +3,20 @@
 export interface Education {
   _id?: string;
   degree?: string;
+  field?: string;       // field of study / specialisation
   institution?: string;
   board?: string;
   startYear?: number;
   endYear?: number;
   percentage?: number;
   cgpa?: number;
+  grade?: string;       // display-friendly grade string
   isCurrentlyStudying?: boolean;
 }
 
 export interface WorkExperience {
   _id?: string;
+  jobTitle?: string;    // alias for role used in resume display
   company?: string;
   role?: string;
   description?: string;
@@ -29,8 +32,8 @@ export interface Project {
   description?: string;
   techStack?: string[];
   link?: string;
-  startDate?: string;
-  endDate?: string;
+  startDate?: string | null;
+  endDate?: string | null;
   isOngoing?: boolean;
 }
 
@@ -50,12 +53,25 @@ export interface Address {
 // ─── Main profile type (discriminator — inherits name/email/role from User) ───
 
 export interface JoineeProfile {
+  resume: any;
+  title: string;
+  completionPercent: number;
+  initials: string;
+  applications: number;
+  savedJobs: number;
   _id?: string;
 
   // From User base schema
   name?: string;
   email?: string;
   role?: string;
+
+  // Flat name fields (populated from name or sent directly by backend)
+  firstName?: string;
+  lastName?: string;
+
+  // Professional headline
+  jobTitle?: string;
 
   // Personal
   phone?: string;
@@ -71,6 +87,10 @@ export interface JoineeProfile {
   // Address (single object)
   address?: Address;
 
+  // Flat address fields (mirrors address.city / address.state for convenience)
+  city?: string;
+  state?: string;
+
   // Summary
   summary?: string;
 
@@ -83,6 +103,11 @@ export interface JoineeProfile {
   workExperience?: WorkExperience[];
   projects?: Project[];
   socialProfiles?: SocialProfile[];
+
+  // Flat social profile links (convenience aliases)
+  linkedIn?: string;
+  github?: string;
+  portfolio?: string;
 
   // Resume
   resumeUrl?: string;
