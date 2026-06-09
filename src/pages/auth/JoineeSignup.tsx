@@ -69,7 +69,7 @@ export default function JoineeSignup() {
   const strengthLabel = ["", "Weak", "Fair", "Good", "Strong"][strength];
 
   return (
-    <div className="min-h-screen bg-gray-50 flex" style={{ fontFamily: "'Inter', sans-serif" }}>
+    <div className="min-h-screen bg-gray-50 flex" style={{ fontFamily: "'Times New Roman', Times, serif" }}>
 
       {/* ── Left decorative panel ── */}
       <div className="hidden lg:flex flex-col justify-between w-[42%] p-14 relative overflow-hidden"

@@ -1,17 +1,19 @@
+import { useEffect, useRef } from 'react';
 import {
   DndContext,
   PointerSensor,
   useSensor,
   useSensors,
   closestCorners,
+  useDroppable,
 } from '@dnd-kit/core';
-import type { DragEndEvent, DragOverEvent } from '@dnd-kit/core';
+import type { DragEndEvent } from '@dnd-kit/core';
 import {
   SortableContext,
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { useStore } from '../../store/useStore';
-import type { CandidateStatus } from '../../store/useStore';
+import type { Candidate, CandidateStatus } from '../../store/useStore';
 import CandidateCard from './CandidateCard';
 
 const columns: { id: CandidateStatus; label: string; color: string; dot: string }[] = [
@@ -22,14 +24,71 @@ const columns: { id: CandidateStatus; label: string; color: string; dot: string 
   { id: 'Hired', label: 'Hired', color: 'bg-green-50 border-green-200', dot: 'bg-green-400' },
 ];
 
+function PipelineColumn({
+  col,
+  columnCandidates,
+}: {
+  col: (typeof columns)[number];
+  columnCandidates: Candidate[];
+}) {
+  const { setNodeRef, isOver } = useDroppable({ id: col.id });
+
+  return (
+    <div
+      ref={setNodeRef}
+      className={`flex-shrink-0 min-w-[200px] sm:min-w-[220px] md:w-56 lg:w-60 h-[420px] sm:h-[460px] md:h-[500px] rounded-xl border-2 ${col.color} p-3 flex flex-col ${
+        isOver ? 'ring-2 ring-blue-300' : ''
+      }`}
+    >
+      <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center gap-2">
+          <div className={`w-2.5 h-2.5 rounded-full ${col.dot}`} />
+          <span className="text-sm font-semibold text-gray-700">{col.label}</span>
+        </div>
+        <span className="text-xs bg-white border border-gray-200 text-gray-500 px-2 py-0.5 rounded-full font-medium">
+          {columnCandidates.length}
+        </span>
+      </div>
+
+      <div className="space-y-3 overflow-y-auto pr-1 flex-1">
+        {columnCandidates.length > 0 ? (
+          columnCandidates.map((candidate) => (
+            <CandidateCard key={candidate.id} candidate={candidate} />
+          ))
+        ) : (
+          <div className="text-center py-8 text-gray-300 text-sm">Drop candidates here</div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export default function PipelineBoard() {
-  const { candidates, updateCandidateStatus } = useStore();
+  const { candidates, fetchCandidates, updateCandidateStatus } = useStore();
+
+  useEffect(() => {
+    fetchCandidates();
+  }, [fetchCandidates]);
+
+  const scrollContainerRef = useRef<HTMLDivElement | null>(null);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: { distance: 5 },
     })
   );
+
+  const handleWheel = (event: React.WheelEvent<HTMLDivElement>) => {
+    const container = scrollContainerRef.current;
+    if (!container) return;
+
+    if (Math.abs(event.deltaX) > Math.abs(event.deltaY)) {
+      return;
+    }
+
+    event.preventDefault();
+    container.scrollLeft += event.deltaY;
+  };
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
@@ -38,30 +97,15 @@ export default function PipelineBoard() {
     const candidateId = active.id as string;
     const overId = over.id as string;
 
-    // Check if dropped over a column
-    const isColumn = columns.find((col) => col.id === overId);
-    if (isColumn) {
-      updateCandidateStatus(candidateId, overId as CandidateStatus);
-      return;
-    }
-
-    // Check if dropped over another candidate — find that candidate's column
     const overCandidate = candidates.find((c) => c.id === overId);
     if (overCandidate) {
       updateCandidateStatus(candidateId, overCandidate.status);
+      return;
     }
-  };
 
-  const handleDragOver = (event: DragOverEvent) => {
-    const { active, over } = event;
-    if (!over) return;
-
-    const candidateId = active.id as string;
-    const overId = over.id as string;
-
-    const isColumn = columns.find((col) => col.id === overId);
-    if (isColumn) {
-      updateCandidateStatus(candidateId, overId as CandidateStatus);
+    const targetColumn = columns.find((col) => col.id === overId);
+    if (targetColumn) {
+      updateCandidateStatus(candidateId, targetColumn.id);
     }
   };
 
@@ -70,44 +114,28 @@ export default function PipelineBoard() {
       sensors={sensors}
       collisionDetection={closestCorners}
       onDragEnd={handleDragEnd}
-      onDragOver={handleDragOver}
     >
-      <div className="flex gap-4 overflow-x-auto pb-4">
-        {columns.map((col) => {
-          const columnCandidates = candidates.filter((c) => c.status === col.id);
-          return (
-            <div
-              key={col.id}
-              className={`flex-shrink-0 w-60 rounded-xl border-2 ${col.color} p-3`}
-            >
-              {/* Column Header */}
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-2">
-                  <div className={`w-2.5 h-2.5 rounded-full ${col.dot}`} />
-                  <span className="text-sm font-semibold text-gray-700">
-                    {col.label}
-                  </span>
-                </div>
-                <span className="text-xs bg-white border border-gray-200 text-gray-500 px-2 py-0.5 rounded-full font-medium">
-                  {columnCandidates.length}
-                </span>
-              </div>
-
-              {/* Cards */}
-              <SortableContext
-                items={columnCandidates.map((c) => c.id)}
-                strategy={verticalListSortingStrategy}
-              >
-                <div className="space-y-3 min-h-20">
-                  {columnCandidates.map((candidate) => (
-                    <CandidateCard key={candidate.id} candidate={candidate} />
-                  ))}
-                </div>
-              </SortableContext>
-            </div>
-          );
-        })}
-      </div>
+      <SortableContext
+        items={candidates.map((c) => c.id)}
+        strategy={verticalListSortingStrategy}
+      >
+        <div
+          ref={scrollContainerRef}
+          className="flex gap-4 overflow-x-auto overflow-y-hidden pb-4 max-w-full"
+          onWheel={handleWheel}
+        >
+          {columns.map((col) => {
+            const columnCandidates = candidates.filter((c) => c.status === col.id);
+            return (
+              <PipelineColumn
+                key={col.id}
+                col={col}
+                columnCandidates={columnCandidates}
+              />
+            );
+          })}
+        </div>
+      </SortableContext>
     </DndContext>
   );
 }

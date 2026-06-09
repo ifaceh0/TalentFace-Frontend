@@ -1,4 +1,5 @@
 import { LayoutDashboard, Users, Briefcase, LogOut } from 'lucide-react';
+import { useAuth } from '../../context/useAuth';
 
 interface SidebarProps {
   activePage: string;
@@ -13,6 +14,24 @@ const navItems = [
 ];
 
 export default function Sidebar({ activePage, setActivePage }: SidebarProps) {
+  const { user, logout } = useAuth();
+
+  const handleLogout = async () => {
+    await logout();
+    // Router will handle redirect via AuthProvider
+  };
+
+  if (!user) {
+    return null; // or a loading state
+  }
+
+  const initials = user.name
+    .split(' ')
+    .map((w) => w[0])
+    .join('')
+    .toUpperCase()
+    .slice(0, 2);
+
   return (
     <div className="h-screen w-64 bg-blue-900 text-white flex flex-col fixed left-0 top-0 z-10">
       {/* Logo */}
@@ -47,14 +66,17 @@ export default function Sidebar({ activePage, setActivePage }: SidebarProps) {
       <div className="p-4 border-t border-blue-700">
         <div className="flex items-center gap-3 px-4 py-3 mb-2">
           <div className="w-9 h-9 rounded-full bg-red-500 flex items-center justify-center text-sm font-bold">
-            PR
+            {initials}
           </div>
           <div>
-            <p className="text-sm font-medium">Priyansu</p>
-            <p className="text-xs text-blue-300">Recruiter</p>
+            <p className="text-sm font-medium">{user.name}</p>
+            <p className="text-xs text-blue-300 capitalize">{user.role}</p>
           </div>
         </div>
-        <button className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-blue-200 hover:bg-blue-800 hover:text-white transition-all duration-200">
+        <button
+          onClick={handleLogout}
+          className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-blue-200 hover:bg-blue-800 hover:text-white transition-all duration-200"
+        >
           <LogOut size={20} />
           <span className="font-medium">Logout</span>
         </button>
