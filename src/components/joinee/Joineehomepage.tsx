@@ -1,5 +1,5 @@
 
-
+import RecruiterSection from "../joinee/RecruiterSection";
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/useAuth";
@@ -10,8 +10,10 @@ import {
     unsaveJob,
     applyToJob,
     getSavedJobIds,
+    getAppliedJobIds,
+    getProfileCompletion,
+    getProfile
 } from "../../services/joinee.service";
-import { getProfile } from "../../services/joinee.service";
 import type { JoineeProfile } from "../../types/joinee.types";
 
 // ─────────────────────────────────────────────
@@ -210,7 +212,7 @@ export default function JoineeHomepage() {
     const [hasNextPage, setHasNextPage]   = useState<boolean>(true);
     const [page, setPage]                 = useState<number>(1);
     const [appliedIds, setAppliedIds]     = useState<Set<string>>(new Set());
-
+    const [applyModalJob, setApplyModalJob] = useState<Job | null>(null);
     const profileRef    = useRef<HTMLDivElement>(null);
     const searchTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -221,19 +223,37 @@ export default function JoineeHomepage() {
     useEffect(() => {
         getProfile().then((p) => setProfile(p)).catch(() => {});
     }, []);
+    // ── Fetch profile completion score on mount ──────────────────────────────
+    useEffect(() => {
+    getProfileCompletion()
+        .then(({ score }) => setProfile((p) => p ? { ...p, completionPercent: score } : p))
+        .catch(() => {});
+    }, []);
 
     // ── Fetch stats on mount ─────────────────────────────────────────────────
     useEffect(() => {
         getJobStats().then((d) => setStats(d)).catch(() => {});
     }, []);
 
-    // ── Fetch saved job IDs on mount ─────────────────────────────────────────
+    // ── Fetch saved job IDs on mount ─────────────────────────────────────
     useEffect(() => {
-        getSavedJobIds()
-            .then((ids: string[]) => setSavedIds(new Set(ids)))
-            .catch(() => {});
-    }, []);
+    getSavedJobIds()
+        .then((ids: string[]) => {
+            setSavedIds(new Set(ids));
+            setProfile((p) => p ? { ...p, savedJobs: ids.length } : p);
+        })
+        .catch(() => {});
+}, []);
 
+   // ── Fetch applied job IDs on mount ───────────────────────────────────
+    useEffect(() => {
+    getAppliedJobIds()
+        .then((ids: string[]) => {
+            setAppliedIds(new Set(ids));
+            setProfile((p) => p ? { ...p, applications: ids.length } : p);
+        })
+        .catch(() => {});
+}, []);
     // ── Close dropdown on outside click ─────────────────────────────────────
     useEffect(() => {
         const handler = (e: MouseEvent) => {
@@ -327,29 +347,37 @@ export default function JoineeHomepage() {
     };
 
     // ── Apply ────────────────────────────────────────────────────────────────
-    const handleApply = async (id: string) => {
-        if (appliedIds.has(id)) {
-            showToast("You've already applied to this role.", "error");
-            return;
-        }
-        try {
-            await applyToJob(id);
-            setAppliedIds((prev) => new Set(prev).add(id));
-            setProfile((p) =>
-                p ? { ...p, applications: (p.applications ?? 0) + 1 } : p
-            );
-            showToast("Applied successfully ✓  We'll notify you of updates.", "success");
-        } catch (err: unknown) {
-            const status = (err as { status?: number })?.status;
-            if (status === 409) {
-                showToast("You've already applied to this role.", "error");
-                setAppliedIds((prev) => new Set(prev).add(id));
-            } else {
-                showToast("Application failed. Please try again.", "error");
-            }
-        }
-    };
+    // ── Apply — opens resume modal first ────────────────────────────────────
+const handleApply = (id: string) => {
+    if (appliedIds.has(id)) {
+        showToast("You've already applied to this role.", "error");
+        return;
+    }
+    const job = jobs.find((j) => j._id === id) ?? null;
+    setApplyModalJob(job);
+};
 
+const confirmApply = async () => {
+    if (!applyModalJob) return;
+    const id = applyModalJob._id;
+    setApplyModalJob(null);
+    try {
+        await applyToJob(id);
+        setAppliedIds((prev) => new Set(prev).add(id));
+        setProfile((p) =>
+            p ? { ...p, applications: (p.applications ?? 0) + 1 } : p
+        );
+        showToast("Applied successfully ✓  We'll notify you of updates.", "success");
+    } catch (err: unknown) {
+        const status = (err as { status?: number })?.status;
+        if (status === 409) {
+            showToast("You've already applied to this role.", "error");
+            setAppliedIds((prev) => new Set(prev).add(id));
+        } else {
+            showToast("Application failed. Please try again.", "error");
+        }
+    }
+};
     // ── Load more ────────────────────────────────────────────────────────────
     const handleLoadMore = () => {
         const nextPage = page + 1;
@@ -681,6 +709,97 @@ export default function JoineeHomepage() {
                     </div>
                 )}
             </main>
+        
+        {/* ══ Apply Resume Modal ══ */}
+{applyModalJob && profile && (
+    <div
+        onClick={() => setApplyModalJob(null)}
+        style={{
+            position: "fixed", inset: 0, zIndex: 200,
+            background: "rgba(13,27,62,0.55)", backdropFilter: "blur(4px)",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            padding: "20px",
+        }}
+    >
+        <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+                background: "#F8F9FF", borderRadius: 20,
+                width: "100%", maxWidth: 760,
+                maxHeight: "90vh", display: "flex", flexDirection: "column",
+                boxShadow: "0 32px 80px rgba(13,27,62,0.28)",
+                overflow: "hidden",
+            }}
+        >
+            {/* Modal header */}
+            <div style={{
+                display: "flex", alignItems: "center", justifyContent: "space-between",
+                padding: "18px 24px", borderBottom: "1.5px solid #E8EDF8",
+                background: "#fff", flexShrink: 0,
+            }}>
+                <div>
+                    <p style={{ fontSize: 13, fontWeight: 700, color: "#0D1B3E", margin: "0 0 2px" }}>
+                        Applying for: <span style={{ color: "#D62B2B" }}>{applyModalJob.title}</span>
+                    </p>
+                    <p style={{ fontSize: 11, color: "#6B7280", margin: 0 }}>
+                        {applyModalJob.company} · {applyModalJob.location}
+                    </p>
+                </div>
+                <button
+                    onClick={() => setApplyModalJob(null)}
+                    style={{
+                        background: "#F3F5FF", border: "1.5px solid #E8EDF8",
+                        borderRadius: 8, width: 32, height: 32,
+                        display: "flex", alignItems: "center", justifyContent: "center",
+                        cursor: "pointer", fontSize: 16, color: "#6B7280",
+                    }}
+                >
+                    ✕
+                </button>
+            </div>
+
+            {/* Scrollable resume preview */}
+            <div style={{ flex: 1, overflowY: "auto", padding: "24px" }}>
+                <RecruiterSection profile={profile} />
+            </div>
+
+            {/* Sticky footer */}
+            <div style={{
+                padding: "16px 24px", borderTop: "1.5px solid #E8EDF8",
+                background: "#fff", display: "flex",
+                alignItems: "center", justifyContent: "space-between",
+                gap: 12, flexShrink: 0,
+            }}>
+                <p style={{ fontSize: 12, color: "#6B7280", margin: 0, flex: 1 }}>
+                    This resume will be shared with <strong>{applyModalJob.company}</strong>
+                </p>
+                <button
+                    onClick={() => setApplyModalJob(null)}
+                    style={{
+                        background: "#fff", border: "1.5px solid #E8EDF8",
+                        borderRadius: 10, padding: "9px 20px",
+                        fontSize: 13, fontWeight: 600, color: "#4A5568",
+                        cursor: "pointer", fontFamily: "inherit",
+                    }}
+                >
+                    Cancel
+                </button>
+                <button
+                    onClick={confirmApply}
+                    style={{
+                        background: "linear-gradient(135deg,#D62B2B,#1C3FA8)",
+                        border: "none", borderRadius: 10, padding: "9px 24px",
+                        fontSize: 13, fontWeight: 700, color: "#fff",
+                        cursor: "pointer", fontFamily: "inherit",
+                    }}
+                >
+                    Confirm & Apply →
+                </button>
+            </div>
+        </div>
+    </div>
+)}
+
 
             {/* Toast */}
             {toast && (
