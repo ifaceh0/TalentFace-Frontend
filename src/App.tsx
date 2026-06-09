@@ -1,4 +1,5 @@
 import { useState } from "react";
+
 import {
   BrowserRouter,
   Routes,
@@ -31,6 +32,7 @@ import ChatWidget from "./components/ChatWidget/ChatWidget";
 import SavedJobs from "./components/joinee/SavedJob";
 
 import Setting from "./pages/joinee/Setting";
+import JoineeApplications from "./pages/joinee/joineeApplications";
 
 // ───────────────── Dashboard Layout ─────────────────
 
@@ -195,6 +197,7 @@ export default function App() {
             <Route path="/joinee/swipe"     element={<JoineeLayout><JobSwipe /></JoineeLayout>} />
             <Route path="/joinee/saved" element={<SavedJobs />} />
             <Route path="/joinee/setting" element={<Setting />} /> 
+            <Route path="/joinee/applications" element={<JoineeLayout><JoineeApplications /></JoineeLayout>} />
           </Route>
 
 

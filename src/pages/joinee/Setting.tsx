@@ -1,6 +1,7 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/useAuth';
+import { getProfile, generate2FASecret, verify2FAToken, disable2FA } from '../../services/joinee.service';
 import {
   User,
   Bell,
@@ -33,17 +34,15 @@ import {
   RotateCcw,
   Shuffle,
   Sliders,
-  // MapPin,
   Building2,
   Wifi,
-  // ToggleLeft,
-  // ToggleRight,
   Volume2,
+  MapPin,
 } from "lucide-react";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
-type Section = 
+type Section =
   | "account" | "notifications" | "privacy" | "job-preferences"
   | "match-preferences" | "security" | "appearance" | "support";
 
@@ -65,9 +64,10 @@ interface PrivacySettings {
 }
 
 interface JobPreferences {
-  workMode: "remote" | "hybrid" | "onsite";
-  salaryMin: number;
-  salaryMax: number;
+  workMode: "onsite" | "remote" | "remote-or-onsite" | "hybrid";
+  salaryExpectation: number;
+  salaryOpenToMore: boolean;
+  currency: string;
   showVerifiedOnly: boolean;
   enableJobAlerts: boolean;
 }
@@ -204,21 +204,21 @@ function Toast({ message, type, onClose }: {
 // ─── Nav Items ────────────────────────────────────────────────────────────────
 
 const NAV_ITEMS: { id: Section; label: string; icon: React.ElementType }[] = [
-  { id: "account",          label: "Account",          icon: User        },
-  { id: "notifications",    label: "Notifications",    icon: Bell        },
-  { id: "privacy",          label: "Privacy",          icon: Shield      },
-  { id: "job-preferences",  label: "Job Preferences",  icon: Briefcase   },
-  { id: "match-preferences",label: "Match Preferences",icon: Zap         },
-  { id: "security",         label: "Security",         icon: Lock        },
-  { id: "appearance",       label: "Appearance",       icon: Palette     },
-  { id: "support",          label: "Support",          icon: HelpCircle  },
+  { id: "account",           label: "Account",           icon: User        },
+  { id: "notifications",     label: "Notifications",     icon: Bell        },
+  { id: "privacy",           label: "Privacy",           icon: Shield      },
+  { id: "job-preferences",   label: "Job Preferences",   icon: Briefcase   },
+  { id: "match-preferences", label: "Match Preferences", icon: Zap         },
+  { id: "security",          label: "Security",          icon: Lock        },
+  { id: "appearance",        label: "Appearance",        icon: Palette     },
+  { id: "support",           label: "Support",           icon: HelpCircle  },
 ];
 
 // ─── Mock Sessions ────────────────────────────────────────────────────────────
 
 const MOCK_SESSIONS = [
-  { id: "1", device: "Chrome on Windows", icon: Monitor,    lastActive: "Active now",      current: true  },
-  { id: "2", device: "Edge on Windows",   icon: Globe,      lastActive: "2 hours ago",     current: false },
+  { id: "1", device: "Chrome on Windows", icon: Monitor,    lastActive: "Active now",         current: true  },
+  { id: "2", device: "Edge on Windows",   icon: Globe,      lastActive: "2 hours ago",        current: false },
   { id: "3", device: "Android Device",    icon: Smartphone, lastActive: "Yesterday, 9:41 PM", current: false },
 ];
 
@@ -241,7 +241,7 @@ export default function Settings() {
   } | null>(null);
 
   // Account
-  const [email] = useState("priya.sharma@example.com");
+  const [email, setEmail] = useState("");
 
   // Notifications
   const [notifications, setNotifications] = useState<NotificationToggles>({
@@ -266,9 +266,10 @@ export default function Settings() {
 
   // Job Preferences
   const [jobPrefs, setJobPrefs] = useState<JobPreferences>({
-    workMode: "hybrid",
-    salaryMin: 8,
-    salaryMax: 25,
+    workMode: "onsite",
+    salaryExpectation: 0,
+    salaryOpenToMore: false,
+    currency: "INR",
     showVerifiedOnly: true,
     enableJobAlerts: true,
   });
@@ -283,15 +284,31 @@ export default function Settings() {
   const [sessions, setSessions] = useState(MOCK_SESSIONS);
 
   // Appearance
-  const [theme, setTheme] = useState<"light" | "dark" | "system">("light");
+ const [theme, setTheme] = useState<"light" | "dark" | "system">("light");
+
+const [twoFAEnabled, setTwoFAEnabled] = useState(false);
+const [twoFAStep, setTwoFAStep] = useState<0 | 1 | 2 | 3>(0);
+const [twoFACode, setTwoFACode] = useState("");
+const [twoFAError, setTwoFAError] = useState("");
+const [twoFALoading, setTwoFALoading] = useState(false);
+const [twoFASecret, setTwoFASecret] = useState("");
+const [twoFAQr, setTwoFAQr] = useState("");
+const [backupCodes, setBackupCodes] = useState<string[]>([]);
 
   const navigate = useNavigate();
-const { logout } = useAuth();
+  const { logout } = useAuth();
 
-const handleLogout = async () => {
-  await logout();
-  navigate('/login', { replace: true });
-};
+  const handleLogout = async () => {
+    await logout();
+    navigate('/login', { replace: true });
+  };
+
+  useEffect(() => {
+  getProfile().then(p => {
+    setEmail(p.email ?? "");
+    setTwoFAEnabled(p.twoFAEnabled ?? false);
+  }).catch(() => {});
+}, []);
 
   // ── Render sections ─────────────────────────────────────────────────────────
 
@@ -345,7 +362,6 @@ const handleLogout = async () => {
                 title: "Logout from all devices?",
                 message: "You'll be signed out from all other active sessions. This action cannot be undone.",
                 onConfirm: handleLogout,
-                // onConfirm: async () => { setConfirm(null); await logout(); navigate('/login', { replace: true }); },
               })
             }
             className="px-4 py-2 text-sm font-medium text-gray-700 border border-gray-200 rounded-xl hover:bg-gray-50 whitespace-nowrap transition-all"
@@ -381,13 +397,13 @@ const handleLogout = async () => {
 
   const renderNotifications = () => {
     const items: { key: keyof NotificationToggles; label: string; desc: string; icon: React.ElementType }[] = [
-      { key: "newJobRecommendations",   label: "New Job Recommendations",   desc: "Get notified when new jobs match your profile",      icon: Briefcase    },
-      { key: "newMatchNotifications",   label: "New Match Notifications",   desc: "Alerts when you get a new job match",               icon: Zap          },
-      { key: "recruiterMessages",       label: "Recruiter Messages",        desc: "Messages from recruiters and hiring managers",      icon: MessageSquare},
-      { key: "interviewInvitations",    label: "Interview Invitations",     desc: "When a company invites you for an interview",       icon: Volume2      },
-      { key: "applicationStatusUpdates",label: "Application Status Updates",desc: "Track the progress of your job applications",       icon: CheckCircle  },
-      { key: "weeklyJobAlerts",         label: "Weekly Job Alerts",         desc: "A weekly digest of new relevant opportunities",     icon: Bell         },
-      { key: "emailNotifications",      label: "Email Notifications",       desc: "Receive all notifications via email as well",       icon: Mail         },
+      { key: "newJobRecommendations",    label: "New Job Recommendations",    desc: "Get notified when new jobs match your profile",     icon: Briefcase     },
+      { key: "newMatchNotifications",    label: "New Match Notifications",    desc: "Alerts when you get a new job match",               icon: Zap           },
+      { key: "recruiterMessages",        label: "Recruiter Messages",         desc: "Messages from recruiters and hiring managers",      icon: MessageSquare },
+      { key: "interviewInvitations",     label: "Interview Invitations",      desc: "When a company invites you for an interview",       icon: Volume2       },
+      { key: "applicationStatusUpdates", label: "Application Status Updates", desc: "Track the progress of your job applications",      icon: CheckCircle   },
+      { key: "weeklyJobAlerts",          label: "Weekly Job Alerts",          desc: "A weekly digest of new relevant opportunities",    icon: Bell          },
+      { key: "emailNotifications",       label: "Email Notifications",        desc: "Receive all notifications via email as well",      icon: Mail          },
     ];
     return (
       <SectionCard title="Notification Preferences" description="Choose what you want to be notified about">
@@ -410,9 +426,9 @@ const handleLogout = async () => {
         <div className="space-y-3">
           {(["public", "recruiters", "hidden"] as const).map(option => {
             const config = {
-              public:     { label: "Public",          desc: "Anyone can view your profile",              icon: Globe   },
-              recruiters: { label: "Recruiters Only", desc: "Only verified recruiters can view",         icon: Eye     },
-              hidden:     { label: "Hidden",           desc: "Profile not visible in searches",           icon: EyeOff  },
+              public:     { label: "Public",           desc: "Anyone can view your profile",             icon: Globe  },
+              recruiters: { label: "Recruiters Only",  desc: "Only verified recruiters can view",        icon: Eye    },
+              hidden:     { label: "Hidden",           desc: "Profile not visible in searches",          icon: EyeOff },
             }[option];
             const isSelected = privacy.profileVisibility === option;
             return (
@@ -451,8 +467,8 @@ const handleLogout = async () => {
       <SectionCard title="Data Sharing" description="Control how your information is shared">
         <div className="divide-y divide-gray-50">
           {([
-            { key: "resumeVisible",        label: "Resume Visible to Recruiters", desc: "Allow recruiters to download your resume"         },
-            { key: "showContactInfo",       label: "Show Contact Information",     desc: "Display email and phone to verified recruiters"   },
+            { key: "resumeVisible",        label: "Resume Visible to Recruiters",  desc: "Allow recruiters to download your resume"        },
+            { key: "showContactInfo",       label: "Show Contact Information",      desc: "Display email and phone to verified recruiters"  },
             { key: "allowRecruiterContact", label: "Allow Recruiters to Contact Me",desc: "Let recruiters reach out directly via platform"  },
           ] as { key: keyof PrivacySettings; label: string; desc: string }[]).map(({ key, label, desc }) => (
             <div key={key} className="py-4 first:pt-0 last:pb-0">
@@ -469,107 +485,178 @@ const handleLogout = async () => {
     </div>
   );
 
-  const renderJobPreferences = () => (
-    <div className="space-y-4">
-      <SectionCard title="Work Mode" description="Your preferred work arrangement">
-        <div className="grid grid-cols-3 gap-3">
-          {(["remote", "hybrid", "onsite"] as const).map(mode => {
-            const config = {
-              remote: { label: "Remote",  icon: Wifi     },
-              hybrid: { label: "Hybrid",  icon: Shuffle  },
-              onsite: { label: "Onsite",  icon: Building2 },
-            }[mode];
-            const isSelected = jobPrefs.workMode === mode;
-            return (
-              <button
-                key={mode}
-                onClick={() => setJobPrefs(p => ({ ...p, workMode: mode }))}
-                className={`flex flex-col items-center gap-2.5 p-4 rounded-xl border-2 transition-all ${
-                  isSelected
-                    ? "border-red-500 bg-red-50"
-                    : "border-gray-100 hover:border-gray-200 hover:bg-gray-50"
-                }`}
-              >
-                <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${isSelected ? "bg-red-100" : "bg-gray-100"}`}>
-                  <config.icon size={18} className={isSelected ? "text-red-600" : "text-gray-500"} />
-                </div>
-                <span className={`text-sm font-medium ${isSelected ? "text-red-700" : "text-gray-700"}`}>{config.label}</span>
-              </button>
-            );
-          })}
-        </div>
-      </SectionCard>
 
-      <SectionCard title="Salary Preference" description="Set your expected annual compensation range">
-        <div className="space-y-5">
-          <div className="flex items-center justify-between">
-            <div className="text-center">
-              <div className="text-2xl font-bold text-gray-900">₹{jobPrefs.salaryMin}</div>
-              <div className="text-xs text-gray-400 mt-0.5">Minimum</div>
+ const renderJobPreferences = () => {
+  const symbols: Record<string, string> = {
+    INR: "₹", USD: "$", EUR: "€", GBP: "£",
+    AED: "د.إ", SGD: "S$", AUD: "A$", CAD: "C$",
+  };
+  const sym = symbols[jobPrefs.currency] ?? "₹";
+  const isINR = jobPrefs.currency === "INR";
+  const sliderMax = isINR ? 999 : 500;
+  const formatVal = (v: number) => {
+    if (isINR) {
+      if (v === 0) return "0 LPA";
+      if (v <= 99) return `${v} LPA`;
+      const cr = v / 100;
+      if (Number.isInteger(cr)) return `${cr} Cr`;
+      return `${cr.toFixed(1)} Cr`;
+    }
+    if (v === 0) return "0";
+    return `${v}K/yr`;
+  };
+  const currentVal = jobPrefs.salaryExpectation;
+  const displayLabel = jobPrefs.salaryOpenToMore
+    ? `${sym}${formatVal(currentVal)} & above`
+    : `${sym}${formatVal(currentVal)}`;
+
+  return (
+      <div className="space-y-4">
+        {/* Work Mode */}
+        <SectionCard title="Work Mode" description="Your preferred work arrangement">
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+            {(["onsite", "remote", "remote-or-onsite", "hybrid"] as const).map(mode => {
+              const config = {
+                onsite:             { label: "Onsite",           icon: Building2 },
+                remote:             { label: "Remote",           icon: Wifi      },
+                "remote-or-onsite": { label: "Remote or Onsite", icon: MapPin    },
+                hybrid:             { label: "Hybrid",           icon: Shuffle   },
+              }[mode];
+              const isSelected = jobPrefs.workMode === mode;
+              return (
+                <button
+                  key={mode}
+                  onClick={() => setJobPrefs(p => ({ ...p, workMode: mode }))}
+                  className={`flex flex-col items-center gap-2.5 p-4 rounded-xl border-2 transition-all ${
+                    isSelected
+                      ? "border-red-500 bg-red-50"
+                      : "border-gray-100 hover:border-gray-200 hover:bg-gray-50"
+                  }`}
+                >
+                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${isSelected ? "bg-red-100" : "bg-gray-100"}`}>
+                    <config.icon size={18} className={isSelected ? "text-red-600" : "text-gray-500"} />
+                  </div>
+                  <span className={`text-sm font-medium ${isSelected ? "text-red-700" : "text-gray-700"}`}>{config.label}</span>
+                </button>
+              );
+            })}
+          </div>
+        </SectionCard>
+
+        {/* Salary Preference */}
+        <SectionCard title="Salary Preference" description="Set your expected annual compensation">
+          <div className="space-y-5">
+            {/* Currency Dropdown */}
+            <div className="flex items-center gap-3">
+              <label className="text-xs font-medium text-gray-500 w-20 shrink-0">Currency</label>
+              <select
+                value={jobPrefs.currency}
+                onChange={e => setJobPrefs(p => ({ ...p, currency: e.target.value }))}
+                className="flex-1 text-sm border border-gray-200 rounded-xl px-3 py-2 bg-white text-gray-800 focus:outline-none focus:ring-2 focus:ring-red-400 cursor-pointer"
+              >
+                <option value="INR">🇮🇳 INR — Indian Rupee</option>
+                <option value="USD">🇺🇸 USD — US Dollar</option>
+                <option value="EUR">🇪🇺 EUR — Euro</option>
+                <option value="GBP">🇬🇧 GBP — British Pound</option>
+                <option value="AED">🇦🇪 AED — UAE Dirham</option>
+                <option value="SGD">🇸🇬 SGD — Singapore Dollar</option>
+                <option value="AUD">🇦🇺 AUD — Australian Dollar</option>
+                <option value="CAD">🇨🇦 CAD — Canadian Dollar</option>
+              </select>
             </div>
-            <div className="flex-1 mx-4">
-              <div className="relative">
-                <div className="h-1.5 bg-gray-100 rounded-full" />
-                <div
-                  className="absolute top-0 h-1.5 bg-gradient-to-r from-red-400 to-red-600 rounded-full transition-all"
-                  style={{
-                    left: `${(jobPrefs.salaryMin / 50) * 100}%`,
-                    right: `${100 - (jobPrefs.salaryMax / 50) * 100}%`,
-                  }}
-                />
+
+            {/* Big value display */}
+            <div className="flex flex-col items-center gap-1 py-3">
+              <div className="text-3xl font-bold text-gray-900">{displayLabel}</div>
+              {jobPrefs.salaryOpenToMore && (
+                <span className="text-xs font-semibold text-green-600 bg-green-50 border border-green-200 px-3 py-1 rounded-full">
+                  Open to higher offers ✓
+                </span>
+              )}
+            </div>
+
+            <div className="flex justify-between text-xs text-gray-400">
+              <span>0</span>
+              <span>{isINR ? "50 LPA" : `${sym}125K`}</span>
+              <span>{isINR ? "99 LPA" : `${sym}250K`}</span>
+              <span>{isINR ? "5 Cr" : `${sym}375K`}</span>
+              <span>{isINR ? "10 Cr+" : `${sym}500K+`}</span>
+            </div>
+            <input
+              type="range"
+              min={0}
+              max={sliderMax}
+              step={1}
+              value={currentVal}
+              onChange={e => setJobPrefs(p => ({ ...p, salaryExpectation: Number(e.target.value) }))}
+              className="w-full h-2 rounded-full appearance-none cursor-pointer accent-red-600"
+            />
+
+            {/* Stepper buttons */}
+            <div className="flex items-center justify-center">
+              <div className="flex items-center border border-gray-200 rounded-xl overflow-hidden shadow-sm">
+                <button
+                  onClick={() => setJobPrefs(p => ({ ...p, salaryExpectation: Math.max(0, p.salaryExpectation - 1) }))}
+                  className="w-11 h-11 text-gray-600 hover:bg-red-50 hover:text-red-600 font-bold text-xl transition-all border-r border-gray-200"
+                >−</button>
+                <span className="px-6 text-sm font-semibold text-gray-800 min-w-[120px] text-center">
+                  {displayLabel}
+                </span>
+                <button
+                  onClick={() => setJobPrefs(p => ({ ...p, salaryExpectation: Math.min(sliderMax, p.salaryExpectation + 1) }))}
+                  className="w-11 h-11 text-gray-600 hover:bg-red-50 hover:text-red-600 font-bold text-xl transition-all border-l border-gray-200"
+                >+</button>
               </div>
             </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-gray-900">₹{jobPrefs.salaryMax}</div>
-              <div className="text-xs text-gray-400 mt-0.5">Maximum LPA</div>
-            </div>
-          </div>
-          <div className="space-y-4">
-            <div>
-              <label className="text-xs font-medium text-gray-500 mb-1.5 block">Minimum: ₹{jobPrefs.salaryMin} LPA</label>
-              <input
-                type="range" min={0} max={50} value={jobPrefs.salaryMin}
-                onChange={e => {
-                  const val = Number(e.target.value);
-                  if (val < jobPrefs.salaryMax) setJobPrefs(p => ({ ...p, salaryMin: val }));
-                }}
-                className="w-full h-1.5 rounded-full appearance-none cursor-pointer accent-red-600"
-              />
-            </div>
-            <div>
-              <label className="text-xs font-medium text-gray-500 mb-1.5 block">Maximum: ₹{jobPrefs.salaryMax} LPA</label>
-              <input
-                type="range" min={0} max={50} value={jobPrefs.salaryMax}
-                onChange={e => {
-                  const val = Number(e.target.value);
-                  if (val > jobPrefs.salaryMin) setJobPrefs(p => ({ ...p, salaryMax: val }));
-                }}
-                className="w-full h-1.5 rounded-full appearance-none cursor-pointer accent-red-600"
-              />
-            </div>
-          </div>
-        </div>
-      </SectionCard>
 
-      <SectionCard title="Job Filters">
-        <div className="divide-y divide-gray-50">
-          {([
-            { key: "showVerifiedOnly", label: "Show Only Verified Companies",   desc: "Filter out unverified employers"                  },
-            { key: "enableJobAlerts",  label: "Enable Job Alerts",              desc: "Get instant alerts for matching new jobs"         },
-          ] as { key: keyof JobPreferences; label: string; desc: string }[]).map(({ key, label, desc }) => (
-            <div key={key} className="py-4 first:pt-0 last:pb-0">
-              <SettingRow label={label} description={desc}>
+            {/* Open to more toggle */}
+            <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl border border-gray-100">
+              <div>
+                <p className="text-sm font-medium text-gray-800">Open to higher offers</p>
+                <p className="text-xs text-gray-400 mt-0.5">
+                  Show recruiters you're open to offers above {sym}{formatVal(currentVal)}
+                </p>
+              </div>
+              <Toggle
+                checked={jobPrefs.salaryOpenToMore}
+                onChange={() => setJobPrefs(p => ({ ...p, salaryOpenToMore: !p.salaryOpenToMore }))}
+              />
+            </div>
+
+            {/* Save button */}
+            <button
+              onClick={() => showToast("Salary preference saved!")}
+              className="w-full py-2.5 rounded-xl bg-red-600 text-white text-sm font-semibold hover:bg-red-700 transition-colors"
+            >
+              Save Salary Preference
+            </button>
+          </div>
+         </SectionCard>
+
+        {/* Other Job Settings */}
+        <SectionCard title="Other Job Settings" description="Additional job feed controls">
+          <div className="divide-y divide-gray-50">
+            <div className="py-4 first:pt-0">
+              <SettingRow label="Show Verified Companies Only" description="Only display jobs from companies verified by TalentFace">
                 <Toggle
-                  checked={jobPrefs[key] as boolean}
-                  onChange={() => setJobPrefs(p => ({ ...p, [key]: !p[key] }))}
+                  checked={jobPrefs.showVerifiedOnly}
+                  onChange={() => setJobPrefs(p => ({ ...p, showVerifiedOnly: !p.showVerifiedOnly }))}
                 />
               </SettingRow>
             </div>
-          ))}
-        </div>
-      </SectionCard>
-    </div>
-  );
+            <div className="py-4 last:pb-0">
+              <SettingRow label="Enable Job Alerts" description="Get notified when new matching jobs are posted">
+                <Toggle
+                  checked={jobPrefs.enableJobAlerts}
+                  onChange={() => setJobPrefs(p => ({ ...p, enableJobAlerts: !p.enableJobAlerts }))}
+                />
+              </SettingRow>
+            </div>
+          </div>
+        </SectionCard>
+      </div>
+    );
+  };
 
   const renderMatchPreferences = () => (
     <div className="space-y-4">
@@ -707,24 +794,67 @@ const handleLogout = async () => {
       </SectionCard>
 
       <SectionCard title="Two-Factor Authentication" description="Add an extra layer of security to your account">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-sm font-medium text-gray-800">Authenticator App</p>
-            <p className="text-xs text-gray-400 mt-0.5">Use an app like Google Authenticator for 2FA</p>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-medium text-amber-600 bg-amber-50 border border-amber-200 px-2.5 py-1 rounded-lg">
-              Coming Soon
-            </span>
-            <button
-              disabled
-              className="px-4 py-2 text-sm font-medium text-gray-400 border border-gray-200 rounded-xl cursor-not-allowed opacity-60"
-            >
-              Enable 2FA
-            </button>
-          </div>
-        </div>
-      </SectionCard>
+  <div className="flex items-center justify-between">
+    <div>
+      <p className="text-sm font-medium text-gray-800">Authenticator App</p>
+      <p className="text-xs text-gray-400 mt-0.5">Use an app like Google Authenticator for 2FA</p>
+    </div>
+    <div className="flex items-center gap-2">
+      {twoFAEnabled ? (
+        <>
+          <span className="text-xs font-medium text-green-600 bg-green-50 border border-green-200 px-2.5 py-1 rounded-lg flex items-center gap-1">
+            <CheckCircle size={11} /> Enabled
+          </span>
+          <button
+            onClick={() =>
+              setConfirm({
+                title: "Disable 2FA?",
+                message: "Removing two-factor authentication will make your account less secure. Are you sure?",
+                onConfirm: async () => {
+                  try {
+                    await disable2FA();
+                    setTwoFAEnabled(false);
+                    setTwoFASecret("");
+                    setTwoFAQr("");
+                    setBackupCodes([]);
+                    setConfirm(null);
+                    showToast("2FA disabled", "error");
+                  } catch {
+                    setConfirm(null);
+                    showToast("Could not disable 2FA. Try again.", "error");
+                  }
+                },
+              })
+            }
+            className="px-4 py-2 text-sm font-medium text-red-600 border border-red-200 rounded-xl hover:bg-red-50 transition-colors"
+          >
+            Disable
+          </button>
+        </>
+      ) : (
+        <button
+          disabled={twoFALoading}
+          onClick={async () => {
+            try {
+              setTwoFALoading(true);
+              const { secret, otpauthUrl } = await generate2FASecret();
+              setTwoFASecret(secret);
+              setTwoFAQr(`https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(otpauthUrl)}`);
+              setTwoFAStep(1);
+            } catch {
+              showToast("Could not start 2FA setup. Try again.", "error");
+            } finally {
+              setTwoFALoading(false);
+            }
+          }}
+          className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-xl hover:bg-red-700 transition-colors disabled:opacity-60"
+        >
+          {twoFALoading ? "Loading..." : "Enable 2FA"}
+        </button>
+      )}
+    </div>
+  </div>
+</SectionCard>
     </div>
   );
 
@@ -733,8 +863,8 @@ const handleLogout = async () => {
       <div className="grid grid-cols-3 gap-3">
         {(["light", "dark", "system"] as const).map(t => {
           const config = {
-            light:  { label: "Light",  icon: Sun,    preview: "bg-white border-gray-200"                         },
-            dark:   { label: "Dark",   icon: Moon,   preview: "bg-gray-900 border-gray-700"                      },
+            light:  { label: "Light",  icon: Sun,    preview: "bg-white border-gray-200"                              },
+            dark:   { label: "Dark",   icon: Moon,   preview: "bg-gray-900 border-gray-700"                           },
             system: { label: "System", icon: Laptop, preview: "bg-gradient-to-br from-white to-gray-900 border-gray-300" },
           }[t];
           const isSelected = theme === t;
@@ -763,11 +893,11 @@ const handleLogout = async () => {
   const renderSupport = () => (
     <div className="space-y-3">
       {[
-        { icon: MessageSquare, label: "Contact Support",    desc: "Get help from our support team",          color: "blue",   href: "#" },
-        { icon: Bug,           label: "Report a Bug",       desc: "Help us improve by reporting issues",     color: "amber",  href: "#" },
-        { icon: FileText,      label: "Privacy Policy",     desc: "Read our privacy and data practices",     color: "gray",   href: "#" },
-        { icon: FileText,      label: "Terms & Conditions", desc: "Review our terms of service",             color: "gray",   href: "#" },
-        { icon: Info,          label: "About TalentFace",   desc: "Version 2.4.1 · Build #20260603",         color: "red",    href: "#" },
+        { icon: MessageSquare, label: "Contact Support",    desc: "Get help from our support team",         color: "blue",  href: "#" },
+        { icon: Bug,           label: "Report a Bug",       desc: "Help us improve by reporting issues",    color: "amber", href: "#" },
+        { icon: FileText,      label: "Privacy Policy",     desc: "Read our privacy and data practices",    color: "gray",  href: "#" },
+        { icon: FileText,      label: "Terms & Conditions", desc: "Review our terms of service",            color: "gray",  href: "#" },
+        { icon: Info,          label: "About TalentFace",   desc: "Version 2.4.1 · Build #20260603",        color: "red",   href: "#" },
       ].map(({ icon: Icon, label, desc, color, href }) => (
         <a
           key={label}
@@ -794,7 +924,137 @@ const handleLogout = async () => {
       ))}
     </div>
   );
+const renderTwoFAModal = () => {
+  if (twoFAStep === 0) return null;
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+      <div className="bg-white rounded-2xl shadow-xl p-6 max-w-sm w-full border border-gray-100">
 
+        {/* Step 1 — Scan QR */}
+        {twoFAStep === 1 && (
+          <>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-semibold text-gray-900">Set up Authenticator</h3>
+              <button onClick={() => { setTwoFAStep(0); setTwoFACode(""); setTwoFAError(""); }}>
+                <X size={18} className="text-gray-400 hover:text-gray-600" />
+              </button>
+            </div>
+            <p className="text-sm text-gray-500 mb-4">
+              Scan this QR code with <span className="font-medium text-gray-700">Google Authenticator</span> or any TOTP app.
+            </p>
+            <div className="flex justify-center mb-4">
+              <img src={twoFAQr} alt="2FA QR Code" className="w-44 h-44 rounded-xl border border-gray-100 p-2" />
+            </div>
+            <div className="bg-gray-50 rounded-xl px-4 py-3 mb-5 text-center">
+              <p className="text-xs text-gray-400 mb-1">Can't scan? Enter this key manually</p>
+              <p className="text-sm font-mono font-bold text-gray-800 tracking-widest">{twoFASecret}</p>
+            </div>
+            <button
+              onClick={() => setTwoFAStep(2)}
+              className="w-full py-2.5 rounded-xl bg-red-600 text-white text-sm font-semibold hover:bg-red-700 transition-colors"
+            >
+              Next — Enter Code
+            </button>
+          </>
+        )}
+
+        {/* Step 2 — Enter OTP */}
+        {twoFAStep === 2 && (
+          <>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-semibold text-gray-900">Verify Your Code</h3>
+              <button onClick={() => { setTwoFAStep(0); setTwoFACode(""); setTwoFAError(""); }}>
+                <X size={18} className="text-gray-400 hover:text-gray-600" />
+              </button>
+            </div>
+            <p className="text-sm text-gray-500 mb-5">
+              Enter the <span className="font-medium text-gray-700">6-digit code</span> currently shown in your authenticator app.
+            </p>
+            <input
+              type="text"
+              inputMode="numeric"
+              maxLength={6}
+              value={twoFACode}
+              onChange={e => { setTwoFACode(e.target.value.replace(/\D/g, "")); setTwoFAError(""); }}
+              placeholder="000000"
+              className={`w-full text-center text-2xl font-mono font-bold tracking-[0.5em] border-2 rounded-xl px-4 py-3 mb-1 focus:outline-none transition-colors ${
+                twoFAError ? "border-red-400 bg-red-50" : "border-gray-200 focus:border-red-400"
+              }`}
+            />
+            {twoFAError && <p className="text-xs text-red-500 text-center mb-3">{twoFAError}</p>}
+            {!twoFAError && <div className="mb-3" />}
+            <div className="flex gap-3">
+              <button
+                onClick={() => setTwoFAStep(1)}
+                className="flex-1 py-2.5 rounded-xl border border-gray-200 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+              >
+                Back
+              </button>
+              <button
+                onClick={async () => {
+                  if (twoFACode.length !== 6) { setTwoFAError("Please enter a 6-digit code."); return; }
+                  try {
+                    setTwoFALoading(true);
+                    const { verified, backupCodes: codes } = await verify2FAToken(twoFACode);
+                    if (verified) {
+                      setTwoFAEnabled(true);
+                      setBackupCodes(codes ?? []);
+                      setTwoFAStep(3);
+                      setTwoFAError("");
+                    } else {
+                      setTwoFAError("Incorrect code. Please try again.");
+                    }
+                  } catch {
+                    setTwoFAError("Verification failed. Please try again.");
+                  } finally {
+                    setTwoFALoading(false);
+                  }
+                }}
+                className="flex-1 py-2.5 rounded-xl bg-red-600 text-white text-sm font-semibold hover:bg-red-700 transition-colors"
+              >
+                {twoFALoading ? "Verifying..." : "Verify"}
+              </button>
+            </div>
+          </>
+        )}
+
+        {/* Step 3 — Success */}
+        {twoFAStep === 3 && (
+          <>
+            <div className="flex flex-col items-center text-center gap-3 py-2">
+              <div className="w-14 h-14 rounded-full bg-green-50 flex items-center justify-center mb-1">
+                <CheckCircle size={28} className="text-green-500" />
+              </div>
+              <h3 className="font-semibold text-gray-900 text-lg">2FA Enabled!</h3>
+              <p className="text-sm text-gray-500">
+                Your account is now protected. Save these backup codes somewhere safe — each can be used once if you lose your phone.
+              </p>
+              {backupCodes.length > 0 && (
+                <div className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 mt-1">
+                  <p className="text-xs font-semibold text-gray-500 mb-2 text-left">Backup Codes</p>
+                  <div className="grid grid-cols-2 gap-1.5">
+                    {backupCodes.map(code => (
+                      <span key={code} className="font-mono text-xs text-gray-700 bg-white border border-gray-200 rounded-lg px-2 py-1 text-center tracking-widest">
+                        {code}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+              <button
+                onClick={() => { setTwoFAStep(0); setTwoFACode(""); showToast("Two-factor authentication enabled!"); }}
+                className="mt-3 w-full py-2.5 rounded-xl bg-green-600 text-white text-sm font-semibold hover:bg-green-700 transition-colors"
+              >
+                Done
+              </button>
+            </div>
+          </>
+        )}
+
+      </div>
+    </div>
+  );
+};
   const SECTION_CONTENT: Record<Section, () => React.ReactNode> = {
     "account":           renderAccount,
     "notifications":     renderNotifications,
@@ -898,14 +1158,14 @@ const handleLogout = async () => {
                   <h1 className="text-lg font-bold text-gray-900">{currentNav.label}</h1>
                   <p className="text-xs text-gray-400 mt-0.5">
                     {{
-                      account:           "Manage your account credentials and data",
-                      notifications:     "Control how and when you receive alerts",
-                      privacy:           "Manage your profile visibility and data sharing",
-                      "job-preferences": "Set your ideal job criteria and filters",
+                      account:            "Manage your account credentials and data",
+                      notifications:      "Control how and when you receive alerts",
+                      privacy:            "Manage your profile visibility and data sharing",
+                      "job-preferences":  "Set your ideal job criteria and filters",
                       "match-preferences":"Configure your job matching algorithm",
-                      security:          "Monitor sessions and authentication settings",
-                      appearance:        "Customize the look and feel of TalentFace",
-                      support:           "Get help or learn more about TalentFace",
+                      security:           "Monitor sessions and authentication settings",
+                      appearance:         "Customize the look and feel of TalentFace",
+                      support:            "Get help or learn more about TalentFace",
                     }[activeSection]}
                   </p>
                 </div>
@@ -919,6 +1179,7 @@ const handleLogout = async () => {
       </div>
 
       {/* Confirm Dialog */}
+      {renderTwoFAModal()}
       {confirm && (
         <ConfirmDialog
           title={confirm.title}
