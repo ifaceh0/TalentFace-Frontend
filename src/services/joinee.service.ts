@@ -235,3 +235,28 @@ export const getSavedJobs = async () => {
   }
 };
 
+export const changePassword = (oldPassword: string, newPassword: string) =>
+  api.patch('/auth/change-password', { oldPassword, newPassword });
+
+// ─── 2FA ─────────────────────────────────────────────────────────────────────
+
+export const generate2FASecret = async (): Promise<{ secret: string; otpauthUrl: string }> => {
+  const { data } = await api.post<ApiEnvelope<{ secret: string; otpauthUrl: string }>>('/joinee/2fa/generate');
+  return data.data;
+};
+
+export const verify2FAToken = async (token: string): Promise<{ verified: boolean; backupCodes?: string[] }> => {
+  const { data } = await api.post<ApiEnvelope<{ verified: boolean; backupCodes?: string[] }>>('/joinee/2fa/verify', { token });
+  return data.data;
+};
+
+export const disable2FA = async (): Promise<{ success: boolean }> => {
+  const { data } = await api.post<ApiEnvelope<{ success: boolean }>>('/joinee/2fa/disable');
+  return data.data;
+};
+// ─── Applied Job IDs ──────────────────────────────────────────────────────────
+
+export const getAppliedJobIds = async (): Promise<string[]> => {
+  const { data } = await api.get<ApiEnvelope<{ ids: string[] }>>('/applications/my-ids');
+  return data.data.ids;
+};
