@@ -53,6 +53,7 @@ export interface Address {
 // ─── Main profile type (discriminator — inherits name/email/role from User) ───
 
 export interface JoineeProfile {
+  twoFAEnabled: boolean;
   resume: any;
   title: string;
   completionPercent: number;
