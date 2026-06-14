@@ -63,7 +63,7 @@ function Dashboard({ role }: { role: string }) {
         role={role}
       />
 
-      <div className="flex-1 ml-64">
+      <div className="flex-1 ml-64 min-h-screen overflow-y-auto">
         <Header activePage={activePage} />
 
         <main className="mt-16 p-6">

@@ -42,18 +42,36 @@ export default function JobList() {
   };
 
   const handleAdd = async () => {
-    if (!form.title || !form.department || !form.location) return;
+  if (!form.title || !form.department || !form.location) {
+    alert('Please fill all required fields');
+    return;
+  }
+
+  try {
     const jobData = {
       title: form.title,
       department: form.department,
       location: form.location,
       description: form.description,
-      status: 'Active' as const,
+      status: 'open' as any,
     };
+
     await createJob(jobData);
-    setForm({ title: '', department: '', location: '', description: '' });
+    await fetchJobs();
+
+    setForm({
+      title: '',
+      department: '',
+      location: '',
+      description: '',
+    });
+
     setShowForm(false);
-  };
+  } catch (error) {
+    console.error('Failed to create job:', error);
+    alert('Failed to create job');
+  }
+};
 
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-100">

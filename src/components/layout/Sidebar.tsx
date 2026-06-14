@@ -33,8 +33,7 @@ export default function Sidebar({ activePage, setActivePage }: SidebarProps) {
     .slice(0, 2);
 
   return (
-    <div className="h-screen w-64 bg-blue-900 text-white flex flex-col fixed left-0 top-0 z-10">
-      {/* Logo */}
+<div className="min-h-screen w-64 bg-blue-900 text-white flex flex-col fixed left-0 top-0 bottom-0 z-10 overflow-y-auto">      {/* Logo */}
       <div className="p-6 border-b border-blue-700">
         <h1 className="text-2xl font-bold text-red-400">TalentFace</h1>
         <p className="text-blue-300 text-sm mt-1">Recruiter Portal</p>
