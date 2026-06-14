@@ -51,7 +51,7 @@ export default function ResumeSection({ profile, onUpdate }: ResumeSectionProps)
               <div className="flex-1">
                 <p className="text-sm font-semibold text-green-800">Resume uploaded ✓</p>
                 <a
-                  href={profile.resumeUrl}
+                   href={`https://docs.google.com/viewer?url=${encodeURIComponent(profile.resumeUrl)}&embedded=false`}
                   target="_blank"
                   rel="noreferrer"
                   className="text-xs text-green-600 hover:underline"
