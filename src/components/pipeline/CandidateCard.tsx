@@ -101,19 +101,28 @@ export default function CandidateCard({
           <p className="text-[10px] text-gray-400 truncate">
             {candidate.email}
           </p>
+          <p className="text-[11px] text-blue-600 font-medium">
+  Applied for: {candidate.jobTitle}
+</p>
         </div>
       </div>
 
       {/* Role */}
       <div className="flex items-center gap-1 mb-1">
-        <Briefcase
-          size={11}
-          className="text-gray-400 shrink-0"
-        />
-        <span className="text-gray-600 truncate">
-          {candidate.role}
-        </span>
-      </div>
+  <Briefcase
+    size={11}
+    className="text-gray-400 shrink-0"
+  />
+  <span className="text-gray-600 truncate">
+    {candidate.role}
+  </span>
+</div>
+
+{candidate.appliedJob && (
+  <div className="text-[10px] text-blue-600 font-medium truncate mb-1">
+    Applied: {candidate.appliedJob}
+  </div>
+)}
 
       {/* Location */}
       <div className="flex items-center gap-1 mb-2">
