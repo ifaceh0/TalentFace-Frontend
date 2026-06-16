@@ -2,6 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 
+<<<<<<< HEAD
 :root[data-theme="light"] {
   --bg-primary: #f9fafb;
   --bg-card: #ffffff;
@@ -25,11 +26,26 @@ body {
 }
 
 /* *, *::before, *::after {
+=======
+* {
+>>>>>>> 90d1bc8d74171183df2199de510b4173632a84ac
   box-sizing: border-box;
 }
 
+html {
+  font-family: 'Times New Roman', Times, serif;
+}
+
 body {
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  margin: 0;
+  font-family: 'Times New Roman', Times, serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-} */
+}
+
+button,
+input,
+select,
+textarea {
+  font-family: inherit;
+}

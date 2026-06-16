@@ -777,7 +777,7 @@ export default function Home() {
   return (
     <div
       className="min-h-screen bg-white text-gray-900 overflow-x-hidden"
-      style={{ fontFamily: "'Inter', sans-serif" }}
+      style={{ fontFamily: "'Times New Roman', Times, serif" }}
     >
       {/* ── NAVBAR ── */}
       <nav className="fixed top-0 left-0 w-full z-50 bg-white/80 backdrop-blur-lg border-b border-gray-100">
