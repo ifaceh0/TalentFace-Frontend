@@ -10,15 +10,26 @@ export type CandidateStatus = 'Applied' | 'Shortlisted' | 'Interview' | 'Offer' 
 
 export interface Candidate {
   id: string;
+  applicationId?: string;
+  jobId?: string;
+
   name: string;
   role: string;
   experience: number;
   skills: string[];
+
   location: string;
+
   status: CandidateStatus;
+
   email: string;
+
   appliedDate: string;
+
   avatar: string;
+
+  appliedJob?: string;
+  jobTitle?: string;
 }
 
 export interface Job {
@@ -30,32 +41,40 @@ export interface Job {
   status: 'Active' | 'Closed' | 'Draft';
   postedDate: string;
   description: string;
+  salaryMin?: number;
+  salaryMax?: number;
+  maxApplicants?: number | null;
 }
 
 interface RecruiterStore {
   candidates: Candidate[];
+  jobCandidates: Candidate[];
   jobs: Job[];
   loading: boolean;
   error: string | null;
+  selectedJobId: string | null;
   fetchJobs: () => Promise<void>;
   fetchCandidates: () => Promise<void>;
+  fetchJobCandidates: (jobId: string) => Promise<void>;
   updateCandidateStatus: (id: string, status: CandidateStatus) => Promise<void>;
   createJob: (job: Omit<Job, 'id' | 'applicants' | 'postedDate'>) => Promise<void>;
   deleteJob: (id: string) => Promise<void>;
+  setSelectedJobId: (jobId: string | null) => void;
 }
 
 export const useStore = create<RecruiterStore>()((set) => ({
   candidates: [],
+  jobCandidates: [],
   jobs: [],
   loading: false,
   error: null,
+  selectedJobId: null,
 
   async fetchJobs() {
     set({ loading: true, error: null });
     try {
       const jobs = await recruiterService.getMyJobs();
       set({ jobs, loading: false });
-      saveAppState();
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to fetch jobs';
       set({ error: message, loading: false });
@@ -63,13 +82,31 @@ export const useStore = create<RecruiterStore>()((set) => ({
   },
 
   async fetchCandidates() {
+    console.log('FETCH CANDIDATES CALLED');
+
     set({ loading: true, error: null });
+
     try {
       const candidates = await recruiterService.getRecruiterCandidates();
-      set({ candidates, loading: false });
-      saveAppState();
+
+      console.log('FETCH RESULT', candidates);
+
+      set({
+        candidates,
+        loading: false,
+      });
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to fetch candidates';
+      console.error(err);
+    }
+  },
+
+  async fetchJobCandidates(jobId: string) {
+    set({ loading: true, error: null });
+    try {
+      const candidates = await recruiterService.getJobCandidates(jobId);
+      set({ jobCandidates: candidates, loading: false });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to fetch job candidates';
       set({ error: message, loading: false });
     }
   },
@@ -77,13 +114,16 @@ export const useStore = create<RecruiterStore>()((set) => ({
   async updateCandidateStatus(id, status) {
     try {
       await recruiterService.updateCandidateStatus(id, status);
-      // Optimistic update: update locally immediately
+      // Optimistic update: update both candidates lists
       set((state) => {
-        const updated = state.candidates.map((c) =>
+        const updatedCandidates = state.candidates.map((c) =>
           c.id === id ? { ...c, status } : c
         );
-        saveAppState();
-        return { candidates: updated };
+        const updatedJobCandidates = state.jobCandidates.map((c) =>
+          c.id === id ? { ...c, status } : c
+        );
+
+        return { candidates: updatedCandidates, jobCandidates: updatedJobCandidates };
       });
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to update candidate status';
@@ -96,7 +136,7 @@ export const useStore = create<RecruiterStore>()((set) => ({
       const newJob = await recruiterService.createJob(job);
       set((state) => {
         const jobs = [...state.jobs, newJob];
-        saveAppState();
+
         return { jobs };
       });
     } catch (err) {
@@ -110,13 +150,17 @@ export const useStore = create<RecruiterStore>()((set) => ({
       await recruiterService.deleteJob(id);
       set((state) => {
         const jobs = state.jobs.filter((j) => j.id !== id);
-        saveAppState();
+
         return { jobs };
       });
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to delete job';
       set({ error: message });
     }
+  },
+
+  setSelectedJobId(jobId: string | null) {
+    set({ selectedJobId: jobId });
   },
 }));
 

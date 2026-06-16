@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import PipelineBoard from '../components/pipeline/PipelineBoard';
+//import PipelineBoard from '../components/pipeline/PipelineBoard';
 import CandidateTable from '../components/candidates/CandidateTable';
 import JobList from '../components/jobs/JobList';
 import HiringChart from '../components/dashboard/HiringChart';
@@ -22,11 +22,7 @@ export default function DashboardPage() {
         <JobOverviewGrid />
       </div>
 
-      {/* Pipeline */}
-      <div>
-        <h3 className="text-lg font-semibold text-blue-900 mb-4">Candidate Pipeline</h3>
-        <PipelineBoard />
-      </div>
+      
 
       {/* Bottom Section */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

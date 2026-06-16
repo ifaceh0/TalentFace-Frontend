@@ -16,8 +16,8 @@ export default function JobOverviewGrid() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   useEffect(() => {
-    fetchJobs();
-  }, [fetchJobs]);
+  fetchJobs();
+}, []);
 
   const handleJobClick = (job: Job) => {
     setSelectedJob(job);

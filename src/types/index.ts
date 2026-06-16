@@ -2,15 +2,26 @@ export type CandidateStatus = 'Applied' | 'Shortlisted' | 'Interview' | 'Offer' 
 
 export interface Candidate {
   id: string;
+  applicationId: string;
+
   name: string;
   role: string;
+  appliedJob?: string;
   experience: number;
+
   skills: string[];
+
   location: string;
+
   status: CandidateStatus;
+
   email: string;
+
   appliedDate: string;
+
   avatar: string;
+
+  jobTitle: string;
 }
 
 export interface Job {

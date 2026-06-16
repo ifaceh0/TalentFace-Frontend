@@ -9,10 +9,10 @@ type ApiEnvelope<T> = {
 
 // ─── Helpers ─────────────────────────────────────────────────────
 
- const transformJob = (job: any): Job => ({
+const transformJob = (job: any): Job => ({
   id: job._id || job.id,
   title: job.title,
-  department: job.department || '',
+  department: job.company || job.department || '',
   location: job.location,
   description: job.description || '',
 
@@ -30,22 +30,31 @@ type ApiEnvelope<T> = {
 
   postedDate: job.postedDate
     ? new Date(job.postedDate).toISOString().split('T')[0]
+    : job.createdAt
+    ? new Date(job.createdAt).toISOString().split('T')[0]
     : new Date().toISOString().split('T')[0],
+
+  salaryMin: job.salaryMin || undefined,
+  salaryMax: job.salaryMax || undefined,
+  maxApplicants: job.maxApplicants || undefined,
 });
 
 const transformCandidate = (candidate: any): Candidate => ({
-  id: candidate.id || candidate._id,
+  id: candidate.id,
+  applicationId: candidate.applicationId,
+  jobId: candidate.jobId,
   name: candidate.name,
-  role: candidate.role || '',
-  experience: candidate.experience || 0,
-  skills: candidate.skills || [],
-  location: candidate.location || '',
-  status: candidate.status,
-  email: candidate.email,
+  role: candidate.role || 'Applicant',
+  experience: candidate.experience ?? 0,
+  skills: Array.isArray(candidate.skills) ? candidate.skills : [],
+  location: candidate.location || 'Not Specified',
+  status: candidate.status || 'Applied',
+  email: candidate.email || '',
   appliedDate: candidate.appliedDate
     ? new Date(candidate.appliedDate).toISOString().split('T')[0]
-    : new Date().toISOString().split('T')[0],
-  avatar: candidate.avatar || '',
+    : '',
+  avatar: candidate.avatar || candidate.name?.slice(0, 2).toUpperCase() || '??',
+  jobTitle: candidate.jobTitle || candidate.appliedJob || candidate.job?.title || candidate.jobId?.title || '',
 });
 
 // ─── Jobs ───────────────────────────────────────────────────────
@@ -111,6 +120,24 @@ export const getRecruiterCandidates = async (): Promise<Candidate[]> => {
       '/recruiter/candidates'
     );
 
+  console.log(
+    'API RESPONSE:',
+    data.data.candidates
+  );
+
+  return data.data.candidates.map(transformCandidate);
+};
+
+/**
+ * GET /api/recruiter/jobs/:jobId/candidates
+ * Get candidates for a specific job
+ */
+export const getJobCandidates = async (jobId: string): Promise<Candidate[]> => {
+  const { data } =
+    await api.get<ApiEnvelope<{ candidates: any[] }>>(
+      `/recruiter/jobs/${jobId}/candidates`
+    );
+
   return data.data.candidates.map(transformCandidate);
 };
 
@@ -133,5 +160,6 @@ export const recruiterService = {
   updateJob,
   deleteJob,
   getRecruiterCandidates,
+  getJobCandidates,
   updateCandidateStatus,
 };
