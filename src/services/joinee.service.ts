@@ -260,3 +260,27 @@ export const getAppliedJobIds = async (): Promise<string[]> => {
   const { data } = await api.get<ApiEnvelope<{ ids: string[] }>>('/applications/my-ids');
   return data.data.ids;
 };
+// ─── 15. JOB PREFERENCES ─────────────────────────────────────────────────────
+
+
+// ─── Job Preferences ─────────────────────────────────────────────────────────
+
+export interface JobPreferencesPayload {
+  workMode: 'onsite' | 'remote' | 'remote-or-onsite' | 'hybrid';
+  salaryExpectation: number;
+  salaryOpenToMore: boolean;
+  currency: string;
+  showVerifiedOnly: boolean;
+  enableJobAlerts: boolean;
+}
+
+
+export const getJobPreferences = async (): Promise<JobPreferencesPayload> => {
+  const { data } = await api.get<ApiEnvelope<{ jobPreferences: JobPreferencesPayload }>>('/joinee/preferences/job');
+  return data.data.jobPreferences;
+};
+
+export const updateJobPreferences = async (payload: JobPreferencesPayload): Promise<JobPreferencesPayload> => {
+  const { data } = await api.put<ApiEnvelope<{ jobPreferences: JobPreferencesPayload }>>('/joinee/preferences/job', payload);
+  return data.data.jobPreferences;
+};

@@ -15,22 +15,28 @@ import {
     getProfile
 } from "../../services/joinee.service";
 import type { JoineeProfile } from "../../types/joinee.types";
+import JobCard, { type Job } from "./JobCard";
+
 
 // ─────────────────────────────────────────────
 // TYPES
 // ─────────────────────────────────────────────
-interface Job {
-    _id: string;
-    title: string;
-    company: string;
-    location: string;
-    type: "Full-time" | "Part-time" | "Contract";
-    salary: string;
-    tags: string[];
-    posted: string;
-    logo: string;
-    color: string;
-}
+// interface Job {
+//     _id: string;
+//     title: string;
+//     company: string;
+//     location: string;
+//     type: "Full-time" | "Part-time" | "Contract";
+//     salary: string;
+//     tags: string[];
+//     posted: string;
+//     logo: string;
+//     color: string;
+//      description?: string;
+//     requirements?: string[];
+//     isRemote?: boolean;
+// }
+
 
 interface Stats {
     open: number;
@@ -45,11 +51,12 @@ type FilterOption = "All" | "Full-time" | "Part-time" | "Contract" | "Remote";
 // ─────────────────────────────────────────────
 const FILTERS: FilterOption[] = ["All", "Full-time", "Part-time", "Contract", "Remote"];
 
-const TYPE_META: Record<string, { bg: string; border: string; text: string }> = {
-    "Full-time": { bg: "#FFF5F5", border: "#FECDD3", text: "#D62B2B" },
-    "Part-time": { bg: "#EEF2FF", border: "#C7D2F8", text: "#1C3FA8" },
-    "Contract":  { bg: "#F0F4FF", border: "#BFCAEE", text: "#0D1B3E" },
-};
+
+// const TYPE_META: Record<string, { bg: string; border: string; text: string }> = {
+//     "Full-time": { bg: "#FFF5F5", border: "#FECDD3", text: "#D62B2B" },
+//     "Part-time": { bg: "#EEF2FF", border: "#C7D2F8", text: "#1C3FA8" },
+//     "Contract":  { bg: "#F0F4FF", border: "#BFCAEE", text: "#0D1B3E" },
+// };
 
 const NAV_LINKS = [
     { label: "Browse Jobs", href: "/joinee/browse" },
@@ -215,6 +222,7 @@ export default function JoineeHomepage() {
     const [applyModalJob, setApplyModalJob] = useState<Job | null>(null);
     const profileRef    = useRef<HTMLDivElement>(null);
     const searchTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const [resumeType, setResumeType] = useState<"ai" | "uploaded">("ai");
 
     // ── Fetch jobs on mount ──────────────────────────────────────────────────
     useEffect(() => { fetchJobs(1, "All", ""); }, []);
@@ -354,6 +362,7 @@ const handleApply = (id: string) => {
         return;
     }
     const job = jobs.find((j) => j._id === id) ?? null;
+    setResumeType("ai");        // ← add this line
     setApplyModalJob(job);
 };
 
@@ -402,7 +411,7 @@ const confirmApply = async () => {
     // RENDER
     // ─────────────────────────────────────────────
     return (
-        <div className="joinee-home" style={{ fontFamily: "'DM Sans', sans-serif", background: "#F8F9FF", minHeight: "100vh", color: "#0D1B3E" }}>
+       <div className="joinee-home" style={{ fontFamily: "'DM Sans', sans-serif", background: "var(--bg-primary)", minHeight: "100vh", color: "var(--text-primary)" }}>
 
             <style>{`
         @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=Sora:wght@600;700&display=swap');
@@ -417,20 +426,20 @@ const confirmApply = async () => {
         .nav-link:hover { color: #D62B2B !important; }
         .menu-item:hover { background: rgba(214,43,43,0.06) !important; }
         @keyframes skeleton-pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
-        .skeleton { animation: skeleton-pulse 1.4s ease-in-out infinite; background: #E8EDF8; border-radius: 8px; }
+        .skeleton { animation: skeleton-pulse 1.4s ease-in-out infinite; background: var(--border-color); border-radius: 8px; }
       `}</style>
 
             {/* ══ NAV ══ */}
             <nav style={{
                 display: "flex", alignItems: "center", justifyContent: "space-between",
-                padding: "0 32px", height: 62, borderBottom: "2px solid #E8EDF8",
-                background: "#fff", position: "sticky", top: 0, zIndex: 50,
+                padding: "0 32px", height: 62, borderBottom: "2px solid var(--border-color)",
+                background: "var(--bg-card)", position: "sticky", top: 0, zIndex: 50,
                 boxShadow: "0 2px 12px rgba(13,27,62,0.06)"
             }}>
                 {/* Logo */}
                 <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                     <div style={{ width: 32, height: 32, borderRadius: 8, background: "linear-gradient(135deg,#D62B2B,#1C3FA8)", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Sora',sans-serif", fontWeight: 700, fontSize: 14, color: "#fff" }}>J</div>
-                    <span style={{ fontFamily: "'Sora',sans-serif", fontWeight: 700, fontSize: 18, letterSpacing: "-0.5px", color: "#0D1B3E" }}>joinnee</span>
+                <span style={{ fontFamily: "'Sora',sans-serif", fontWeight: 700, fontSize: 18, letterSpacing: "-0.5px", color: "var(--text-primary)" }}>joinnee</span>
                     <span style={{ fontSize: 10, background: "#EEF2FF", color: "#1C3FA8", padding: "2px 8px", borderRadius: 20, fontWeight: 600, border: "1px solid #C7D2F8" }}>Joinee</span>
                 </div>
 
@@ -475,7 +484,7 @@ const confirmApply = async () => {
                         <div style={{ width: 30, height: 30, borderRadius: "50%", background: "linear-gradient(135deg,#D62B2B,#1C3FA8)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 700, color: "#fff" }}>
                             {profile?.initials ?? "?"}
                         </div>
-                        <span style={{ fontSize: 13, fontWeight: 600, color: "#0D1B3E" }}>
+                        <span style={{ fontSize: 13, fontWeight: 600, color: "var(--text-primary)" }}>
                             {profile?.name?.split(" ")[0] ?? "…"}
                         </span>
                         <svg width="11" height="11" viewBox="0 0 12 12" fill="none">
@@ -485,34 +494,34 @@ const confirmApply = async () => {
 
                     {/* ── Profile dropdown ── */}
                     {profileOpen && (
-                        <div style={{ position: "absolute", right: 0, top: "calc(100% + 10px)", width: 256, background: "#fff", border: "1.5px solid #E8EDF8", borderRadius: 16, padding: 6, zIndex: 100, boxShadow: "0 24px 60px rgba(13,27,62,0.14)" }}>
+                        <div style={{ position: "absolute", right: 0, top: "calc(100% + 10px)", width: 256, background: "var(--bg-card)", border: "1.5px solid var(--border-color)", borderRadius: 16, padding: 6, zIndex: 100, boxShadow: "0 24px 60px rgba(13,27,62,0.14)" }}>
 
                             {/* Header */}
-                            <div style={{ padding: "12px 14px", borderBottom: "1px solid #F0F4FF", marginBottom: 4 }}>
+                            <div style={{ padding: "12px 14px", borderBottom: "1px solid var(--border-color)", marginBottom: 4 }}>
                                 <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 11 }}>
                                     <div style={{ width: 40, height: 40, borderRadius: "50%", background: "linear-gradient(135deg,#D62B2B,#1C3FA8)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 700, color: "#fff", flexShrink: 0 }}>
                                         {profile?.initials ?? "?"}
                                     </div>
                                     <div>
-                                        <div style={{ fontSize: 14, fontWeight: 700, color: "#0D1B3E" }}>{profile?.name ?? "Loading…"}</div>
-                                        <div style={{ fontSize: 11, color: "#6B7280" }}>{profile?.title ?? ""}</div>
+                                        <div style={{ fontSize: 14, fontWeight: 700, color: "var(--text-primary)" }}>{profile?.name ?? "Loading…"}</div>
+                                        <div style={{ fontSize: 11, color: "var(--text-secondary)" }}>{profile?.title ?? ""}</div>
                                     </div>
                                 </div>
-                                <div style={{ fontSize: 11, color: "#6B7280", marginBottom: 5 }}>
+                                <div style={{ fontSize: 11, color: "var(--text-secondary)", marginBottom: 5 }}>
                                     Profile {profile?.completionPercent ?? 0}% complete
                                 </div>
-                                <div style={{ height: 4, background: "#F0F4FF", borderRadius: 99 }}>
+                                <div style={{ height: 4, background: "var(--bg-secondary)", borderRadius: 99 }}>
                                     <div style={{ height: "100%", width: `${profile?.completionPercent ?? 0}%`, background: "linear-gradient(90deg,#D62B2B,#1C3FA8)", borderRadius: 99 }} />
                                 </div>
                             </div>
 
                             {/* Quick stats */}
-                            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6, padding: "4px 6px", borderBottom: "1px solid #F0F4FF", marginBottom: 4 }}>
-                                <div style={{ background: "#FFF5F5", border: "1px solid #FECDD3", borderRadius: 8, padding: 8, textAlign: "center" }}>
+                            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6, padding: "4px 6px", borderBottom: "1px solid var(--border-color)", marginBottom: 4 }}>
+                                <div style={{ background: "var(--bg-secondary)", border: "1px solid var(--border-color)", borderRadius: 8, padding: 8, textAlign: "center" }}>
                                     <div style={{ fontSize: 18, fontWeight: 700, color: "#D62B2B" }}>{profile?.applications ?? 0}</div>
                                     <div style={{ fontSize: 10, color: "#9DA3B4", marginTop: 1 }}>Applications</div>
                                 </div>
-                                <div style={{ background: "#EEF2FF", border: "1px solid #C7D2F8", borderRadius: 8, padding: 8, textAlign: "center" }}>
+                                <div style={{ background: "var(--bg-secondary)", border: "1px solid var(--border-color)", borderRadius: 8, padding: 8, textAlign: "center" }}>
                                     <div style={{ fontSize: 18, fontWeight: 700, color: "#1C3FA8" }}>{profile?.savedJobs ?? 0}</div>
                                     <div style={{ fontSize: 10, color: "#9DA3B4", marginTop: 1 }}>Saved Jobs</div>
                                 </div>
@@ -548,17 +557,17 @@ const confirmApply = async () => {
             </nav>
 
             {/* ══ HERO ══ */}
-            <section style={{ padding: "60px 32px 40px", textAlign: "center", background: "linear-gradient(160deg,#fff 60%,#F3F5FF 100%)", borderBottom: "1px solid #E8EDF8", position: "relative", overflow: "hidden" }}>
+            <section style={{ padding: "60px 32px 40px", textAlign: "center", background: "linear-gradient(160deg,#fff 60%,#F3F5FF 100%)", borderBottom: "1px solid var(--border-color)", position: "relative", overflow: "hidden" }}>
                 <div style={{ position: "absolute", top: -40, right: -40, width: 220, height: 220, borderRadius: "50%", border: "40px solid rgba(214,43,43,0.07)", pointerEvents: "none" }} />
                 <div style={{ position: "absolute", bottom: -60, left: -60, width: 260, height: 260, borderRadius: "50%", border: "50px solid rgba(28,63,168,0.06)", pointerEvents: "none" }} />
 
                 <div style={{ position: "relative", zIndex: 1 }}>
-                    <div style={{ display: "inline-flex", alignItems: "center", gap: 7, background: "#FFF5F5", border: "1px solid #FECDD3", borderRadius: 30, padding: "5px 14px", fontSize: 11, color: "#D62B2B", fontWeight: 600, marginBottom: 20 }}>
+                    <div style={{ display: "inline-flex", alignItems: "center", gap: 7, background: "var(--bg-secondary)", border: "1px solid var(--border-color)", borderRadius: 30, padding: "5px 14px", fontSize: 11, color: "var(--accent-color)", fontWeight: 600, marginBottom: 20 }}>
                         <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#D62B2B", display: "inline-block" }} />
                         {stats.open > 0 ? `${stats.open.toLocaleString()} active openings right now` : "Loading openings…"}
                     </div>
 
-                    <h1 style={{ fontFamily: "'Sora',sans-serif", fontSize: 44, fontWeight: 700, lineHeight: 1.1, color: "#0D1B3E", margin: "0 0 14px", letterSpacing: "-1.5px" }}>
+                    <h1 style={{ fontFamily: "'Sora',sans-serif", fontSize: 44, fontWeight: 700, lineHeight: 1.1, color: "var(--text-primary)", margin: "0 0 14px", letterSpacing: "-1.5px" }}>
                         Find your next<br />
                         <span style={{ background: "linear-gradient(90deg,#D62B2B,#1C3FA8)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
                             great opportunity
@@ -592,15 +601,15 @@ const confirmApply = async () => {
             </section>
 
             {/* ══ STATS BAR ══ */}
-            <div style={{ background: "#fff", borderBottom: "1px solid #E8EDF8", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <div style={{ background: "var(--bg-card)", borderBottom: "1px solid var(--border-color)", display: "flex", alignItems: "center", justifyContent: "center" }}>
                 {[
                     { value: stats.open > 0      ? `${stats.open.toLocaleString()}+`  : "—", label: "Open positions",   color: "#D62B2B" },
                     { value: stats.companies > 0  ? `${stats.companies}+`              : "—", label: "Companies hiring", color: "#1C3FA8" },
-                    { value: stats.remote > 0     ? `${stats.remote}+`                 : "—", label: "Remote friendly",  color: "#0D1B3E" },
+                    { value: stats.remote > 0     ? `${stats.remote}+`                 : "—", label: "Remote friendly",  color: "var(--text-primary)" },
                 ].map(({ value, label, color }, i, arr) => (
-                    <div key={label} style={{ textAlign: "center", padding: "18px 44px", borderRight: i < arr.length - 1 ? "1px solid #E8EDF8" : "none" }}>
+                    <div key={label} style={{ textAlign: "center", padding: "18px 44px", borderRight: i < arr.length - 1 ? "1px solid var(--border-color)" : "none" }}>
                         <div style={{ fontSize: 20, fontWeight: 700, color, fontFamily: "'Sora',sans-serif" }}>{value}</div>
-                        <div style={{ fontSize: 11, color: "#6B7280", marginTop: 2 }}>{label}</div>
+                        <div style={{ fontSize: 11, color: "var(--text-secondary)", marginTop: 2 }}>{label}</div>
                     </div>
                 ))}
             </div>
@@ -613,7 +622,7 @@ const confirmApply = async () => {
 
                 {/* Section heading */}
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
-                    <h2 style={{ fontFamily: "'Sora',sans-serif", fontSize: 18, fontWeight: 700, color: "#0D1B3E" }}>
+                    <h2 style={{ fontFamily: "'Sora',sans-serif", fontSize: 18, fontWeight: 700, color: "var(--text-primary)" }}>
                         Browse all jobs
                     </h2>
                     <button
@@ -633,7 +642,7 @@ const confirmApply = async () => {
                                 <button
                                     key={f}
                                     onClick={() => handleFilterChange(f)}
-                                    style={{ border: `1.5px solid ${isActive ? "#D62B2B" : "#E8EDF8"}`, borderRadius: 30, padding: "5px 15px", fontSize: 12, fontWeight: isActive ? 600 : 500, cursor: "pointer", whiteSpace: "nowrap", transition: "all 0.15s", fontFamily: "inherit", background: isActive ? "#D62B2B" : "#fff", color: isActive ? "#fff" : "#4A5568" }}
+                                    style={{ border: `1.5px solid ${isActive ? "#D62B2B" : "var(--border-color)"}`, borderRadius: 30, padding: "5px 15px", fontSize: 12, fontWeight: isActive ? 600 : 500, cursor: "pointer", whiteSpace: "nowrap", transition: "all 0.15s", fontFamily: "inherit", background: isActive ? "#D62B2B" : "var(--bg-card)", color: isActive ? "#fff" : "var(--text-secondary)" }}
                                     onMouseEnter={(e) => { if (!isActive) { e.currentTarget.style.borderColor = "#1C3FA8"; e.currentTarget.style.color = "#1C3FA8"; } }}
                                     onMouseLeave={(e) => { if (!isActive) { e.currentTarget.style.borderColor = "#E8EDF8"; e.currentTarget.style.color = "#4A5568"; } }}
                                 >
@@ -709,8 +718,7 @@ const confirmApply = async () => {
                     </div>
                 )}
             </main>
-        
-        {/* ══ Apply Resume Modal ══ */}
+            {/* ══ Apply Resume Modal ══ */}
 {applyModalJob && profile && (
     <div
         onClick={() => setApplyModalJob(null)}
@@ -724,84 +732,240 @@ const confirmApply = async () => {
         <div
             onClick={(e) => e.stopPropagation()}
             style={{
-                background: "#F8F9FF", borderRadius: 20,
-                width: "100%", maxWidth: 760,
+                background: "var(--bg-card)", borderRadius: 20,
+                width: "100%", maxWidth: 900,
                 maxHeight: "90vh", display: "flex", flexDirection: "column",
                 boxShadow: "0 32px 80px rgba(13,27,62,0.28)",
-                overflow: "hidden",
+                overflow: "hidden", border: "1.5px solid var(--border-color)",
             }}
         >
-            {/* Modal header */}
+            {/* ── Modal header ── */}
             <div style={{
                 display: "flex", alignItems: "center", justifyContent: "space-between",
-                padding: "18px 24px", borderBottom: "1.5px solid #E8EDF8",
-                background: "#fff", flexShrink: 0,
+                padding: "16px 22px", borderBottom: "1.5px solid var(--border-color)",
+                background: "var(--bg-card)", flexShrink: 0,
             }}>
                 <div>
-                    <p style={{ fontSize: 13, fontWeight: 700, color: "#0D1B3E", margin: "0 0 2px" }}>
+                    <p style={{ fontSize: 14, fontWeight: 700, color: "var(--text-primary)", margin: "0 0 2px" }}>
                         Applying for: <span style={{ color: "#D62B2B" }}>{applyModalJob.title}</span>
                     </p>
-                    <p style={{ fontSize: 11, color: "#6B7280", margin: 0 }}>
+                    <p style={{ fontSize: 11, color: "var(--text-secondary)", margin: 0 }}>
                         {applyModalJob.company} · {applyModalJob.location}
                     </p>
                 </div>
                 <button
                     onClick={() => setApplyModalJob(null)}
                     style={{
-                        background: "#F3F5FF", border: "1.5px solid #E8EDF8",
+                        background: "var(--bg-secondary)", border: "1.5px solid var(--border-color)",
                         borderRadius: 8, width: 32, height: 32,
                         display: "flex", alignItems: "center", justifyContent: "center",
-                        cursor: "pointer", fontSize: 16, color: "#6B7280",
+                        cursor: "pointer", fontSize: 16, color: "var(--text-secondary)",
                     }}
-                >
-                    ✕
-                </button>
+                >✕</button>
             </div>
 
-            {/* Scrollable resume preview */}
-            <div style={{ flex: 1, overflowY: "auto", padding: "24px" }}>
-                <RecruiterSection profile={profile} />
-            </div>
-
-            {/* Sticky footer */}
+            {/* ── Two column body ── */}
             <div style={{
-                padding: "16px 24px", borderTop: "1.5px solid #E8EDF8",
-                background: "#fff", display: "flex",
+                display: "grid", gridTemplateColumns: "1fr 1fr",
+                flex: 1, minHeight: 0, overflowY: "auto",
+            }}>
+                {/* ── Left: job details ── */}
+                <div style={{
+                    borderRight: "1.5px solid var(--border-color)",
+                    padding: "22px", overflowY: "auto",
+                }}>
+                    <p style={{ fontSize: 10, fontWeight: 600, color: "var(--text-secondary)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 14 }}>
+                        Job Details
+                    </p>
+
+                    {/* Company + title */}
+                    <div style={{ display: "flex", alignItems: "center", gap: 11, marginBottom: 14 }}>
+                        <div style={{
+                            width: 42, height: 42, borderRadius: 10,
+                            background: applyModalJob.color,
+                            display: "flex", alignItems: "center", justifyContent: "center",
+                            fontSize: 15, fontWeight: 700, color: "#fff", flexShrink: 0,
+                        }}>
+                            {applyModalJob.logo}
+                        </div>
+                        <div>
+                            <div style={{ fontSize: 14, fontWeight: 600, color: "var(--text-primary)" }}>{applyModalJob.title}</div>
+                            <div style={{ fontSize: 12, color: "var(--text-secondary)", marginTop: 2 }}>{applyModalJob.company}</div>
+                        </div>
+                    </div>
+
+                    {/* Type badge */}
+                    <span style={{
+                        display: "inline-flex", alignItems: "center", fontSize: 11,
+                        background: "var(--bg-secondary)", color: "var(--text-secondary)",
+                        border: "1px solid var(--border-color)", padding: "3px 10px",
+                        borderRadius: 99, marginBottom: 14,
+                    }}>
+                        {applyModalJob.type}
+                        {applyModalJob.isRemote && <span style={{ marginLeft: 6, color: "#1C3FA8" }}>· Remote</span>}
+                    </span>
+
+                    {/* Info grid */}
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 16 }}>
+                        {[
+                            { label: "Location", value: applyModalJob.location },
+                            { label: "Salary",   value: applyModalJob.salary   },
+                            { label: "Type",     value: applyModalJob.type     },
+                            { label: "Posted",   value: applyModalJob.posted   },
+                        ].map(({ label, value }) => (
+                            <div key={label} style={{
+                                background: "var(--bg-secondary)", border: "1px solid var(--border-color)",
+                                borderRadius: 10, padding: "10px 12px",
+                            }}>
+                                <div style={{ fontSize: 10, color: "var(--text-secondary)", marginBottom: 3 }}>{label}</div>
+                                <div style={{ fontSize: 12, fontWeight: 600, color: "var(--text-primary)" }}>{value}</div>
+                            </div>
+                        ))}
+                    </div>
+
+                    {/* Tags */}
+                    {applyModalJob.tags?.length > 0 && (
+                        <>
+                            <p style={{ fontSize: 10, fontWeight: 600, color: "var(--text-secondary)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 8 }}>Skills</p>
+                            <div style={{ display: "flex", flexWrap: "wrap", gap: 5, marginBottom: 16 }}>
+                                {applyModalJob.tags.map((tag) => (
+                                    <span key={tag} style={{
+                                        fontSize: 11, background: "var(--bg-secondary)", color: "var(--text-secondary)",
+                                        border: "1px solid var(--border-color)", padding: "3px 9px", borderRadius: 99,
+                                    }}>{tag}</span>
+                                ))}
+                            </div>
+                        </>
+                    )}
+
+                    {/* Description */}
+                    {applyModalJob.description && (
+                        <>
+                            <p style={{ fontSize: 10, fontWeight: 600, color: "var(--text-secondary)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 8 }}>Description</p>
+                            <p style={{ fontSize: 12, color: "var(--text-secondary)", lineHeight: 1.65, marginBottom: 16 }}>
+                                {applyModalJob.description}
+                            </p>
+                        </>
+                    )}
+
+                    {/* Requirements */}
+                    {applyModalJob.requirements && applyModalJob.requirements.length > 0 && (
+                        <>
+                            <p style={{ fontSize: 10, fontWeight: 600, color: "var(--text-secondary)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 8 }}>Requirements</p>
+                            <ul style={{ listStyle: "none", display: "flex", flexDirection: "column", gap: 6 }}>
+                                {applyModalJob.requirements.map((req, i) => (
+                                    <li key={i} style={{ display: "flex", alignItems: "flex-start", gap: 8, fontSize: 12, color: "var(--text-secondary)", lineHeight: 1.5 }}>
+                                        <span style={{ width: 5, height: 5, borderRadius: "50%", background: "#D62B2B", flexShrink: 0, marginTop: 5 }} />
+                                        {req}
+                                    </li>
+                                ))}
+                            </ul>
+                        </>
+                    )}
+                </div>
+
+                {/* ── Right: resume picker ── */}
+                <div style={{ padding: "22px", display: "flex", flexDirection: "column", gap: 14 }}>
+                    <p style={{ fontSize: 10, fontWeight: 600, color: "var(--text-secondary)", textTransform: "uppercase", letterSpacing: "0.08em" }}>
+                        Choose resume to submit
+                    </p>
+
+                    {/* Radio options */}
+                    <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                        {(["ai", "uploaded"] as const).map((opt) => {
+                            const isSelected = resumeType === opt;
+                            return (
+                                <div
+                                    key={opt}
+                                    onClick={() => setResumeType(opt)}
+                                    style={{
+                                        border: `1.5px solid ${isSelected ? "var(--text-primary)" : "var(--border-color)"}`,
+                                        borderRadius: 12, padding: "12px 14px", cursor: "pointer",
+                                        background: isSelected ? "var(--bg-secondary)" : "var(--bg-card)",
+                                        transition: "border-color 0.15s",
+                                    }}
+                                >
+                                    <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                                        {/* Radio circle */}
+                                        <div style={{
+                                            width: 16, height: 16, borderRadius: "50%", flexShrink: 0,
+                                            border: `2px solid ${isSelected ? "var(--text-primary)" : "var(--border-color)"}`,
+                                            background: isSelected ? "var(--text-primary)" : "transparent",
+                                            display: "flex", alignItems: "center", justifyContent: "center",
+                                        }}>
+                                            {isSelected && <div style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--bg-card)" }} />}
+                                        </div>
+                                        <div>
+                                            <div style={{ fontSize: 13, fontWeight: 600, color: "var(--text-primary)" }}>
+                                                {opt === "ai" ? "AI generated resume" : "Uploaded resume"}
+                                            </div>
+                                            <div style={{ fontSize: 11, color: "var(--text-secondary)", marginTop: 2 }}>
+                                                {opt === "ai" ? "Built from your profile information" : "Your manually uploaded PDF or DOCX"}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
+
+                    {/* Resume preview */}
+                    <div style={{
+                        flex: 1, border: "1.5px solid var(--border-color)", borderRadius: 12,
+                        overflow: "hidden", background: "var(--bg-secondary)", minHeight: 200,
+                    }}>
+                        {resumeType === "ai" ? (
+                            <div style={{ overflowY: "auto", height: "100%", padding: "16px" }}>
+                                <RecruiterSection profile={profile} />
+                            </div>
+                        ) : (
+                            <div style={{
+                                height: "100%", minHeight: 200,
+                                display: "flex", alignItems: "center", justifyContent: "center",
+                                flexDirection: "column", gap: 8,
+                            }}>
+                                <span style={{ fontSize: 28, color: "var(--text-secondary)" }}>📄</span>
+                                <p style={{ fontSize: 12, color: "var(--text-secondary)" }}>No resume uploaded yet</p>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            </div>
+
+            {/* ── Footer ── */}
+            <div style={{
+                padding: "14px 22px", borderTop: "1.5px solid var(--border-color)",
+                background: "var(--bg-card)", display: "flex",
                 alignItems: "center", justifyContent: "space-between",
                 gap: 12, flexShrink: 0,
             }}>
-                <p style={{ fontSize: 12, color: "#6B7280", margin: 0, flex: 1 }}>
-                    This resume will be shared with <strong>{applyModalJob.company}</strong>
+                <p style={{ fontSize: 11, color: "var(--text-secondary)", margin: 0 }}>
+                    Resume will be shared with <strong>{applyModalJob.company}</strong>
                 </p>
-                <button
-                    onClick={() => setApplyModalJob(null)}
-                    style={{
-                        background: "#fff", border: "1.5px solid #E8EDF8",
-                        borderRadius: 10, padding: "9px 20px",
-                        fontSize: 13, fontWeight: 600, color: "#4A5568",
-                        cursor: "pointer", fontFamily: "inherit",
-                    }}
-                >
-                    Cancel
-                </button>
-                <button
-                    onClick={confirmApply}
-                    style={{
-                        background: "linear-gradient(135deg,#D62B2B,#1C3FA8)",
-                        border: "none", borderRadius: 10, padding: "9px 24px",
-                        fontSize: 13, fontWeight: 700, color: "#fff",
-                        cursor: "pointer", fontFamily: "inherit",
-                    }}
-                >
-                    Confirm & Apply →
-                </button>
+                <div style={{ display: "flex", gap: 8 }}>
+                    <button
+                        onClick={() => setApplyModalJob(null)}
+                        style={{
+                            background: "var(--bg-secondary)", border: "1.5px solid var(--border-color)",
+                            borderRadius: 10, padding: "9px 18px", fontSize: 13,
+                            fontWeight: 600, color: "var(--text-secondary)", cursor: "pointer", fontFamily: "inherit",
+                        }}
+                    >Cancel</button>
+                    <button
+                        onClick={confirmApply}
+                        style={{
+                            background: "linear-gradient(135deg,#D62B2B,#1C3FA8)",
+                            border: "none", borderRadius: 10, padding: "9px 24px",
+                            fontSize: 13, fontWeight: 700, color: "#fff",
+                            cursor: "pointer", fontFamily: "inherit",
+                        }}
+                    >Confirm &amp; Apply →</button>
+                </div>
             </div>
         </div>
     </div>
 )}
-
-
-            {/* Toast */}
+        {/* Toast */}
             {toast && (
                 <div style={{
                     position: "fixed", bottom: 28, left: "50%", transform: "translateX(-50%)",
@@ -814,6 +978,7 @@ const confirmApply = async () => {
                     {toast}
                 </div>
             )}
+        
         </div>
     );
 }
@@ -821,68 +986,68 @@ const confirmApply = async () => {
 // ─────────────────────────────────────────────
 // JOB CARD COMPONENT
 // ─────────────────────────────────────────────
-interface JobCardProps {
-    job: Job;
-    isSaved: boolean;
-    isApplied: boolean;
-    onSave: (id: string) => void;
-    onApply: (id: string) => void;
-}
+// interface JobCardProps {
+//     job: Job;
+//     isSaved: boolean;
+//     isApplied: boolean;
+//     onSave: (id: string) => void;
+//     onApply: (id: string) => void;
+// }
 
-function JobCard({ job, isSaved, isApplied, onSave, onApply }: JobCardProps) {
-    const tm = TYPE_META[job.type] ?? { bg: "#F8F9FF", border: "#E8EDF8", text: "#0D1B3E" };
+// function JobCard({ job, isSaved, isApplied, onSave, onApply }: JobCardProps) {
+//     const tm = TYPE_META[job.type] ?? { bg: "#F8F9FF", border: "#E8EDF8", text: "#0D1B3E" };
 
-    return (
-        <div className="job-card" style={{ background: "#fff", border: "1.5px solid #E8EDF8", borderRadius: 14, padding: 20, display: "flex", flexDirection: "column", gap: 13, boxShadow: "0 2px 8px rgba(13,27,62,0.04)" }}>
-            <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 11 }}>
-                    <div style={{ width: 42, height: 42, borderRadius: 10, background: job.color, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 15, fontWeight: 700, color: "#fff", flexShrink: 0 }}>
-                        {job.logo}
-                    </div>
-                    <div>
-                        <div style={{ fontSize: 14, fontWeight: 600, color: "#0D1B3E", lineHeight: 1.3 }}>{job.title}</div>
-                        <div style={{ fontSize: 12, color: "#6B7280", marginTop: 2 }}>{job.company}</div>
-                    </div>
-                </div>
-                <button
-                    onClick={() => onSave(job._id)}
-                    title={isSaved ? "Unsave job" : "Save job"}
-                    style={{ background: isSaved ? "#FFF5F5" : "#F8F9FF", border: `1.5px solid ${isSaved ? "#FECDD3" : "#E8EDF8"}`, borderRadius: 8, width: 34, height: 34, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flexShrink: 0, fontSize: 15, transition: "all 0.15s" }}
-                >
-                    {isSaved ? "🔖" : "🏷️"}
-                </button>
-            </div>
+//     return (
+//         <div className="job-card" style={{ background: "var(--bg-card)", border: "1.5px solid var(--border-color)", borderRadius: 14, padding: 20, display: "flex", flexDirection: "column", gap: 13, boxShadow: "0 2px 8px rgba(13,27,62,0.04)" }}>
+//             <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between" }}>
+//                 <div style={{ display: "flex", alignItems: "center", gap: 11 }}>
+//                     <div style={{ width: 42, height: 42, borderRadius: 10, background: job.color, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 15, fontWeight: 700, color: "#fff", flexShrink: 0 }}>
+//                         {job.logo}
+//                     </div>
+//                     <div>
+//                         <div style={{ fontSize: 14, fontWeight: 600, color: "var(--text-primary)", lineHeight: 1.3 }}>{job.title}</div>
+//                         <div style={{ fontSize: 12, color: "var(--text-secondary)", marginTop: 2 }}>{job.company}</div>
+//                     </div>
+//                 </div>
+//                 <button
+//                     onClick={() => onSave(job._id)}
+//                     title={isSaved ? "Unsave job" : "Save job"}
+//                     style={{ background: isSaved ? "#FFF5F5" : "#F8F9FF", border: `1.5px solid ${isSaved ? "#FECDD3" : "#E8EDF8"}`, borderRadius: 8, width: 34, height: 34, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flexShrink: 0, fontSize: 15, transition: "all 0.15s" }}
+//                 >
+//                     {isSaved ? "🔖" : "🏷️"}
+//                 </button>
+//             </div>
 
-            <div style={{ display: "flex", alignItems: "center", gap: 7, flexWrap: "wrap" }}>
-                <span style={{ fontSize: 11, background: tm.bg, color: tm.text, border: `1px solid ${tm.border}`, padding: "3px 9px", borderRadius: 20, fontWeight: 600 }}>{job.type}</span>
-                <span style={{ fontSize: 11, color: "#6B7280" }}>📍 {job.location}</span>
-            </div>
+//             <div style={{ display: "flex", alignItems: "center", gap: 7, flexWrap: "wrap" }}>
+//                 <span style={{ fontSize: 11, background: tm.bg, color: tm.text, border: `1px solid ${tm.border}`, padding: "3px 9px", borderRadius: 20, fontWeight: 600 }}>{job.type}</span>
+//                 <span style={{ fontSize: 11, color: "#6B7280" }}>📍 {job.location}</span>
+//             </div>
 
-            <div style={{ display: "flex", gap: 5, flexWrap: "wrap" }}>
-                {job.tags.map((tag) => (
-                    <span key={tag} style={{ fontSize: 10, background: "#F8F9FF", color: "#4A5568", border: "1px solid #E8EDF8", padding: "2px 8px", borderRadius: 5, fontWeight: 500 }}>
-                        {tag}
-                    </span>
-                ))}
-            </div>
+//             <div style={{ display: "flex", gap: 5, flexWrap: "wrap" }}>
+//                 {job.tags.map((tag) => (
+//                     <span key={tag} style={{ fontSize: 10, background: "#F8F9FF", color: "#4A5568", border: "1px solid #E8EDF8", padding: "2px 8px", borderRadius: 5, fontWeight: 500 }}>
+//                         {tag}
+//                     </span>
+//                 ))}
+//             </div>
 
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: "auto", paddingTop: 10, borderTop: "1px solid #F0F4FF" }}>
-                <div>
-                    <div style={{ fontSize: 13, fontWeight: 700, color: "#D62B2B" }}>{job.salary}</div>
-                    <div style={{ fontSize: 10, color: "#A0AABF", marginTop: 2 }}>{job.posted}</div>
-                </div>
-                <button
-                    className="apply-btn"
-                    onClick={() => onApply(job._id)}
-                    disabled={isApplied}
-                    style={{ background: isApplied ? "#E8EDF8" : "linear-gradient(135deg,#D62B2B,#1C3FA8)", border: "none", borderRadius: 9, padding: "9px 20px", fontSize: 12, fontWeight: 600, color: isApplied ? "#A0AABF" : "#fff", cursor: isApplied ? "not-allowed" : "pointer", fontFamily: "inherit", transition: "opacity 0.15s" }}
-                >
-                    {isApplied ? "Applied ✓" : "Apply →"}
-                </button>
-            </div>
-        </div>
-    );
-}
+//             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: "auto", paddingTop: 10, borderTop: "1px solid var(--border-color)" }}>
+//                 <div>
+//                     <div style={{ fontSize: 13, fontWeight: 700, color: "var(--accent-color)" }}>{job.salary}</div>
+//                     <div style={{ fontSize: 10, color: "var(--text-secondary)", marginTop: 2 }}>{job.posted}</div>
+//                 </div>
+//                 <button
+//                     className="apply-btn"
+//                     onClick={() => onApply(job._id)}
+//                     disabled={isApplied}
+//                     style={{ background: isApplied ? "var(--bg-card)" : "linear-gradient(135deg,#D62B2B,#1C3FA8)", border: "none", borderRadius: 9, padding: "9px 20px", fontSize: 12, fontWeight: 600, color: isApplied ? "var(--text-secondary)" : "#fff", cursor: isApplied ? "not-allowed" : "pointer", fontFamily: "inherit", transition: "opacity 0.15s" }}
+//                 >
+//                     {isApplied ? "Applied ✓" : "Apply →"}
+//                 </button>
+//             </div>
+//         </div>
+//     );
+// }
 // import { useState, useEffect, useRef } from "react";
 // import { useNavigate } from "react-router-dom";
 // import { useAuth } from "../../context/useAuth";

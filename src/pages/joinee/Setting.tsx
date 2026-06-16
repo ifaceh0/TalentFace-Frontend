@@ -1,7 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/useAuth';
-import { getProfile, generate2FASecret, verify2FAToken, disable2FA } from '../../services/joinee.service';
+import {
+  getProfile, generate2FASecret, verify2FAToken, disable2FA,
+  getJobPreferences, updateJobPreferences,
+} from '../../services/joinee.service';
+import { useTheme } from '../../context/ThemeContext';
 import {
   User,
   Bell,
@@ -104,8 +108,8 @@ function SectionCard({ title, description, children }: {
   children: React.ReactNode;
 }) {
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-      <div className="px-6 py-5 border-b border-gray-50">
+    <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm overflow-hidden">
+      <div className="px-6 py-5 border-b border-gray-50 dark:border-slate-600">
         <h3 className="text-base font-semibold text-gray-900">{title}</h3>
         {description && <p className="text-sm text-gray-500 mt-0.5">{description}</p>}
       </div>
@@ -284,7 +288,7 @@ export default function Settings() {
   const [sessions, setSessions] = useState(MOCK_SESSIONS);
 
   // Appearance
- const [theme, setTheme] = useState<"light" | "dark" | "system">("light");
+ const { theme, setTheme } = useTheme();
 
 const [twoFAEnabled, setTwoFAEnabled] = useState(false);
 const [twoFAStep, setTwoFAStep] = useState<0 | 1 | 2 | 3>(0);
@@ -304,11 +308,23 @@ const [backupCodes, setBackupCodes] = useState<string[]>([]);
   };
 
   useEffect(() => {
-  getProfile().then(p => {
-    setEmail(p.email ?? "");
-    setTwoFAEnabled(p.twoFAEnabled ?? false);
-  }).catch(() => {});
-}, []);
+    getProfile().then(p => {
+      setEmail(p.email ?? "");
+      setTwoFAEnabled(p.twoFAEnabled ?? false);
+    }).catch(() => {});
+
+    getJobPreferences().then(prefs => {
+      if (!prefs) return;
+      setJobPrefs({
+        workMode:          prefs.workMode          ?? 'onsite',
+        salaryExpectation: prefs.salaryExpectation ?? 0,
+        salaryOpenToMore:  prefs.salaryOpenToMore  ?? false,
+        currency:          prefs.currency          ?? 'INR',
+        showVerifiedOnly:  prefs.showVerifiedOnly  ?? true,
+        enableJobAlerts:   prefs.enableJobAlerts   ?? true,
+      });
+    }).catch(() => {});
+  }, []);
 
   // ── Render sections ─────────────────────────────────────────────────────────
 
@@ -625,10 +641,17 @@ const [backupCodes, setBackupCodes] = useState<string[]>([]);
 
             {/* Save button */}
             <button
-              onClick={() => showToast("Salary preference saved!")}
+              onClick={async () => {
+                try {
+                  await updateJobPreferences(jobPrefs);
+                  showToast("Job preferences saved!");
+                } catch {
+                  showToast("Failed to save preferences.", "error");
+                }
+              }}
               className="w-full py-2.5 rounded-xl bg-red-600 text-white text-sm font-semibold hover:bg-red-700 transition-colors"
             >
-              Save Salary Preference
+              Save Preferences
             </button>
           </div>
          </SectionCard>
@@ -1071,9 +1094,9 @@ const renderTwoFAModal = () => {
   // ── Render ────────────────────────────────────────────────────────────────
 
   return (
-    <div className="min-h-screen bg-gray-50 font-sans">
+    <div className="min-h-screen bg-gray-50 dark:bg-slate-900 font-sans">
       {/* Header */}
-      <header className="bg-white border-b border-gray-100 sticky top-0 z-30">
+      <header className="bg-white dark:bg-slate-800 border-b border-gray-100 dark:border-slate-700 sticky top-0 z-30">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
           <div className="flex items-center gap-3">
             {/* Mobile menu toggle */}
