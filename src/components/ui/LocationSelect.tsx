@@ -358,7 +358,7 @@ export default function LocationSelect({ value, onChange, placeholder = 'Search 
           ) : apiError ? (
             <div className="p-3 text-sm text-red-500">{apiError}</div>
           ) : filteredLocations.length === 0 ? (
-            <div className="p-3 text-sm text-gray-500">No locations found.</div>
+            <div className="p-3 text-sm text-gray-500">Searching....</div>
           ) : (
             filteredLocations.map((location) => (
               <button

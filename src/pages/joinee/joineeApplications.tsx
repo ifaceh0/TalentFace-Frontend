@@ -311,10 +311,10 @@ export default function JoineeApplications() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 font-sans">
+    <div className="min-h-screen bg-gray-50 dark:bg-slate-900 font-sans">
 
       {/* Header */}
-      <header className="bg-white border-b border-gray-100 sticky top-0 z-30">
+      <header className="bg-white dark:bg-slate-800 border-b border-gray-100 dark:border-slate-700 sticky top-0 z-30">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <button
@@ -342,8 +342,8 @@ export default function JoineeApplications() {
 
         {/* Page title */}
         <div className="mb-6">
-          <h1 className="text-xl font-bold text-gray-900">My Applications</h1>
-          <p className="text-sm text-gray-500 mt-0.5">Track every job you've applied to</p>
+          <h1 className="text-xl font-bold text-gray-900 dark:text-slate-100">My Applications</h1>
+          <p className="text-sm text-gray-500 dark:text-slate-400 mt-0.5">Track every job you've applied to</p>
         </div>
 
         {/* Filter tabs */}
@@ -365,8 +365,8 @@ export default function JoineeApplications() {
                 onClick={() => setFilterStatus(key)}
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all ${
                   isActive
-                    ? "bg-gray-900 text-white border-gray-900"
-                    : "bg-white text-gray-600 border-gray-200 hover:border-gray-300 hover:bg-gray-50"
+                    ? "bg-gray-900 dark:bg-slate-100 text-white dark:text-slate-900 border-gray-900"
+                    : "bg-white dark:bg-slate-800 text-gray-600 dark:text-slate-300 border-gray-200 dark:border-slate-600 hover:border-gray-300 hover:bg-gray-50 dark:hover:bg-slate-700"
                 }`}
               >
                 {label}
@@ -381,8 +381,7 @@ export default function JoineeApplications() {
         </div>
 
         {/* Loading */}
-        {loading && (
-          <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
+        {loading && (<div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 overflow-hidden">
             {Array.from({ length: 5 }).map((_, i) => (
               <div key={i} className="flex items-center gap-4 px-5 py-4 border-b border-gray-50 last:border-0">
                 <div className="w-8 h-4 bg-gray-100 rounded animate-pulse" />
@@ -407,14 +406,14 @@ export default function JoineeApplications() {
 
         {/* Empty */}
         {!loading && !error && filtered.length === 0 && (
-          <div className="bg-white rounded-2xl border border-gray-100 p-16 text-center">
-            <div className="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+          <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 p-16 text-center">
+            <div className="w-16 h-16 bg-gray-100 dark:bg-slate-700 rounded-2xl flex items-center justify-center mx-auto mb-4">
               <Briefcase size={28} className="text-gray-400" />
             </div>
-            <p className="text-base font-semibold text-gray-800 mb-1">
+            <p className="text-base font-semibold text-gray-800 dark:text-slate-200 mb-1">
               {filterStatus === "all" ? "No applications yet" : `No ${filterStatus.replace("_", " ")} applications`}
             </p>
-            <p className="text-sm text-gray-400 mb-5">
+            <p className="text-sm text-gray-400 dark:text-slate-400 mb-5">
               {filterStatus === "all"
                 ? "Jobs you apply to will appear here."
                 : "Try a different filter above."}
@@ -432,11 +431,11 @@ export default function JoineeApplications() {
 
         {/* Table */}
         {!loading && !error && filtered.length > 0 && (
-          <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-sm">
+          <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 overflow-hidden shadow-sm">
             {/* Table header */}
-            <div className="grid grid-cols-[40px_1fr_160px_140px_100px_44px] gap-3 px-5 py-3 bg-gray-50 border-b border-gray-100">
+            <div className="grid grid-cols-[40px_1fr_160px_140px_100px_44px] gap-3 px-5 py-3 bg-gray-50 dark:bg-slate-700 border-b border-gray-100 dark:border-slate-600">
               {["#", "Job", "Company · Location", "Date Applied", "Status", ""].map((h) => (
-                <span key={h} className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                <span key={h} className="text-xs font-semibold text-gray-400 dark:text-slate-400 uppercase tracking-wider">
                   {h}
                 </span>
               ))}
@@ -449,7 +448,7 @@ export default function JoineeApplications() {
                 <div
                   key={app._id}
                   onClick={() => setSelected(app)}
-                  className="grid grid-cols-[40px_1fr_160px_140px_100px_44px] gap-3 items-center px-5 py-4 border-b border-gray-50 last:border-0 hover:bg-gray-50 cursor-pointer transition-colors group"
+                  className="grid grid-cols-[40px_1fr_160px_140px_100px_44px] gap-3 items-center px-5 py-4 border-b border-gray-50 dark:border-slate-700 last:border-0 hover:bg-gray-50 dark:hover:bg-slate-700 cursor-pointer transition-colors group"
                 >
                   {/* Serial */}
                   <span className="text-xs font-bold text-gray-400 tabular-nums">
@@ -462,7 +461,7 @@ export default function JoineeApplications() {
                       {(job?.company ?? "?")[0].toUpperCase()}
                     </div>
                     <div className="min-w-0">
-                      <p className="text-sm font-semibold text-gray-900 truncate group-hover:text-red-600 transition-colors">
+                      <p className="text-sm font-semibold text-gray-900 dark:text-slate-200 truncate group-hover:text-red-600 transition-colors">
                         {job?.title ?? "Unavailable"}
                       </p>
                       {job?.type && (
@@ -473,9 +472,9 @@ export default function JoineeApplications() {
 
                   {/* Company · Location */}
                   <div className="min-w-0">
-                    <p className="text-sm font-medium text-gray-700 truncate">{job?.company ?? "—"}</p>
+                    <p className="text-sm font-medium text-gray-700 dark:text-slate-300 truncate">{job?.company ?? "—"}</p>
                     {job?.location && (
-                      <p className="text-xs text-gray-400 flex items-center gap-1 mt-0.5 truncate">
+                      <p className="text-xs text-gray-400 dark:text-slate-400 flex items-center gap-1 mt-0.5 truncate">
                         <MapPin size={10} /> {job.location}
                       </p>
                     )}
@@ -483,7 +482,7 @@ export default function JoineeApplications() {
 
                   {/* Date */}
                   <div>
-                    <p className="text-sm text-gray-700">{formatDate(app.createdAt)}</p>
+                    <p className="text-sm text-gray-700 dark:text-slate-300">{formatDate(app.createdAt)}</p>
                     <p className="text-xs text-gray-400 mt-0.5">
                       {new Date(app.createdAt).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" })}
                     </p>
@@ -505,8 +504,8 @@ export default function JoineeApplications() {
         )}
 
         {/* Footer note */}
-        {!loading && filtered.length > 0 && (
-          <p className="text-xs text-gray-400 text-center mt-4">
+       {!loading && filtered.length > 0 && (
+          <p className="text-xs text-gray-400 dark:text-slate-500 text-center mt-4">
             Showing {filtered.length} of {applications.length} application{applications.length !== 1 ? "s" : ""}
           </p>
         )}

@@ -515,9 +515,9 @@ export default function JoineeDashboard() {
   };
 
   // ─── Loading ───────────────────────────────────────────────────────────────
-  if (loading) {
+ if (loading) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+      <div className="min-h-screen bg-slate-50 dark:bg-slate-900 flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
           <svg className="animate-spin w-10 h-10 text-red-500" viewBox="0 0 24 24" fill="none">
             <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" strokeOpacity="0.2" />
@@ -532,11 +532,11 @@ export default function JoineeDashboard() {
   // ─── Error ─────────────────────────────────────────────────────────────────
   if (error) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+      <div className="min-h-screen bg-slate-50 dark:bg-slate-900 flex items-center justify-center">
         <div className="text-center max-w-sm mx-auto px-4">
           <p className="text-5xl mb-4">⚠️</p>
-          <h1 className="text-lg font-bold text-gray-900">Failed to load profile</h1>
-          <p className="text-sm text-gray-500 mt-1">{error}</p>
+          <h1 className="text-lg font-bold text-gray-900 dark:text-slate-100">Failed to load profile</h1>
+          <p className="text-sm text-gray-500 dark:text-slate-400 mt-1">{error}</p>
           <button
             onClick={() => window.location.reload()}
             className="mt-4 px-5 py-2 bg-red-500 hover:bg-red-600 text-white text-sm font-semibold rounded-xl"
@@ -615,7 +615,7 @@ export default function JoineeDashboard() {
 
   // ─── Render ────────────────────────────────────────────────────────────────
   return (
-    <div className="flex min-h-screen bg-slate-50" style={{ fontFamily: "'Inter', system-ui, sans-serif" }}>
+   <div className="flex min-h-screen bg-slate-50 dark:bg-slate-900" style={{ fontFamily: "'Inter', system-ui, sans-serif" }}>
 
       {/* ── Enhanced Sidebar with Recruiter Section ── */}
       <EnhancedSidebar
@@ -637,13 +637,13 @@ export default function JoineeDashboard() {
       <div className="flex-1 flex flex-col overflow-hidden">
 
         {/* Top bar */}
-        <header className="bg-white border-b border-gray-100 px-6 py-3.5 flex items-center justify-between shrink-0" style={{ gap: 12 }}>
+        <header className="bg-white dark:bg-slate-800 border-b border-gray-100 dark:border-slate-700 px-6 py-3.5 flex items-center justify-between shrink-0" style={{ gap: 12 }}>
           <div className="flex items-center gap-2">
-            <span className="text-sm font-medium text-gray-400">Dashboard</span>
+            <span className="text-sm font-medium text-gray-400 dark:text-slate-400">Dashboard</span>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-gray-300">
               <path d="M9 18l6-6-6-6" />
             </svg>
-            <span className="text-sm font-semibold text-gray-800">
+            <span className="text-sm font-semibold text-gray-800 dark:text-slate-200">
               {SECTION_LABELS[activeSection]}
             </span>
             {/* Recruiter badge in breadcrumb */}
@@ -681,7 +681,7 @@ export default function JoineeDashboard() {
         {/* Content panel */}
         <main
           ref={mainRef}
-          className="flex-1 overflow-y-auto p-6 lg:p-8"
+          className="flex-1 overflow-y-auto p-6 lg:p-8 dark:bg-slate-900"
           key={activeSection}
           style={{ animation: 'fadeIn 0.22s ease' }}
         >
