@@ -4,7 +4,7 @@ import type { JoineeProfile } from '../../types/joinee.types';
 type Section =
   | 'overview' | 'basic' | 'summary' | 'address'
   | 'education' | 'work' | 'skills' | 'projects'
-  | 'social' | 'resume' | 'recruiter';
+  | 'social' | 'resume' | 'analyzer' | 'recruiter';
 
 type BadgeStatus = 'done' | 'partial' | 'empty' | 'locked';
 
@@ -19,6 +19,7 @@ const BASE_NAV_ITEMS: { id: Section; label: string; icon: string; pts: number }[
   { id: 'projects',  label: 'Projects',        icon: '🚀', pts: 10 },
   { id: 'social',    label: 'Social Profiles', icon: '🔗', pts: 5  },
   { id: 'resume',    label: 'Resume',          icon: '📄', pts: 10 },
+  { id: 'analyzer',  label: 'Resume Analyzer', icon: '🤖', pts: 0  },
   { id: 'recruiter', label: 'Recruiter View',  icon: '🧑‍💼', pts: 0  },
 ];
 
@@ -38,6 +39,7 @@ function getStatus(id: Section, profile: JoineeProfile | null): BadgeStatus {
     case 'projects':  return (profile.projects?.length ?? 0) > 0 ? 'done' : 'empty';
     case 'social':    return profile.socialProfiles ? 'partial' : 'empty';
     case 'resume':    return profile.resume ? 'done' : 'empty';
+    case 'analyzer':  return 'done';
     case 'recruiter': return score >= 50 ? 'done' : 'locked';
     default:          return 'empty';
   }
@@ -85,7 +87,7 @@ export default function Sidebar({ profile, activeSection, onSelect, onPhotoClick
   const score = profile?.profileCompletionScore ?? 0;
 
   return (
-    <aside className="w-64 shrink-0 flex flex-col bg-slate-900 min-h-screen">
+    <aside className="w-64 shrink-0 flex flex-col bg-slate-900 h-full">
       {/* Brand */}
       <div className="px-5 py-5 border-b border-slate-800 flex items-center gap-2.5">
         <div className="w-7 h-7 rounded-lg bg-red-500 flex items-center justify-center shrink-0">

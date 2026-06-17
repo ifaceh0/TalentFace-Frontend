@@ -257,9 +257,11 @@ import ResumeSection from '../../components/joinee/ResumeSection';
 import { getProfile, uploadProfilePhoto } from '../../services/joinee.service';
 import type { JoineeProfile } from '../../types/joinee.types';
 import RecruiterSection from '../../components/joinee/RecruiterSection';
+// after your other joinee component imports
+import ResumeAnalyzer from '../../components/joinee/ResumeAnalyzer';
 
 // ─── Extended section type with recruiter panel ───────────────────────────────
-type ExtendedSection = Section | 'recruiter';
+type ExtendedSection = Section | 'recruiter' | 'analyzer';
 
 
 // ─── Recruiter Panel (thin wrapper) ──────────────────────────────────────────
@@ -555,7 +557,7 @@ export default function JoineeDashboard() {
       return <RecruiterPanel profile={profile} />;
     }
 
-    switch (activeSection as Section) {
+    switch (activeSection as ExtendedSection) {
       case 'overview':
         return <Overview profile={profile} />;
       case 'basic':
@@ -591,6 +593,8 @@ export default function JoineeDashboard() {
         return <SocialProfilesForm profile={profile} onUpdate={updateProfile} />;
       case 'resume':
         return <ResumeSection profile={profile} onUpdate={updateProfile} />;
+      case 'analyzer':
+        return <ResumeAnalyzer />;
     }
   };
 
@@ -605,6 +609,7 @@ export default function JoineeDashboard() {
     projects: 'Projects',
     social: 'Social Profiles',
     resume: 'Resume',
+    analyzer: 'Resume Analyzer',
     recruiter: 'Recruiter Section',
   };
 
@@ -618,8 +623,6 @@ export default function JoineeDashboard() {
         activeSection={activeSection}
         onSelect={handleSectionSelect}
         onPhotoClick={() => photoInputRef.current?.click()}
-        profileScore={profileScore}
-        canAccessRecruiter={canAccessRecruiter}
       />
 
       <input
@@ -713,110 +716,131 @@ export default function JoineeDashboard() {
 
 // ─── Enhanced Sidebar ─────────────────────────────────────────────────────────
 // Wraps your existing Sidebar and adds the Recruiter Section item below.
+// Replace the entire EnhancedSidebar function with this:
 function EnhancedSidebar({
   profile,
   activeSection,
   onSelect,
   onPhotoClick,
-  profileScore,
-  canAccessRecruiter,
 }: {
   profile: JoineeProfile | null;
   activeSection: ExtendedSection;
   onSelect: (s: ExtendedSection) => void;
   onPhotoClick: () => void;
-  profileScore: number;
-  canAccessRecruiter: boolean;
 }) {
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', width: 240, flexShrink: 0 }}>
-      {/* Existing sidebar (handles all original sections) */}
-      <Sidebar
-        profile={profile}
-        activeSection={activeSection === 'recruiter' ? 'overview' : (activeSection as Section)}
-        onSelect={(s) => onSelect(s as ExtendedSection)}
-        onPhotoClick={onPhotoClick}
-      />
-
-      {/* ── Recruiter Section entry — injected at bottom of sidebar ── */}
-      {/* NOTE: If your Sidebar renders a fixed-height list you may need to
-           position this as an absolute footer inside the sidebar container.
-           Alternatively, add this item directly inside your Sidebar component. */}
-      <div style={{
-        background: '#0D1B3E',
-        borderTop: '1px solid rgba(255,255,255,0.08)',
-        padding: '12px 10px',
-        marginTop: 'auto',
-      }}>
-        <button
-          onClick={() => onSelect('recruiter')}
-          style={{
-            width: '100%',
-            display: 'flex',
-            alignItems: 'center',
-            gap: 10,
-            padding: '10px 12px',
-            borderRadius: 10,
-            border: activeSection === 'recruiter' ? '1.5px solid rgba(255,255,255,0.2)' : '1.5px solid transparent',
-            background: activeSection === 'recruiter'
-              ? 'linear-gradient(135deg,rgba(214,43,43,0.3),rgba(28,63,168,0.3))'
-              : canAccessRecruiter
-                ? 'rgba(34,197,94,0.12)'
-                : 'rgba(214,43,43,0.1)',
-            cursor: 'pointer',
-            transition: 'all 0.2s',
-            fontFamily: 'inherit',
-            position: 'relative',
-          }}
-        >
-          {/* Icon */}
-          <span style={{ fontSize: 18, flexShrink: 0 }}>
-            {canAccessRecruiter ? '📋' : '🔒'}
-          </span>
-
-          <div style={{ flex: 1, textAlign: 'left' }}>
-            <div style={{ fontSize: 13, fontWeight: 600, color: '#fff', lineHeight: 1.2 }}>
-              Recruiter Section
-            </div>
-            <div style={{ fontSize: 10, color: canAccessRecruiter ? '#86EFAC' : '#FCA5A5', marginTop: 1 }}>
-              {canAccessRecruiter ? '✓ Your resume is live' : `Needs ${50 - profileScore}% more`}
-            </div>
-          </div>
-
-          {/* Score pill */}
-          <span style={{
-            fontSize: 10,
-            fontWeight: 700,
-            color: canAccessRecruiter ? '#16A34A' : '#D62B2B',
-            background: canAccessRecruiter ? '#F0FDF4' : '#FFF5F5',
-            border: `1px solid ${canAccessRecruiter ? '#BBF7D0' : '#FECDD3'}`,
-            borderRadius: 20,
-            padding: '2px 7px',
-            flexShrink: 0,
-          }}>
-            {profileScore}%
-          </span>
-        </button>
-
-        {/* Mini progress bar */}
-        {!canAccessRecruiter && (
-          <div style={{ marginTop: 8, padding: '0 12px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-              <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.4)' }}>Profile Score</span>
-              <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.4)' }}>50% needed</span>
-            </div>
-            <div style={{ height: 3, background: 'rgba(255,255,255,0.1)', borderRadius: 99, overflow: 'hidden' }}>
-              <div style={{
-                height: '100%',
-                width: `${(profileScore / 50) * 100}%`,
-                background: 'linear-gradient(90deg,#D62B2B,#F59E0B)',
-                borderRadius: 99,
-                transition: 'width 0.6s ease',
-              }} />
-            </div>
-          </div>
-        )}
-      </div>
-    </div>
+    <Sidebar
+      profile={profile}
+      activeSection={activeSection as Section}
+      onSelect={(s) => onSelect(s as ExtendedSection)}
+      onPhotoClick={onPhotoClick}
+    />
   );
 }
+// function EnhancedSidebar({
+//   profile,
+//   activeSection,
+//   onSelect,
+//   onPhotoClick,
+//   profileScore,
+//   canAccessRecruiter,
+// }: {
+//   profile: JoineeProfile | null;
+//   activeSection: ExtendedSection;
+//   onSelect: (s: ExtendedSection) => void;
+//   onPhotoClick: () => void;
+//   profileScore: number;
+//   canAccessRecruiter: boolean;
+// }) {
+//   return (
+//     <div style={{ display: 'flex', flexDirection: 'column', width: 240, flexShrink: 0, minHeight: '100vh' }}>
+//       {/* Existing sidebar (handles all original sections) */}
+//       <Sidebar
+//         profile={profile}
+//         activeSection={activeSection === 'recruiter' ? 'overview' : (activeSection as Section)}
+//         onSelect={(s) => onSelect(s as ExtendedSection)}
+//         onPhotoClick={onPhotoClick}
+//       />
+
+//       {/* ── Recruiter Section entry — injected at bottom of sidebar ── */}
+//       {/* NOTE: If your Sidebar renders a fixed-height list you may need to
+//            position this as an absolute footer inside the sidebar container.
+//            Alternatively, add this item directly inside your Sidebar component. */}
+//       <div style={{
+//         background: '#0D1B3E',
+//         borderTop: '1px solid rgba(255,255,255,0.08)',
+//         padding: '12px 10px',
+//         marginTop: 'auto',
+//       }}>
+//         <button
+//           onClick={() => onSelect('recruiter')}
+//           style={{
+//             width: '100%',
+//             display: 'flex',
+//             alignItems: 'center',
+//             gap: 10,
+//             padding: '10px 12px',
+//             borderRadius: 10,
+//             border: activeSection === 'recruiter' ? '1.5px solid rgba(255,255,255,0.2)' : '1.5px solid transparent',
+//             background: activeSection === 'recruiter'
+//               ? 'linear-gradient(135deg,rgba(214,43,43,0.3),rgba(28,63,168,0.3))'
+//               : canAccessRecruiter
+//                 ? 'rgba(34,197,94,0.12)'
+//                 : 'rgba(214,43,43,0.1)',
+//             cursor: 'pointer',
+//             transition: 'all 0.2s',
+//             fontFamily: 'inherit',
+//             position: 'relative',
+//           }}
+//         >
+//           {/* Icon */}
+//           <span style={{ fontSize: 18, flexShrink: 0 }}>
+//             {canAccessRecruiter ? '📋' : '🔒'}
+//           </span>
+
+//           <div style={{ flex: 1, textAlign: 'left' }}>
+//             <div style={{ fontSize: 13, fontWeight: 600, color: '#fff', lineHeight: 1.2 }}>
+//               Recruiter Section
+//             </div>
+//             <div style={{ fontSize: 10, color: canAccessRecruiter ? '#86EFAC' : '#FCA5A5', marginTop: 1 }}>
+//               {canAccessRecruiter ? '✓ Your resume is live' : `Needs ${50 - profileScore}% more`}
+//             </div>
+//           </div>
+
+//           {/* Score pill */}
+//           <span style={{
+//             fontSize: 10,
+//             fontWeight: 700,
+//             color: canAccessRecruiter ? '#16A34A' : '#D62B2B',
+//             background: canAccessRecruiter ? '#F0FDF4' : '#FFF5F5',
+//             border: `1px solid ${canAccessRecruiter ? '#BBF7D0' : '#FECDD3'}`,
+//             borderRadius: 20,
+//             padding: '2px 7px',
+//             flexShrink: 0,
+//           }}>
+//             {profileScore}%
+//           </span>
+//         </button>
+
+//         {/* Mini progress bar */}
+//         {!canAccessRecruiter && (
+//           <div style={{ marginTop: 8, padding: '0 12px' }}>
+//             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+//               <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.4)' }}>Profile Score</span>
+//               <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.4)' }}>50% needed</span>
+//             </div>
+//             <div style={{ height: 3, background: 'rgba(255,255,255,0.1)', borderRadius: 99, overflow: 'hidden' }}>
+//               <div style={{
+//                 height: '100%',
+//                 width: `${(profileScore / 50) * 100}%`,
+//                 background: 'linear-gradient(90deg,#D62B2B,#F59E0B)',
+//                 borderRadius: 99,
+//                 transition: 'width 0.6s ease',
+//               }} />
+//             </div>
+//           </div>
+//         )}
+//       </div>
+//     </div>
+//   );
+

@@ -6,6 +6,7 @@ import type {
   Project,
   SocialProfile,
   Address,
+  ResumeAnalysis
 } from '../types/joinee.types';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -259,4 +260,29 @@ export const disable2FA = async (): Promise<{ success: boolean }> => {
 export const getAppliedJobIds = async (): Promise<string[]> => {
   const { data } = await api.get<ApiEnvelope<{ ids: string[] }>>('/applications/my-ids');
   return data.data.ids;
+};
+
+// export const analyzeResume = async (): Promise<ResumeAnalysis> => {
+//   const { data } = await api.post<ApiEnvelope<{ analysis: ResumeAnalysis }>>('/resume/analyze');
+//   return data.data.analysis;
+// };
+
+export interface AnalyzeResumeResult {
+  analysis: ResumeAnalysis;
+  cached: boolean;
+  nextAvailableAt: string;
+}
+
+export const analyzeResume = async (): Promise<AnalyzeResumeResult> => {
+  const { data } = await api.post<ApiEnvelope<AnalyzeResumeResult>>('/resume/analyze');
+  return data.data;
+};
+
+export const getExistingAnalysis = async (): Promise<ResumeAnalysis | null> => {
+  try {
+    const { data } = await api.get<ApiEnvelope<{ analysis: ResumeAnalysis }>>('/resume/analysis');
+    return data.data.analysis;
+  } catch {
+    return null;
+  }
 };
