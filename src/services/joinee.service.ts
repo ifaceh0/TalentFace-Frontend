@@ -13,6 +13,16 @@ import type {
 
 type ApiEnvelope<T> = { success: boolean; message: string; data: T };
 
+// ─── Python health check ──────────────────────────────────────────────────────
+export const checkPythonHealth = async (): Promise<boolean> => {
+  try {
+    const { data } = await api.get<{ success: boolean; pythonHealthy: boolean }>('/health/python');
+    return data.pythonHealthy;
+  } catch {
+    return false;
+  }
+};
+
 // ─── 1. Profile ───────────────────────────────────────────────────────────────
 
 export const getProfile = async (): Promise<JoineeProfile> => {
@@ -309,4 +319,34 @@ export const getJobPreferences = async (): Promise<JobPreferencesPayload> => {
 export const updateJobPreferences = async (payload: JobPreferencesPayload): Promise<JobPreferencesPayload> => {
   const { data } = await api.put<ApiEnvelope<{ jobPreferences: JobPreferencesPayload }>>('/joinee/preferences/job', payload);
   return data.data.jobPreferences;
+};
+
+export interface JobFitCheckResult {
+  _id: string;
+  joinee: string;
+  job: string;
+  source: 'generated' | 'uploaded';
+  stage: 'filtered' | 'analyzed';
+  keywordScore: number;
+  matchedKeywords: string[];
+  missingKeywords: string[];
+  atsScore: number | null;
+  extractedSkills: string[];
+  strengths: string[];
+  improvements: string[];
+  overallFeedback: string;
+  eligible: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export const checkJobFit = async (
+  jobId: string,
+  resumeType: 'ai' | 'uploaded'
+): Promise<JobFitCheckResult> => {
+  const { data } = await api.post<ApiEnvelope<{ fitCheck: JobFitCheckResult }>>(
+    `/jobs/${jobId}/check-fit`,
+    { resumeType }
+  );
+  return data.data.fitCheck;
 };

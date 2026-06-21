@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { analyzeResume, getExistingAnalysis } from '../../services/joinee.service';
 import type { ResumeAnalysis } from '../../types/joinee.types';
+import { useWarmPythonService } from '../../hooks/useWarmPythonService';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -327,6 +328,7 @@ export default function ResumeAnalyzer() {
   const [error, setError]                 = useState<string | null>(null);
   const [cached, setCached]               = useState(false);
   const [nextAvailableAt, setNextAvailableAt] = useState<string | null>(null);
+  const { runWhenWarm, warming, cancel }  = useWarmPythonService();
 
   // ── Auto-load existing analysis on mount ──────────────────────────────────
   useEffect(() => {
@@ -342,21 +344,24 @@ export default function ResumeAnalyzer() {
         }
       })
       .finally(() => setInitialLoading(false));
-  }, []);
+    return () => cancel(); // cancel any in-flight warm-up poll on unmount
+  }, [cancel]);
 
   const handleAnalyze = async () => {
     setLoading(true);
     setError(null);
-    try {
-      const result = await analyzeResume();
-      setAnalysis(result.analysis);
-      setCached(result.cached);
-      setNextAvailableAt(result.nextAvailableAt);
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Analysis failed. Please try again.');
-    } finally {
-      setLoading(false);
-    }
+    await runWhenWarm(async () => {
+      try {
+        const result = await analyzeResume();
+        setAnalysis(result.analysis);
+        setCached(result.cached);
+        setNextAvailableAt(result.nextAvailableAt);
+      } catch (err: unknown) {
+        setError(err instanceof Error ? err.message : 'Analysis failed. Please try again.');
+      } finally {
+        setLoading(false);
+      }
+    });
   };
 
   const canReanalyze = nextAvailableAt ? Date.now() >= new Date(nextAvailableAt).getTime() : true;
@@ -390,12 +395,35 @@ export default function ResumeAnalyzer() {
       )}
 
       {/* ── Empty state ── */}
-      {!initialLoading && !analysis && !loading && (
+      {!initialLoading && !analysis && !loading && !warming && (
         <EmptyState onAnalyze={handleAnalyze} loading={loading} />
       )}
 
+      {/* ── Warming up Python service (cold start) ── */}
+      {warming && !analysis && (
+        <div style={{
+          background: '#fff',
+          border: '1px solid #E8EDF8',
+          borderRadius: 20,
+          padding: '48px 32px',
+          textAlign: 'center',
+        }}>
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none"
+            style={{ animation: 'spin 0.8s linear infinite', margin: '0 auto 16px' }}>
+            <circle cx="12" cy="12" r="10" stroke="#D62B2B" strokeWidth="3" strokeOpacity="0.2" />
+            <path d="M12 2a10 10 0 0110 10" stroke="#D62B2B" strokeWidth="3" strokeLinecap="round" />
+          </svg>
+          <p style={{ fontSize: 14, color: '#6B7280', margin: 0 }}>
+            Warming up AI engine…
+          </p>
+          <p style={{ fontSize: 12, color: '#9CA3AF', margin: '4px 0 0' }}>
+            This can take up to 30 seconds the first time
+          </p>
+        </div>
+      )}
+
       {/* ── Loading skeleton ── */}
-      {loading && !analysis && (
+      {loading && !warming && !analysis && (
         <div style={{
           background: '#fff',
           border: '1px solid #E8EDF8',
@@ -535,8 +563,8 @@ export default function ResumeAnalyzer() {
   );
 }
 
-// import { useState } from 'react';
-// import { analyzeResume } from '../../services/joinee.service';
+// import { useState, useEffect } from 'react';
+// import { analyzeResume, getExistingAnalysis } from '../../services/joinee.service';
 // import type { ResumeAnalysis } from '../../types/joinee.types';
 
 // // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -770,25 +798,133 @@ export default function ResumeAnalyzer() {
 //   );
 // }
 
+// // ─── Cooldown Banner ──────────────────────────────────────────────────────────
+
+// function CooldownBanner({ nextAvailableAt }: { nextAvailableAt: string }) {
+//   const [timeLeft, setTimeLeft] = useState('');
+
+//   useEffect(() => {
+//     const calc = () => {
+//       const diff = new Date(nextAvailableAt).getTime() - Date.now();
+//       if (diff <= 0) { setTimeLeft('Available now'); return; }
+
+//       const days    = Math.floor(diff / (1000 * 60 * 60 * 24));
+//       const hours   = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+//       const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+//       const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+//       if (days > 0)    setTimeLeft(`${days}d ${hours}h ${minutes}m`);
+//       else if (hours > 0) setTimeLeft(`${hours}h ${minutes}m ${seconds}s`);
+//       else             setTimeLeft(`${minutes}m ${seconds}s`);
+//     };
+
+//     calc();
+//     const timer = setInterval(calc, 1000);
+//     return () => clearInterval(timer);
+//   }, [nextAvailableAt]);
+
+//   return (
+//     <div style={{
+//       background: '#FFFBEB',
+//       border: '1px solid #FDE68A',
+//       borderRadius: 12,
+//       padding: '12px 16px',
+//       display: 'flex',
+//       alignItems: 'center',
+//       justifyContent: 'space-between',
+//       flexWrap: 'wrap',
+//       gap: 8,
+//     }}>
+//       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+//         <span style={{ fontSize: 16 }}>⏳</span>
+//         <div>
+//           <p style={{ fontSize: 12, fontWeight: 700, color: '#B45309', margin: 0 }}>
+//             Showing cached analysis
+//           </p>
+//           <p style={{ fontSize: 11, color: '#92400E', margin: '2px 0 0' }}>
+//             Next re-analysis available in{' '}
+//             <strong>{timeLeft}</strong>
+//           </p>
+//         </div>
+//       </div>
+//       <div style={{
+//         fontSize: 11, fontWeight: 600,
+//         color: '#B45309',
+//         background: '#FEF3C7',
+//         border: '1px solid #FDE68A',
+//         borderRadius: 99,
+//         padding: '3px 10px',
+//       }}>
+//         7-day cooldown
+//       </div>
+//     </div>
+//   );
+// }
+
+// // ─── Locked Re-analyze Button ─────────────────────────────────────────────────
+
+// function LockedButton({ nextAvailableAt }: { nextAvailableAt: string }) {
+//   const isAvailable = Date.now() >= new Date(nextAvailableAt).getTime();
+//   if (isAvailable) return null;
+//   return (
+//     <div style={{
+//       display: 'inline-flex', alignItems: 'center', gap: 8,
+//       background: '#F3F4F6',
+//       color: '#9CA3AF',
+//       border: '1px solid #E5E7EB',
+//       borderRadius: 12,
+//       padding: '11px 20px',
+//       fontSize: 13, fontWeight: 600,
+//       cursor: 'not-allowed',
+//       userSelect: 'none',
+//     }}>
+//       🔒 Re-analyze locked
+//     </div>
+//   );
+// }
+
 // // ─── Main Component ───────────────────────────────────────────────────────────
 
 // export default function ResumeAnalyzer() {
-//   const [analysis, setAnalysis] = useState<ResumeAnalysis | null>(null);
-//   const [loading, setLoading] = useState(false);
-//   const [error, setError] = useState<string | null>(null);
+//   const [analysis, setAnalysis]           = useState<ResumeAnalysis | null>(null);
+//   const [loading, setLoading]             = useState(false);
+//   const [initialLoading, setInitialLoading] = useState(true);
+//   const [error, setError]                 = useState<string | null>(null);
+//   const [cached, setCached]               = useState(false);
+//   const [nextAvailableAt, setNextAvailableAt] = useState<string | null>(null);
+
+//   // ── Auto-load existing analysis on mount ──────────────────────────────────
+//   useEffect(() => {
+//     getExistingAnalysis()
+//       .then((existing) => {
+//         if (existing) {
+//           setAnalysis(existing);
+//           // Compute nextAvailableAt from updatedAt (7-day cooldown)
+//           const next = new Date(new Date(existing.updatedAt).getTime() + 7 * 24 * 60 * 60 * 1000);
+//           const isCached = Date.now() < next.getTime();
+//           setCached(isCached);
+//           setNextAvailableAt(next.toISOString());
+//         }
+//       })
+//       .finally(() => setInitialLoading(false));
+//   }, []);
 
 //   const handleAnalyze = async () => {
 //     setLoading(true);
 //     setError(null);
 //     try {
 //       const result = await analyzeResume();
-//       setAnalysis(result);
+//       setAnalysis(result.analysis);
+//       setCached(result.cached);
+//       setNextAvailableAt(result.nextAvailableAt);
 //     } catch (err: unknown) {
 //       setError(err instanceof Error ? err.message : 'Analysis failed. Please try again.');
 //     } finally {
 //       setLoading(false);
 //     }
 //   };
+
+//   const canReanalyze = nextAvailableAt ? Date.now() >= new Date(nextAvailableAt).getTime() : true;
 
 //   return (
 //     <div style={{ fontFamily: "'Inter', system-ui, sans-serif" }}>
@@ -803,8 +939,23 @@ export default function ResumeAnalyzer() {
 //         </p>
 //       </div>
 
+//       {/* ── Initial page load ── */}
+//       {initialLoading && (
+//         <div style={{
+//           background: '#fff', border: '1px solid #E8EDF8',
+//           borderRadius: 20, padding: '48px 32px', textAlign: 'center',
+//         }}>
+//           <svg width="36" height="36" viewBox="0 0 24 24" fill="none"
+//             style={{ animation: 'spin 0.8s linear infinite', margin: '0 auto 14px' }}>
+//             <circle cx="12" cy="12" r="10" stroke="#1C3FA8" strokeWidth="3" strokeOpacity="0.2" />
+//             <path d="M12 2a10 10 0 0110 10" stroke="#1C3FA8" strokeWidth="3" strokeLinecap="round" />
+//           </svg>
+//           <p style={{ fontSize: 13, color: '#6B7280', margin: 0 }}>Loading your analysis…</p>
+//         </div>
+//       )}
+
 //       {/* ── Empty state ── */}
-//       {!analysis && !loading && (
+//       {!initialLoading && !analysis && !loading && (
 //         <EmptyState onAnalyze={handleAnalyze} loading={loading} />
 //       )}
 
@@ -845,8 +996,13 @@ export default function ResumeAnalyzer() {
 //       )}
 
 //       {/* ── Results ── */}
-//       {analysis && (
+//       {!initialLoading && analysis && (
 //         <div style={{ display: 'flex', flexDirection: 'column', gap: 20, animation: 'fadeIn 0.3s ease' }}>
+
+//           {/* ── Cooldown banner ── */}
+//           {cached && nextAvailableAt && (
+//             <CooldownBanner nextAvailableAt={nextAvailableAt} />
+//           )}
 
 //           {/* ── Top bar: score ring + meta ── */}
 //           <div style={{
@@ -877,12 +1033,15 @@ export default function ResumeAnalyzer() {
 //                 </p>
 //               </div>
 
-//               <Timestamp iso={analysis.createdAt} />
+//               <Timestamp iso={analysis.updatedAt} />
 //             </div>
 
-//             {/* Re-analyze button */}
+//             {/* Re-analyze button — locked during cooldown */}
 //             <div style={{ marginLeft: 'auto' }}>
-//               <AnalyzeButton onClick={handleAnalyze} loading={loading} />
+//               {canReanalyze
+//                 ? <AnalyzeButton onClick={handleAnalyze} loading={loading} />
+//                 : <LockedButton nextAvailableAt={nextAvailableAt!} />
+//               }
 //             </div>
 //           </div>
 
@@ -940,3 +1099,4 @@ export default function ResumeAnalyzer() {
 //     </div>
 //   );
 // }
+
