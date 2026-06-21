@@ -1,4 +1,3 @@
-import { useEffect } from 'react';
 import {
   DndContext,
   PointerSensor,
@@ -15,7 +14,7 @@ import {
 
 import { useStore } from '../../store/useStore';
 import type { Candidate, CandidateStatus } from '../../store/useStore';
-import CandidateCard from './CandidateCard';
+import CandidateCard from '../candidates/CandidateCard';
 
 const columns: {
   id: CandidateStatus;
@@ -70,10 +69,8 @@ function PipelineColumn({
     <div
       ref={setNodeRef}
       className={`
-        w-full
-        sm:w-[48%]
-        lg:w-[19%]
-        min-w-[220px]
+        w-[280px]
+        min-w-[280px]
         h-[420px]
         rounded-xl
         border-2
@@ -116,16 +113,12 @@ function PipelineColumn({
   );
 }
 
-export default function PipelineBoard() {
-  const {
-    candidates,
-    fetchCandidates,
-    updateCandidateStatus,
-  } = useStore();
+interface PipelineBoardFilteredProps {
+  candidates: Candidate[];
+}
 
-  useEffect(() => {
-    fetchCandidates();
-  }, [fetchCandidates]);
+export default function PipelineBoardFiltered({ candidates }: PipelineBoardFilteredProps) {
+  const { updateCandidateStatus } = useStore();
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -177,7 +170,7 @@ export default function PipelineBoard() {
         items={candidates.map((c) => c.id)}
         strategy={verticalListSortingStrategy}
       >
-        <div className="flex flex-wrap gap-3 justify-center">
+        <div className="flex gap-3 justify-start overflow-x-auto pb-4">
           {columns.map((col) => {
             const columnCandidates = candidates.filter(
               (c) => c.status === col.id

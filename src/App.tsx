@@ -1,4 +1,5 @@
 import { useState } from "react";
+
 import {
   BrowserRouter,
   Routes,
@@ -7,6 +8,7 @@ import {
 } from "react-router-dom";
 
 import { AuthProvider } from "./context/AuthContext";
+//import { ThemeProvider } from "./context/ThemeContext";
 import ProtectedRoute from "./components/common/ProtectedRoute";
 
 import Sidebar from "./components/layout/Sidebar";
@@ -31,6 +33,7 @@ import ChatWidget from "./components/ChatWidget/ChatWidget";
 import SavedJobs from "./components/joinee/SavedJob";
 
 import Setting from "./pages/joinee/Setting";
+import JoineeApplications from "./pages/joinee/joineeApplications";
 
 // ───────────────── Dashboard Layout ─────────────────
 
@@ -61,7 +64,7 @@ function Dashboard({ role }: { role: string }) {
         role={role}
       />
 
-      <div className="flex-1 ml-64">
+      <div className="flex-1 ml-64 min-h-screen overflow-y-auto">
         <Header activePage={activePage} />
 
         <main className="mt-16 p-6">
@@ -127,6 +130,7 @@ function Unauthorized() {
 
 export default function App() {
   return (
+    // <ThemeProvider>
     <AuthProvider>
       <BrowserRouter>
         <Routes>
@@ -195,6 +199,7 @@ export default function App() {
             <Route path="/joinee/swipe"     element={<JoineeLayout><JobSwipe /></JoineeLayout>} />
             <Route path="/joinee/saved" element={<SavedJobs />} />
             <Route path="/joinee/setting" element={<Setting />} /> 
+            <Route path="/joinee/applications" element={<JoineeLayout><JoineeApplications /></JoineeLayout>} />
           </Route>
 
 
@@ -208,7 +213,8 @@ export default function App() {
 
         </Routes>
       </BrowserRouter>
-    </AuthProvider>
+   </AuthProvider>
+    // </ThemeProvider>
   );
 }
 

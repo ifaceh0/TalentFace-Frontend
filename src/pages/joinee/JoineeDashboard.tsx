@@ -257,9 +257,11 @@ import ResumeSection from '../../components/joinee/ResumeSection';
 import { getProfile, uploadProfilePhoto } from '../../services/joinee.service';
 import type { JoineeProfile } from '../../types/joinee.types';
 import RecruiterSection from '../../components/joinee/RecruiterSection';
+// after your other joinee component imports
+import ResumeAnalyzer from '../../components/joinee/ResumeAnalyzer';
 
 // ─── Extended section type with recruiter panel ───────────────────────────────
-type ExtendedSection = Section | 'recruiter';
+type ExtendedSection = Section | 'recruiter' | 'analyzer';
 
 
 // ─── Recruiter Panel (thin wrapper) ──────────────────────────────────────────
@@ -513,9 +515,9 @@ export default function JoineeDashboard() {
   };
 
   // ─── Loading ───────────────────────────────────────────────────────────────
-  if (loading) {
+ if (loading) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+      <div className="min-h-screen bg-slate-50 dark:bg-slate-900 flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
           <svg className="animate-spin w-10 h-10 text-red-500" viewBox="0 0 24 24" fill="none">
             <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" strokeOpacity="0.2" />
@@ -530,11 +532,11 @@ export default function JoineeDashboard() {
   // ─── Error ─────────────────────────────────────────────────────────────────
   if (error) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+      <div className="min-h-screen bg-slate-50 dark:bg-slate-900 flex items-center justify-center">
         <div className="text-center max-w-sm mx-auto px-4">
           <p className="text-5xl mb-4">⚠️</p>
-          <h1 className="text-lg font-bold text-gray-900">Failed to load profile</h1>
-          <p className="text-sm text-gray-500 mt-1">{error}</p>
+          <h1 className="text-lg font-bold text-gray-900 dark:text-slate-100">Failed to load profile</h1>
+          <p className="text-sm text-gray-500 dark:text-slate-400 mt-1">{error}</p>
           <button
             onClick={() => window.location.reload()}
             className="mt-4 px-5 py-2 bg-red-500 hover:bg-red-600 text-white text-sm font-semibold rounded-xl"
@@ -555,7 +557,7 @@ export default function JoineeDashboard() {
       return <RecruiterPanel profile={profile} />;
     }
 
-    switch (activeSection as Section) {
+    switch (activeSection as ExtendedSection) {
       case 'overview':
         return <Overview profile={profile} />;
       case 'basic':
@@ -591,6 +593,8 @@ export default function JoineeDashboard() {
         return <SocialProfilesForm profile={profile} onUpdate={updateProfile} />;
       case 'resume':
         return <ResumeSection profile={profile} onUpdate={updateProfile} />;
+      case 'analyzer':
+        return <ResumeAnalyzer />;
     }
   };
 
@@ -605,12 +609,13 @@ export default function JoineeDashboard() {
     projects: 'Projects',
     social: 'Social Profiles',
     resume: 'Resume',
+    analyzer: 'Resume Analyzer',
     recruiter: 'Recruiter Section',
   };
 
   // ─── Render ────────────────────────────────────────────────────────────────
   return (
-    <div className="flex min-h-screen bg-slate-50" style={{ fontFamily: "'Inter', system-ui, sans-serif" }}>
+   <div className="flex min-h-screen bg-slate-50 dark:bg-slate-900" style={{ fontFamily: "'Inter', system-ui, sans-serif" }}>
 
       {/* ── Enhanced Sidebar with Recruiter Section ── */}
       <EnhancedSidebar
@@ -618,8 +623,6 @@ export default function JoineeDashboard() {
         activeSection={activeSection}
         onSelect={handleSectionSelect}
         onPhotoClick={() => photoInputRef.current?.click()}
-        profileScore={profileScore}
-        canAccessRecruiter={canAccessRecruiter}
       />
 
       <input
@@ -634,13 +637,13 @@ export default function JoineeDashboard() {
       <div className="flex-1 flex flex-col overflow-hidden">
 
         {/* Top bar */}
-        <header className="bg-white border-b border-gray-100 px-6 py-3.5 flex items-center justify-between shrink-0" style={{ gap: 12 }}>
+        <header className="bg-white dark:bg-slate-800 border-b border-gray-100 dark:border-slate-700 px-6 py-3.5 flex items-center justify-between shrink-0" style={{ gap: 12 }}>
           <div className="flex items-center gap-2">
-            <span className="text-sm font-medium text-gray-400">Dashboard</span>
+            <span className="text-sm font-medium text-gray-400 dark:text-slate-400">Dashboard</span>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-gray-300">
               <path d="M9 18l6-6-6-6" />
             </svg>
-            <span className="text-sm font-semibold text-gray-800">
+            <span className="text-sm font-semibold text-gray-800 dark:text-slate-200">
               {SECTION_LABELS[activeSection]}
             </span>
             {/* Recruiter badge in breadcrumb */}
@@ -678,7 +681,7 @@ export default function JoineeDashboard() {
         {/* Content panel */}
         <main
           ref={mainRef}
-          className="flex-1 overflow-y-auto p-6 lg:p-8"
+          className="flex-1 overflow-y-auto p-6 lg:p-8 dark:bg-slate-900"
           key={activeSection}
           style={{ animation: 'fadeIn 0.22s ease' }}
         >
@@ -713,110 +716,131 @@ export default function JoineeDashboard() {
 
 // ─── Enhanced Sidebar ─────────────────────────────────────────────────────────
 // Wraps your existing Sidebar and adds the Recruiter Section item below.
+// Replace the entire EnhancedSidebar function with this:
 function EnhancedSidebar({
   profile,
   activeSection,
   onSelect,
   onPhotoClick,
-  profileScore,
-  canAccessRecruiter,
 }: {
   profile: JoineeProfile | null;
   activeSection: ExtendedSection;
   onSelect: (s: ExtendedSection) => void;
   onPhotoClick: () => void;
-  profileScore: number;
-  canAccessRecruiter: boolean;
 }) {
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', width: 240, flexShrink: 0 }}>
-      {/* Existing sidebar (handles all original sections) */}
-      <Sidebar
-        profile={profile}
-        activeSection={activeSection === 'recruiter' ? 'overview' : (activeSection as Section)}
-        onSelect={(s) => onSelect(s as ExtendedSection)}
-        onPhotoClick={onPhotoClick}
-      />
-
-      {/* ── Recruiter Section entry — injected at bottom of sidebar ── */}
-      {/* NOTE: If your Sidebar renders a fixed-height list you may need to
-           position this as an absolute footer inside the sidebar container.
-           Alternatively, add this item directly inside your Sidebar component. */}
-      <div style={{
-        background: '#0D1B3E',
-        borderTop: '1px solid rgba(255,255,255,0.08)',
-        padding: '12px 10px',
-        marginTop: 'auto',
-      }}>
-        <button
-          onClick={() => onSelect('recruiter')}
-          style={{
-            width: '100%',
-            display: 'flex',
-            alignItems: 'center',
-            gap: 10,
-            padding: '10px 12px',
-            borderRadius: 10,
-            border: activeSection === 'recruiter' ? '1.5px solid rgba(255,255,255,0.2)' : '1.5px solid transparent',
-            background: activeSection === 'recruiter'
-              ? 'linear-gradient(135deg,rgba(214,43,43,0.3),rgba(28,63,168,0.3))'
-              : canAccessRecruiter
-                ? 'rgba(34,197,94,0.12)'
-                : 'rgba(214,43,43,0.1)',
-            cursor: 'pointer',
-            transition: 'all 0.2s',
-            fontFamily: 'inherit',
-            position: 'relative',
-          }}
-        >
-          {/* Icon */}
-          <span style={{ fontSize: 18, flexShrink: 0 }}>
-            {canAccessRecruiter ? '📋' : '🔒'}
-          </span>
-
-          <div style={{ flex: 1, textAlign: 'left' }}>
-            <div style={{ fontSize: 13, fontWeight: 600, color: '#fff', lineHeight: 1.2 }}>
-              Recruiter Section
-            </div>
-            <div style={{ fontSize: 10, color: canAccessRecruiter ? '#86EFAC' : '#FCA5A5', marginTop: 1 }}>
-              {canAccessRecruiter ? '✓ Your resume is live' : `Needs ${50 - profileScore}% more`}
-            </div>
-          </div>
-
-          {/* Score pill */}
-          <span style={{
-            fontSize: 10,
-            fontWeight: 700,
-            color: canAccessRecruiter ? '#16A34A' : '#D62B2B',
-            background: canAccessRecruiter ? '#F0FDF4' : '#FFF5F5',
-            border: `1px solid ${canAccessRecruiter ? '#BBF7D0' : '#FECDD3'}`,
-            borderRadius: 20,
-            padding: '2px 7px',
-            flexShrink: 0,
-          }}>
-            {profileScore}%
-          </span>
-        </button>
-
-        {/* Mini progress bar */}
-        {!canAccessRecruiter && (
-          <div style={{ marginTop: 8, padding: '0 12px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-              <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.4)' }}>Profile Score</span>
-              <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.4)' }}>50% needed</span>
-            </div>
-            <div style={{ height: 3, background: 'rgba(255,255,255,0.1)', borderRadius: 99, overflow: 'hidden' }}>
-              <div style={{
-                height: '100%',
-                width: `${(profileScore / 50) * 100}%`,
-                background: 'linear-gradient(90deg,#D62B2B,#F59E0B)',
-                borderRadius: 99,
-                transition: 'width 0.6s ease',
-              }} />
-            </div>
-          </div>
-        )}
-      </div>
-    </div>
+    <Sidebar
+      profile={profile}
+      activeSection={activeSection as Section}
+      onSelect={(s) => onSelect(s as ExtendedSection)}
+      onPhotoClick={onPhotoClick}
+    />
   );
 }
+// function EnhancedSidebar({
+//   profile,
+//   activeSection,
+//   onSelect,
+//   onPhotoClick,
+//   profileScore,
+//   canAccessRecruiter,
+// }: {
+//   profile: JoineeProfile | null;
+//   activeSection: ExtendedSection;
+//   onSelect: (s: ExtendedSection) => void;
+//   onPhotoClick: () => void;
+//   profileScore: number;
+//   canAccessRecruiter: boolean;
+// }) {
+//   return (
+//     <div style={{ display: 'flex', flexDirection: 'column', width: 240, flexShrink: 0, minHeight: '100vh' }}>
+//       {/* Existing sidebar (handles all original sections) */}
+//       <Sidebar
+//         profile={profile}
+//         activeSection={activeSection === 'recruiter' ? 'overview' : (activeSection as Section)}
+//         onSelect={(s) => onSelect(s as ExtendedSection)}
+//         onPhotoClick={onPhotoClick}
+//       />
+
+//       {/* ── Recruiter Section entry — injected at bottom of sidebar ── */}
+//       {/* NOTE: If your Sidebar renders a fixed-height list you may need to
+//            position this as an absolute footer inside the sidebar container.
+//            Alternatively, add this item directly inside your Sidebar component. */}
+//       <div style={{
+//         background: '#0D1B3E',
+//         borderTop: '1px solid rgba(255,255,255,0.08)',
+//         padding: '12px 10px',
+//         marginTop: 'auto',
+//       }}>
+//         <button
+//           onClick={() => onSelect('recruiter')}
+//           style={{
+//             width: '100%',
+//             display: 'flex',
+//             alignItems: 'center',
+//             gap: 10,
+//             padding: '10px 12px',
+//             borderRadius: 10,
+//             border: activeSection === 'recruiter' ? '1.5px solid rgba(255,255,255,0.2)' : '1.5px solid transparent',
+//             background: activeSection === 'recruiter'
+//               ? 'linear-gradient(135deg,rgba(214,43,43,0.3),rgba(28,63,168,0.3))'
+//               : canAccessRecruiter
+//                 ? 'rgba(34,197,94,0.12)'
+//                 : 'rgba(214,43,43,0.1)',
+//             cursor: 'pointer',
+//             transition: 'all 0.2s',
+//             fontFamily: 'inherit',
+//             position: 'relative',
+//           }}
+//         >
+//           {/* Icon */}
+//           <span style={{ fontSize: 18, flexShrink: 0 }}>
+//             {canAccessRecruiter ? '📋' : '🔒'}
+//           </span>
+
+//           <div style={{ flex: 1, textAlign: 'left' }}>
+//             <div style={{ fontSize: 13, fontWeight: 600, color: '#fff', lineHeight: 1.2 }}>
+//               Recruiter Section
+//             </div>
+//             <div style={{ fontSize: 10, color: canAccessRecruiter ? '#86EFAC' : '#FCA5A5', marginTop: 1 }}>
+//               {canAccessRecruiter ? '✓ Your resume is live' : `Needs ${50 - profileScore}% more`}
+//             </div>
+//           </div>
+
+//           {/* Score pill */}
+//           <span style={{
+//             fontSize: 10,
+//             fontWeight: 700,
+//             color: canAccessRecruiter ? '#16A34A' : '#D62B2B',
+//             background: canAccessRecruiter ? '#F0FDF4' : '#FFF5F5',
+//             border: `1px solid ${canAccessRecruiter ? '#BBF7D0' : '#FECDD3'}`,
+//             borderRadius: 20,
+//             padding: '2px 7px',
+//             flexShrink: 0,
+//           }}>
+//             {profileScore}%
+//           </span>
+//         </button>
+
+//         {/* Mini progress bar */}
+//         {!canAccessRecruiter && (
+//           <div style={{ marginTop: 8, padding: '0 12px' }}>
+//             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+//               <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.4)' }}>Profile Score</span>
+//               <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.4)' }}>50% needed</span>
+//             </div>
+//             <div style={{ height: 3, background: 'rgba(255,255,255,0.1)', borderRadius: 99, overflow: 'hidden' }}>
+//               <div style={{
+//                 height: '100%',
+//                 width: `${(profileScore / 50) * 100}%`,
+//                 background: 'linear-gradient(90deg,#D62B2B,#F59E0B)',
+//                 borderRadius: 99,
+//                 transition: 'width 0.6s ease',
+//               }} />
+//             </div>
+//           </div>
+//         )}
+//       </div>
+//     </div>
+//   );
+

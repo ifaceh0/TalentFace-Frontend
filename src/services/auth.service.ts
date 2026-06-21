@@ -99,3 +99,11 @@ export const getMe = async (): Promise<AuthUser> => {
   const { data } = await api.get<{ data: { user: AuthUser } }>('/auth/me');
   return data.data.user;
 };
+
+/**
+ * PATCH /api/auth/change-password
+ */
+export const changePassword = async (oldPassword: string, newPassword: string): Promise<void> => {
+  const { data } = await api.patch('/auth/change-password', { oldPassword, newPassword });
+  return data;
+};
