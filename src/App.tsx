@@ -8,7 +8,7 @@ import {
 } from "react-router-dom";
 
 import { AuthProvider } from "./context/AuthContext";
-import { ThemeProvider } from "./context/ThemeContext";
+//import { ThemeProvider } from "./context/ThemeContext";
 import ProtectedRoute from "./components/common/ProtectedRoute";
 
 import Sidebar from "./components/layout/Sidebar";
@@ -130,7 +130,7 @@ function Unauthorized() {
 
 export default function App() {
   return (
-    <ThemeProvider>
+    // <ThemeProvider>
     <AuthProvider>
       <BrowserRouter>
         <Routes>
@@ -214,7 +214,7 @@ export default function App() {
         </Routes>
       </BrowserRouter>
    </AuthProvider>
-    </ThemeProvider>
+    // </ThemeProvider>
   );
 }
 

@@ -5,7 +5,7 @@ import {
   getProfile, generate2FASecret, verify2FAToken, disable2FA,
   getJobPreferences, updateJobPreferences,
 } from '../../services/joinee.service';
-import { useTheme } from '../../context/ThemeContext';
+//import { useTheme } from '../../context/ThemeContext';
 import {
   User,
   Bell,
@@ -13,7 +13,7 @@ import {
   Briefcase,
   Zap,
   Lock,
-  Palette,
+ // Palette,
   HelpCircle,
   ChevronRight,
   LogOut,
@@ -28,9 +28,9 @@ import {
   AlertTriangle,
   CheckCircle,
   X,
-  Sun,
-  Moon,
-  Laptop,
+  //Sun,
+  //Moon,
+  //Laptop,
   MessageSquare,
   Bug,
   FileText,
@@ -48,7 +48,7 @@ import {
 
 type Section =
   | "account" | "notifications" | "privacy" | "job-preferences"
-  | "match-preferences" | "security" | "appearance" | "support";
+  | "match-preferences" | "security" | "support";
 
 interface NotificationToggles {
   newJobRecommendations: boolean;
@@ -214,7 +214,7 @@ const NAV_ITEMS: { id: Section; label: string; icon: React.ElementType }[] = [
   { id: "job-preferences",   label: "Job Preferences",   icon: Briefcase   },
   { id: "match-preferences", label: "Match Preferences", icon: Zap         },
   { id: "security",          label: "Security",          icon: Lock        },
-  { id: "appearance",        label: "Appearance",        icon: Palette     },
+  //{ id: "appearance",        label: "Appearance",        icon: Palette     },
   { id: "support",           label: "Support",           icon: HelpCircle  },
 ];
 
@@ -288,7 +288,7 @@ export default function Settings() {
   const [sessions, setSessions] = useState(MOCK_SESSIONS);
 
   // Appearance
- const { theme, setTheme } = useTheme();
+ //const { theme, setTheme } = useTheme();
 
 const [twoFAEnabled, setTwoFAEnabled] = useState(false);
 const [twoFAStep, setTwoFAStep] = useState<0 | 1 | 2 | 3>(0);
@@ -881,37 +881,37 @@ const [backupCodes, setBackupCodes] = useState<string[]>([]);
     </div>
   );
 
-  const renderAppearance = () => (
-    <SectionCard title="Theme" description="Choose how TalentFace looks to you">
-      <div className="grid grid-cols-3 gap-3">
-        {(["light", "dark", "system"] as const).map(t => {
-          const config = {
-            light:  { label: "Light",  icon: Sun,    preview: "bg-white border-gray-200"                              },
-            dark:   { label: "Dark",   icon: Moon,   preview: "bg-gray-900 border-gray-700"                           },
-            system: { label: "System", icon: Laptop, preview: "bg-gradient-to-br from-white to-gray-900 border-gray-300" },
-          }[t];
-          const isSelected = theme === t;
-          return (
-            <button
-              key={t}
-              onClick={() => setTheme(t)}
-              className={`flex flex-col gap-3 p-4 rounded-xl border-2 transition-all ${
-                isSelected ? "border-red-500 bg-red-50" : "border-gray-100 hover:border-gray-200"
-              }`}
-            >
-              <div className={`w-full aspect-video rounded-lg border-2 ${config.preview}`} />
-              <div className="flex items-center justify-between">
-                <span className={`text-sm font-medium ${isSelected ? "text-red-700" : "text-gray-700"}`}>
-                  {config.label}
-                </span>
-                <config.icon size={14} className={isSelected ? "text-red-500" : "text-gray-400"} />
-              </div>
-            </button>
-          );
-        })}
-      </div>
-    </SectionCard>
-  );
+  // const renderAppearance = () => (
+  //   <SectionCard title="Theme" description="Choose how TalentFace looks to you">
+  //     <div className="grid grid-cols-3 gap-3">
+  //       {(["light", "dark", "system"] as const).map(t => {
+  //         const config = {
+  //           light:  { label: "Light",  icon: Sun,    preview: "bg-white border-gray-200"                              },
+  //           dark:   { label: "Dark",   icon: Moon,   preview: "bg-gray-900 border-gray-700"                           },
+  //           system: { label: "System", icon: Laptop, preview: "bg-gradient-to-br from-white to-gray-900 border-gray-300" },
+  //         }[t];
+  //         const isSelected = theme === t;
+  //         return (
+  //           <button
+  //             key={t}
+  //             onClick={() => setTheme(t)}
+  //             className={`flex flex-col gap-3 p-4 rounded-xl border-2 transition-all ${
+  //               isSelected ? "border-red-500 bg-red-50" : "border-gray-100 hover:border-gray-200"
+  //             }`}
+  //           >
+  //             <div className={`w-full aspect-video rounded-lg border-2 ${config.preview}`} />
+  //             <div className="flex items-center justify-between">
+  //               <span className={`text-sm font-medium ${isSelected ? "text-red-700" : "text-gray-700"}`}>
+  //                 {config.label}
+  //               </span>
+  //               <config.icon size={14} className={isSelected ? "text-red-500" : "text-gray-400"} />
+  //             </div>
+  //           </button>
+  //         );
+  //       })}
+  //     </div>
+  //   </SectionCard>
+  // );
 
   const renderSupport = () => (
     <div className="space-y-3">
@@ -1085,10 +1085,9 @@ const renderTwoFAModal = () => {
     "job-preferences":   renderJobPreferences,
     "match-preferences": renderMatchPreferences,
     "security":          renderSecurity,
-    "appearance":        renderAppearance,
     "support":           renderSupport,
   };
-
+  //  "appearance":        renderAppearance,
   const currentNav = NAV_ITEMS.find(n => n.id === activeSection)!;
 
   // ── Render ────────────────────────────────────────────────────────────────
@@ -1187,7 +1186,7 @@ const renderTwoFAModal = () => {
                       "job-preferences":  "Set your ideal job criteria and filters",
                       "match-preferences":"Configure your job matching algorithm",
                       security:           "Monitor sessions and authentication settings",
-                      appearance:         "Customize the look and feel of TalentFace",
+                     // appearance:         "Customize the look and feel of TalentFace",
                       support:            "Get help or learn more about TalentFace",
                     }[activeSection]}
                   </p>
