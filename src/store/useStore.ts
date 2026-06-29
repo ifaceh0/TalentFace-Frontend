@@ -8,6 +8,15 @@ const getStorageKey = (userId?: string) =>
 
 export type CandidateStatus = 'Applied' | 'Shortlisted' | 'Interview' | 'Offer' | 'Hired';
 
+export interface CandidateWorkExperience {
+  company: string;
+  role: string;
+  description: string;
+  type: string;
+  startDate?: string;
+  endDate?: string;
+}
+
 export interface Candidate {
   id: string;
   applicationId?: string;
@@ -16,6 +25,10 @@ export interface Candidate {
   name: string;
   role: string;
   experience: number;
+
+  // Work experience history (for recruiter dashboard)
+  workExperience?: CandidateWorkExperience[];
+
   skills: string[];
 
   location: string;
@@ -31,6 +44,7 @@ export interface Candidate {
   appliedJob?: string;
   jobTitle?: string;
 }
+
 
 export interface Job {
   id: string;

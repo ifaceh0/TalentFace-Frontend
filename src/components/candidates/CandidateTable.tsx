@@ -207,8 +207,16 @@ export default function CandidateTable() {
                     </div>
                   </td>
                   <td className="px-4 py-3">
-                    {c.experience} yrs
+                    <div className="flex flex-col">
+                      <span>{c.experience} yrs</span>
+                      {c.workExperience && c.workExperience.length > 0 && (
+                        <span className="text-xs text-gray-500">
+                          {c.workExperience.length} items
+                        </span>
+                      )}
+                    </div>
                   </td>
+
                   <td className="px-4 py-3">{c.role}</td>
                   <td className="px-4 py-3">
                     {c.appliedJob || c.jobTitle || '-'}

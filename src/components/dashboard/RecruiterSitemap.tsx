@@ -1,4 +1,4 @@
-import { Home, User, Settings, Lock, Briefcase, Users, BarChart3, FileText, HelpCircle, LogOut } from 'lucide-react';
+import { Home, User, Settings, Lock, Briefcase, Users, HelpCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 export default function RecruiterSitemap() {

@@ -5,11 +5,7 @@ import { Plus, Trash2, Users, Loader, AlertCircle, DollarSign, Edit2, Globe, Che
 import LocationSelect from '../ui/LocationSelect';
 import JobDetailModal from '../dashboard/JobDetailModal';
 
-const statusColors: Record<Job['status'], string> = {
-  Active: 'bg-green-100 text-green-700',
-  Closed: 'bg-red-100 text-red-700',
-  Draft: 'bg-gray-100 text-gray-600',
-};
+
 
 const jobTypes = ['Full-time', 'Part-time', 'Contract', 'Internship', 'Freelance'];
 const salaryTypes = ['LPA', 'USD/year', 'Custom'];
@@ -206,7 +202,11 @@ export default function JobList() {
         status: 'Active' as const,
         salaryMin: form.salaryMin ? parseInt(form.salaryMin) : undefined,
         salaryMax: form.salaryMax ? parseInt(form.salaryMax) : undefined,
-        salaryCurrency: form.salaryCurrency === 'Custom' ? form.customCurrency.toUpperCase() : form.salaryCurrency,
+        salaryCurrency:
+          form.salaryCurrency === 'Custom'
+            ? (form.customCurrency.toUpperCase() as 'LPA' | 'USD/year' | 'Custom')
+            : form.salaryCurrency as 'LPA' | 'USD/year' | 'Custom',
+
         maxApplicants: form.maxApplicants ? parseInt(form.maxApplicants) : undefined,
         jobType: form.jobType,
         isRemote: form.isRemote,

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { User, Mail, Phone, Building, Globe, MapPin, ArrowLeft } from 'lucide-react';
+import { User, Mail, Phone, Building, Globe, ArrowLeft } from 'lucide-react';
 import { useAuth } from '../../context/useAuth';
 import { useNavigate } from 'react-router-dom';
 

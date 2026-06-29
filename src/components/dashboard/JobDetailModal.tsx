@@ -24,8 +24,7 @@ export default function JobDetailModal({ isOpen, onClose, jobId, onEdit }: JobDe
       // Check if within 24 hours
       if (job) {
         const createdTime = new Date(job.postedDate);
-        const currentTime = new Date();
-        const hoursDiff = (currentTime.getTime() - createdTime.getTime()) / (1000 * 60 * 60);
+        const hoursDiff = (Date.now() - createdTime.getTime()) / (1000 * 60 * 60);
         setCanEdit(hoursDiff <= 24);
       }
     }

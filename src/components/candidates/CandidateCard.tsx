@@ -88,6 +88,15 @@ export default function CandidateCard({ candidate }: CandidateCardProps) {
           {candidate.experience} yrs exp
         </p>
       )}
+
+      {/* Work experience count */}
+      {candidate.workExperience && candidate.workExperience.length > 0 && (
+        <p className="text-xs text-gray-500 mt-1">
+          {candidate.workExperience.length} work history item(s)
+        </p>
+      )}
+
+
     </div>
   );
 }

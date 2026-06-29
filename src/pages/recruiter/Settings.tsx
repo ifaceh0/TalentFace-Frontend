@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Bell, Lock, Eye, EyeOff, ArrowLeft } from 'lucide-react';
+import { Bell, Lock, Eye, ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 export default function SettingsPage() {
