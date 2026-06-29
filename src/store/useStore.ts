@@ -43,7 +43,11 @@ export interface Job {
   description: string;
   salaryMin?: number;
   salaryMax?: number;
+  salaryCurrency?: 'LPA' | 'USD/year' | 'Custom';
   maxApplicants?: number | null;
+  jobType?: string;
+  isRemote?: boolean;
+  editedAt?: Date;
 }
 
 interface RecruiterStore {
@@ -58,6 +62,7 @@ interface RecruiterStore {
   fetchJobCandidates: (jobId: string) => Promise<void>;
   updateCandidateStatus: (id: string, status: CandidateStatus) => Promise<void>;
   createJob: (job: Omit<Job, 'id' | 'applicants' | 'postedDate'>) => Promise<void>;
+  updateJob: (jobId: string, job: Partial<Omit<Job, 'id' | 'applicants' | 'postedDate'>>) => Promise<void>;
   deleteJob: (id: string) => Promise<void>;
   setSelectedJobId: (jobId: string | null) => void;
 }
@@ -142,6 +147,21 @@ export const useStore = create<RecruiterStore>()((set) => ({
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to create job';
       set({ error: message });
+    }
+  },
+
+  async updateJob(jobId, job) {
+    try {
+      const updatedJob = await recruiterService.updateJob(jobId, job);
+      set((state) => {
+        const jobs = state.jobs.map((j) => (j.id === jobId ? updatedJob : j));
+
+        return { jobs };
+      });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to update job';
+      set({ error: message });
+      throw err;
     }
   },
 

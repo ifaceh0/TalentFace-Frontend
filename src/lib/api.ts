@@ -36,11 +36,10 @@
 // export default api;
 import axios from 'axios';
 
-console.log("API URL:", import.meta.env.VITE_API_BASE_URL);
-
 const api = axios.create({
-  //baseURL: '/api',
-  baseURL: import.meta.env.VITE_API_BASE_URL,
+  // Use relative '/api' so Vite's dev proxy forwards requests to the backend.
+  // This avoids CORS issues during local development.
+  baseURL: '/api',
   withCredentials: true,
   headers: { 'Content-Type': 'application/json' },
 });

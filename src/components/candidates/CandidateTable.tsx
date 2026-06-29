@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useStore } from '../../store/useStore';
 import type { CandidateStatus } from '../../store/useStore';
-import { Filter, Loader } from 'lucide-react';
+import { Filter, Loader, X } from 'lucide-react';
 import LocationSelect from '../ui/LocationSelect';
 
 const statusColors: Record<CandidateStatus, string> = {
@@ -23,9 +23,7 @@ export default function CandidateTable() {
 
   useEffect(() => {
     console.log('CandidateTable MOUNTED');
-
     fetchCandidates();
-
     return () => {
       console.log('CandidateTable UNMOUNTED');
     };
@@ -34,12 +32,14 @@ export default function CandidateTable() {
   console.log('TABLE RECEIVED:', candidates);
 
   const filtered = candidates.filter((c) => {
+    // Skill filter
     const matchSkill = skillFilter
       ? c.skills.some((s) =>
           s.toLowerCase().includes(skillFilter.toLowerCase())
         )
       : true;
 
+    // Experience filter
     const matchExp =
       expFilter === '0-2'
         ? c.experience <= 2
@@ -49,30 +49,49 @@ export default function CandidateTable() {
         ? c.experience > 5
         : true;
 
-    const matchLocation = locationFilter
-      ? c.location?.toLowerCase() === locationFilter.toLowerCase()
+    // Location filter - FIXED!
+    const trimmedLocation = locationFilter.trim().toLowerCase();
+    const matchLocation = trimmedLocation
+      ? c.location?.toLowerCase().includes(trimmedLocation)
       : true;
 
     return matchSkill && matchExp && matchLocation;
   });
 
   console.log('FILTERED:', filtered);
-  console.log(
-  JSON.stringify(
-    candidates,
-    null,
-    2
-  )
-);
+
+  const handleClearFilters = () => {
+    setSkillFilter('');
+    setExpFilter('');
+    setLocationFilter('');
+  };
+
+  const hasActiveFilters = skillFilter || expFilter || locationFilter;
 
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-100">
       <div className="p-4 border-b border-gray-100">
-        <div className="flex items-center gap-2 mb-3">
-          <Filter size={16} className="text-gray-500" />
-          <span className="text-sm font-semibold text-gray-700">
-            Filters
-          </span>
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-2">
+            <Filter size={16} className="text-gray-500" />
+            <span className="text-sm font-semibold text-gray-700">
+              Filters
+            </span>
+            {hasActiveFilters && (
+              <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full">
+                {[skillFilter, expFilter, locationFilter].filter(Boolean).length} active
+              </span>
+            )}
+          </div>
+          {hasActiveFilters && (
+            <button
+              onClick={handleClearFilters}
+              className="text-xs text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1 transition"
+            >
+              <X size={14} />
+              Clear all
+            </button>
+          )}
         </div>
 
         <div className="flex flex-wrap gap-3">
@@ -98,7 +117,10 @@ export default function CandidateTable() {
           <div className="w-40">
             <LocationSelect
               value={locationFilter}
-              onChange={setLocationFilter}
+              onChange={(location) => {
+                console.log('Location changed to:', location);
+                setLocationFilter(location);
+              }}
               placeholder="Filter by location..."
             />
           </div>
@@ -138,15 +160,51 @@ export default function CandidateTable() {
                   colSpan={7}
                   className="text-center py-8 text-gray-400"
                 >
-                  No candidates found.
+                  {candidates.length === 0 ? (
+                    <span>No candidates found. Check back later!</span>
+                  ) : (
+                    <div>
+                      <p>No candidates match your filters.</p>
+                      <button
+                        onClick={handleClearFilters}
+                        className="text-xs text-blue-600 hover:text-blue-700 mt-2 underline"
+                      >
+                        Clear filters to see all candidates
+                      </button>
+                    </div>
+                  )}
                 </td>
               </tr>
             ) : (
               filtered.map((c) => (
-                <tr key={c.id}>
-                  <td className="px-4 py-3">{c.name}</td>
+                <tr
+                  key={c.id}
+                  className="border-t border-gray-50 hover:bg-gray-50 transition"
+                >
                   <td className="px-4 py-3">
-                    {c.skills.join(', ')}
+                    <div className="flex items-center gap-2">
+                      <div className="w-6 h-6 rounded-full bg-indigo-600 text-white text-xs font-semibold flex items-center justify-center">
+                        {c.avatar}
+                      </div>
+                      <span>{c.name}</span>
+                    </div>
+                  </td>
+                  <td className="px-4 py-3">
+                    <div className="flex flex-wrap gap-1">
+                      {c.skills.slice(0, 2).map((skill, idx) => (
+                        <span
+                          key={idx}
+                          className="text-xs bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded"
+                        >
+                          {skill}
+                        </span>
+                      ))}
+                      {c.skills.length > 2 && (
+                        <span className="text-xs text-gray-500">
+                          +{c.skills.length - 2}
+                        </span>
+                      )}
+                    </div>
                   </td>
                   <td className="px-4 py-3">
                     {c.experience} yrs

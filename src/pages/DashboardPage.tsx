@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import RecruiterSitemap from '../components/dashboard/RecruiterSitemap';
 //import PipelineBoard from '../components/pipeline/PipelineBoard';
 import CandidateTable from '../components/candidates/CandidateTable';
 import JobList from '../components/jobs/JobList';
@@ -41,6 +42,7 @@ export default function DashboardPage() {
           </div>
         </div>
       </div>
+      <RecruiterSitemap />
     </div>
   );
 }

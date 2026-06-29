@@ -15,6 +15,8 @@ const transformJob = (job: any): Job => ({
   department: job.company || job.department || '',
   location: job.location,
   description: job.description || '',
+  jobType: job.type || 'Full-time',
+  editedAt: job.editedAt,
 
   // Convert backend status to frontend status
   status:
@@ -86,6 +88,7 @@ export const createJob = async (
 
 /**
  * PATCH /api/recruiter/jobs/:id
+ * Update job within 24-hour window (can only edit once)
  */
 export const updateJob = async (
   jobId: string,

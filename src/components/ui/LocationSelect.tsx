@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { X } from 'lucide-react';
 
 const FALLBACK_LOCATIONS = [
   'Afghanistan',
@@ -41,7 +42,7 @@ const FALLBACK_LOCATIONS = [
   'Comoros',
   'Congo',
   'Costa Rica',
-  'Côte d’Ivoire',
+  'Côte dIvoire',
   'Croatia',
   'Cuba',
   'Cyprus',
@@ -239,7 +240,9 @@ export default function LocationSelect({ value, onChange, placeholder = 'Search 
   }, [value]);
 
   useEffect(() => {
-    if (!query.trim() || query.trim().length < 2) {
+    const trimmedQuery = query.trim();
+    
+    if (!trimmedQuery || trimmedQuery.length < 2) {
       setSuggestions([]);
       setApiError(null);
       setLoading(false);
@@ -253,7 +256,7 @@ export default function LocationSelect({ value, onChange, placeholder = 'Search 
 
       try {
         const response = await fetch(
-          `https://nominatim.openstreetmap.org/search?format=json&addressdetails=0&limit=8&q=${encodeURIComponent(query.trim())}`,
+          `https://nominatim.openstreetmap.org/search?format=json&addressdetails=0&limit=8&q=${encodeURIComponent(trimmedQuery)}`,
           {
             signal: controller.signal,
             headers: {
@@ -276,7 +279,7 @@ export default function LocationSelect({ value, onChange, placeholder = 'Search 
         } else {
           setSuggestions(
             LOCATIONS.filter((location) =>
-              location.toLowerCase().includes(query.trim().toLowerCase())
+              location.toLowerCase().includes(trimmedQuery.toLowerCase())
             ).slice(0, 8)
           );
         }
@@ -285,7 +288,7 @@ export default function LocationSelect({ value, onChange, placeholder = 'Search 
           setApiError('Unable to load location suggestions');
           setSuggestions(
             LOCATIONS.filter((location) =>
-              location.toLowerCase().includes(query.trim().toLowerCase())
+              location.toLowerCase().includes(trimmedQuery.toLowerCase())
             ).slice(0, 8)
           );
         }
@@ -311,12 +314,16 @@ export default function LocationSelect({ value, onChange, placeholder = 'Search 
   const handleInputChange = (nextValue: string) => {
     setQuery(nextValue);
 
+    // Only call onChange if there's an exact match or if the value is empty
     const exactMatch = LOCATIONS.find(
       (location) => location.toLowerCase() === nextValue.trim().toLowerCase()
     );
 
     if (exactMatch) {
       onChange(exactMatch);
+    } else if (!nextValue.trim()) {
+      // If user clears the input, reset to empty
+      onChange('');
     }
   };
 
@@ -326,12 +333,18 @@ export default function LocationSelect({ value, onChange, placeholder = 'Search 
     setIsOpen(false);
   };
 
+  const handleClear = () => {
+    setQuery('');
+    onChange('');
+    setIsOpen(false);
+  };
+
   const handleBlur = () => {
     window.setTimeout(() => {
       const exactMatch = filteredLocations.find(
         (location) => location.toLowerCase() === query.trim().toLowerCase()
       );
-      if (!exactMatch) {
+      if (!exactMatch && query.trim()) {
         setQuery(value);
       }
       setIsOpen(false);
@@ -341,15 +354,27 @@ export default function LocationSelect({ value, onChange, placeholder = 'Search 
   return (
     <div className="relative" ref={containerRef}>
       {label && <label className="block text-sm font-medium text-gray-700 mb-1">{label}</label>}
-      <input
-        type="text"
-        placeholder={placeholder}
-        value={query}
-        onChange={(event) => handleInputChange(event.target.value)}
-        onFocus={() => setIsOpen(true)}
-        onBlur={handleBlur}
-        className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-indigo-300"
-      />
+      <div className="relative">
+        <input
+          type="text"
+          placeholder={placeholder}
+          value={query}
+          onChange={(event) => handleInputChange(event.target.value)}
+          onFocus={() => setIsOpen(true)}
+          onBlur={handleBlur}
+          className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-indigo-300 pr-8"
+        />
+        {query && (
+          <button
+            type="button"
+            onClick={handleClear}
+            className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition"
+            title="Clear location"
+          >
+            <X size={16} />
+          </button>
+        )}
+      </div>
 
       {isOpen && (
         <div className="absolute z-40 mt-1 w-full rounded-xl border border-gray-200 bg-white shadow-lg max-h-72 overflow-y-auto">
@@ -358,7 +383,9 @@ export default function LocationSelect({ value, onChange, placeholder = 'Search 
           ) : apiError ? (
             <div className="p-3 text-sm text-red-500">{apiError}</div>
           ) : filteredLocations.length === 0 ? (
-            <div className="p-3 text-sm text-gray-500">Searching....</div>
+            <div className="p-3 text-sm text-gray-500">
+              {query.trim() ? 'No locations found. Try searching for a city or country.' : 'Start typing to search locations...'}
+            </div>
           ) : (
             filteredLocations.map((location) => (
               <button
@@ -368,7 +395,7 @@ export default function LocationSelect({ value, onChange, placeholder = 'Search 
                   e.preventDefault();
                   handleSelect(location);
                 }}
-                className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 transition border-b border-gray-50 last:border-b-0"
               >
                 {location}
               </button>
