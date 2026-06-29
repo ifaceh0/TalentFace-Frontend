@@ -90,6 +90,30 @@ export const deleteEducation = async (eduId: string): Promise<Education[]> => {
   const { data } = await api.delete<ApiEnvelope<{ education: Education[] }>>(`/joinee/education/${eduId}`);
   return data.data.education;
 };
+export const uploadEducationDocuments = async (
+  eduId: string,
+  files: { degreeCertificate?: File; marksheet?: File }
+): Promise<Education[]> => {
+  const formData = new FormData();
+  if (files.degreeCertificate) formData.append('degreeCertificate', files.degreeCertificate);
+  if (files.marksheet) formData.append('marksheet', files.marksheet);
+
+  const { data } = await api.post<ApiEnvelope<{ education: Education[] }>>(
+    `/joinee/education/${eduId}/documents`,
+    formData
+  );
+  return data.data.education;
+};
+
+export const deleteEducationDocument = async (
+  eduId: string,
+  field: 'degreeCertificate' | 'marksheet'
+): Promise<Education[]> => {
+  const { data } = await api.delete<ApiEnvelope<{ education: Education[] }>>(
+    `/joinee/education/${eduId}/documents/${field}`
+  );
+  return data.data.education;
+};
 
 // ─── 3. Work Experience ───────────────────────────────────────────────────────
 

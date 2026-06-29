@@ -23,3 +23,69 @@ select,
 textarea {
   font-family: inherit;
 }
+.phone-input-wrapper {
+  display: flex;
+  align-items: center;
+  border: 1.5px solid #E5E7EB;
+  border-radius: 0.75rem;
+  padding: 0.5rem 0.75rem;
+  background: #F8FAFC;
+  gap: 8px;
+  font-size: 13px;
+}
+
+.phone-input-wrapper:focus-within {
+  border-color: #6366F1;
+  outline: none;
+}
+
+.phone-input-wrapper input {
+  border: none;
+  background: transparent;
+  outline: none;
+  font-size: 13px;
+  color: #111827;
+  width: 100%;
+}
+
+.PhoneInputCountrySelect {
+  border: none;
+  background: transparent;
+  font-size: 13px;
+  cursor: pointer;
+  color: #374151;
+}
+
+.phone-input-wrapper {
+  display: flex;
+  align-items: center;
+  border: 1.5px solid #E5E7EB;
+  border-radius: 0.75rem;
+  padding: 0.65rem 0.75rem;
+  background: #ffffff;
+  gap: 8px;
+  font-size: 14px;
+  transition: all 0.2s;
+}
+.phone-input-wrapper:focus-within {
+  border-color: #DC2626;
+  box-shadow: 0 0 0 3px rgba(220,38,38,0.08);
+}
+.phone-input-wrapper input {
+  border: none;
+  background: transparent;
+  outline: none;
+  font-size: 14px;
+  color: #111827;
+  width: 100%;
+}
+.phone-input-wrapper input::placeholder {
+  color: #9CA3AF;
+}
+.PhoneInputCountrySelect {
+  border: none;
+  background: transparent;
+  font-size: 14px;
+  cursor: pointer;
+  color: #374151;
+}

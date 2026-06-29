@@ -9,44 +9,119 @@ type Section =
 type BadgeStatus = 'done' | 'partial' | 'empty' | 'locked';
 
 const BASE_NAV_ITEMS: { id: Section; label: string; icon: string; pts: number }[] = [
+  
   { id: 'overview',  label: 'Overview',        icon: '📊', pts: 0  },
-  { id: 'basic',     label: 'Basic Details',   icon: '👤', pts: 0  },
-  { id: 'summary',   label: 'Summary',         icon: '📝', pts: 10 },
-  { id: 'address',   label: 'Address',         icon: '🏠', pts: 0  },
-  { id: 'education', label: 'Education',       icon: '🎓', pts: 10 },
-  { id: 'work',      label: 'Work Experience', icon: '💼', pts: 5  },
+  { id: 'basic',     label: 'Basic Details',   icon: '👤', pts: 5  },
+  { id: 'summary',   label: 'Summary',         icon: '📝', pts: 5  },
+  { id: 'address',   label: 'Address',         icon: '🏠', pts: 5  },
+  { id: 'education', label: 'Education',       icon: '🎓', pts: 5  },
+  { id: 'work',      label: 'Work Experience', icon: '💼', pts: 10 },
   { id: 'skills',    label: 'Skills',          icon: '🛠️', pts: 10 },
-  { id: 'projects',  label: 'Projects',        icon: '🚀', pts: 10 },
-  { id: 'social',    label: 'Social Profiles', icon: '🔗', pts: 5  },
-  { id: 'resume',    label: 'Resume',          icon: '📄', pts: 10 },
+  { id: 'projects',  label: 'Projects',        icon: '🚀', pts: 20 },
+  { id: 'social',    label: 'Social Profiles', icon: '🔗', pts: 10 },
+  { id: 'resume',    label: 'Resume',          icon: '📄', pts: 20 },
   { id: 'analyzer',  label: 'Resume Analyzer', icon: '🤖', pts: 0  },
   { id: 'recruiter', label: 'Recruiter View',  icon: '🧑‍💼', pts: 0  },
 ];
 
+
 function getStatus(id: Section, profile: JoineeProfile | null): BadgeStatus {
-  if (!profile) return id === 'overview' || id === 'basic' ? 'done' : 'empty';
+  if (!profile) return 'empty';
 
   const score = profile.profileCompletionScore ?? 0;
 
   switch (id) {
-    case 'overview':  return 'done';
-    case 'basic':     return profile.name && profile.email ? 'done' : 'partial';
-    case 'summary':   return profile.summary ? 'done' : 'empty';
-    case 'address':   return profile.address ? 'done' : 'empty';
-    case 'education': return (profile.education?.length ?? 0) > 0 ? 'done' : 'empty';
-    case 'work':      return (profile.workExperience?.length ?? 0) > 0 ? 'done' : 'partial';
-    case 'skills':    return (profile.skills?.length ?? 0) > 0 ? 'done' : 'empty';
-    case 'projects':  return (profile.projects?.length ?? 0) > 0 ? 'done' : 'empty';
-    case 'social':    return profile.socialProfiles ? 'partial' : 'empty';
-    case 'resume':    return profile.resume ? 'done' : 'empty';
-    case 'analyzer':  return 'done';
-    case 'recruiter': return score >= 50 ? 'done' : 'locked';
-    default:          return 'empty';
+    case 'overview':
+      return 'done'; // always accessible
+
+    case 'basic':
+      // fully done only when all 4 required fields are filled
+      if (profile.phone && profile.dateOfBirth && profile.gender && (profile.firstName || profile.name))
+        return 'done';
+      if (profile.name || profile.firstName)
+        return 'partial'; // has name but missing phone/dob/gender
+      return 'empty';
+
+    case 'summary':
+      if (profile.summary && profile.summary.trim().length > 50) return 'done';
+      if (profile.summary && profile.summary.trim().length > 0)   return 'partial';
+      return 'empty';
+
+    case 'address': {
+      const a = profile.address;
+      // fully done only when city, state AND pincode are filled
+      if (a?.city && a?.state && a?.pincode) return 'done';
+      // partial if at least one field is filled
+      if (a?.city || a?.state || a?.line1 || a?.pincode) return 'partial';
+      return 'empty';
+    }
+
+    case 'education':
+      return (profile.education?.length ?? 0) > 0 ? 'done' : 'empty';
+
+    case 'work':
+      return (profile.workExperience?.length ?? 0) > 0 ? 'done' : 'empty';
+
+    case 'skills':
+      if ((profile.skills?.length ?? 0) >= 3) return 'done';
+      if ((profile.skills?.length ?? 0) > 0)  return 'partial';
+      return 'empty';
+
+    case 'projects':
+      return (profile.projects?.length ?? 0) > 0 ? 'done' : 'empty';
+
+    case 'social': {
+      const profiles = profile.socialProfiles ?? [];
+      const hasLinkedInOrGithub = profiles.some(
+        (s) => (s.platform === 'linkedin' || s.platform === 'github') && s.url?.trim()
+      );
+      // fallback to flat fields if socialProfiles not populated
+      if (hasLinkedInOrGithub || profile.linkedIn || profile.github) return 'done';
+      if (profiles.length > 0) return 'partial';
+      return 'empty';
+    }
+
+    case 'resume':
+      return profile.resume || profile.resumeUrl ? 'done' : 'empty';
+
+    case 'analyzer':
+      return 'done'; // always accessible, no completion concept
+
+    case 'recruiter':
+      return score >= 50 ? 'done' : 'locked';
+
+    default:
+      return 'empty';
   }
 }
+// function getStatus(id: Section, profile: JoineeProfile | null): BadgeStatus {
+//   if (!profile) return id === 'overview' || id === 'basic' ? 'done' : 'empty';
+
+//   const score = profile.profileCompletionScore ?? 0;
+
+//   switch (id) {
+//     case 'overview':  return 'done';
+//     case 'basic':     return profile.name && profile.email ? 'done' : 'partial';
+//     case 'summary':   return profile.summary ? 'done' : 'empty';
+//     case 'address': {
+//     const a = profile.address;
+//     return (a?.city || a?.state || a?.line1) ? 'done' : 'empty';
+// }
+//     case 'education': return (profile.education?.length ?? 0) > 0 ? 'done' : 'empty';
+//     case 'work':      return (profile.workExperience?.length ?? 0) > 0 ? 'done' : 'partial';
+//     case 'skills':    return (profile.skills?.length ?? 0) > 0 ? 'done' : 'empty';
+//     case 'projects':  return (profile.projects?.length ?? 0) > 0 ? 'done' : 'empty';
+//     case 'social':    return profile.socialProfiles ? 'partial' : 'empty';
+//     case 'resume':    return profile.resume ? 'done' : 'empty';
+//     case 'analyzer':  return 'done';
+//     case 'recruiter': return score >= 50 ? 'done' : 'locked';
+//     default:          return 'empty';
+//   }
+// }
 
 function SectionBadge({ status, pts, active }: { status: BadgeStatus; pts: number; active: boolean }) {
   if (active) return null;
+  if (pts === 0) return null;
 
   if (status === 'locked') {
     return (

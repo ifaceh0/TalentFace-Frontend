@@ -485,24 +485,48 @@ export default function JoineeDashboard() {
   // ── Compute profile score ──────────────────────────────────────────────────
   // TODO: Ideally receive this from GET /api/profile/me → profile.completionScore
   // Below is a local approximation matching backend logic.
-  const computeScore = (p: JoineeProfile | null): number => {
-    if (!p) return 0;
-    let score = 0;
-    if (p.firstName && p.lastName) score += 10; // Basic name
-    if (p.phone) score += 10; // Phone
-    if (p.dateOfBirth) score += 5;  // DOB
-    if (p.gender) score += 5;  // Gender
-    if (p.summary && p.summary.length > 50) score += 15; // Summary
-    if (p.city || p.state) score += 5;  // Address
-    if (p.education && p.education.length > 0) score += 15; // Education
-    if (p.skills && p.skills.length >= 3) score += 10; // Skills
-    if (p.workExperience && p.workExperience.length > 0) score += 10; // Work exp
-    if (p.projects && p.projects.length > 0) score += 10; // Projects
-    if (p.linkedIn || p.github) score += 5;  // Social
-    return Math.min(score, 100);
-  };
+//   const computeScore = (p: JoineeProfile | null): number => {
+//   if (!p) return 0;
+//   let score = 0;
 
-  const profileScore = computeScore(profile);
+//   // Basic Details — 5pts (name + phone + dob + gender all required)
+//   if ((p.firstName || p.name) && p.phone && p.dateOfBirth && p.gender) score += 5;
+
+//   // Summary — 5pts (must be meaningful, >50 chars)
+//   if (p.summary && p.summary.trim().length > 50) score += 5;
+
+//   // Address — 5pts (city + state + pincode)
+//   if (p.address?.city && p.address?.state && p.address?.pincode) score += 5;
+
+//   // Education — 5pts
+//   if ((p.education?.length ?? 0) > 0) score += 5;
+
+//   // Work Experience — 10pts
+//   if ((p.workExperience?.length ?? 0) > 0) score += 10;
+
+//   // Skills — 10pts (at least 3)
+//   if ((p.skills?.length ?? 0) >= 3) score += 10;
+
+//   // Projects — 20pts
+//   if ((p.projects?.length ?? 0) > 0) score += 20;
+
+//   // Social Profiles — 10pts (LinkedIn or GitHub required)
+//   const hasSocial = p.socialProfiles?.some(
+//     (s) => (s.platform === 'linkedin' || s.platform === 'github') && s.url?.trim()
+//   );
+//   if (hasSocial || p.linkedIn || p.github) score += 10;
+
+//   // Resume — 20pts
+//   if (p.resume || p.resumeUrl) score += 20;
+
+//   // Profile Photo — 10pts
+//   if (p.profilePhoto) score += 10;
+
+//   return Math.min(score, 100);
+// };
+
+  // const profileScore = computeScore(profile);
+  const profileScore = profile?.profileCompletionScore ?? 0;
   const canAccessRecruiter = profileScore >= 50;
 
   // ── Handle recruiter section click ────────────────────────────────────────

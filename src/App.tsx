@@ -25,6 +25,7 @@ import JoineeSignup from "./pages/auth/JoineeSignup";
 
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import Home from "./pages/Home";
+import BrowseJobs    from "./pages/joinee/BrowseJobs";   //
 import JoineeHomepage from "./components/joinee/Joineehomepage";
 import JoineeDashboard from "./pages/joinee/JoineeDashboard";
 import JobSwipe from "./pages/joinee/JobSwipe";
@@ -196,6 +197,7 @@ export default function App() {
           <Route element={<ProtectedRoute allowedRoles={["joinee"]} />}>
             <Route path="/joinee/home"      element={<JoineeLayout><JoineeHomepage /></JoineeLayout>} />
             <Route path="/joinee/dashboard" element={<JoineeLayout><JoineeDashboard /></JoineeLayout>} />
+            <Route path="/joinee/browse"    element={<BrowseJobs />} />
             <Route path="/joinee/swipe"     element={<JoineeLayout><JobSwipe /></JoineeLayout>} />
             <Route path="/joinee/saved" element={<SavedJobs />} />
             <Route path="/joinee/setting" element={<Setting />} /> 

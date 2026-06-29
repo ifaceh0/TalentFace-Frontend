@@ -12,6 +12,8 @@ export interface Education {
   cgpa?: number;
   grade?: string;       // display-friendly grade string
   isCurrentlyStudying?: boolean;
+  degreeCertificate?: { url: string | null; publicId: string | null };
+  marksheet?: { url: string | null; publicId: string | null };
 }
 
 export interface WorkExperience {
