@@ -25,6 +25,7 @@ import JoineeSignup from "./pages/auth/JoineeSignup";
 
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import Home from "./pages/Home";
+import BrowseJobs    from "./pages/joinee/BrowseJobs";   //
 import JoineeHomepage from "./components/joinee/Joineehomepage";
 import JoineeDashboard from "./pages/joinee/JoineeDashboard";
 import JobSwipe from "./pages/joinee/JobSwipe";
@@ -34,6 +35,11 @@ import SavedJobs from "./components/joinee/SavedJob";
 
 import Setting from "./pages/joinee/Setting";
 import JoineeApplications from "./pages/joinee/joineeApplications";
+
+// ── NEW: Import Recruiter Profile Pages ────────────────────────────────────
+import Profile from "./pages/recruiter/Profile";
+import Settings from "./pages/recruiter/Settings";
+import ChangePassword from "./pages/recruiter/Changepassword";
 
 // ───────────────── Dashboard Layout ─────────────────
 
@@ -168,14 +174,27 @@ export default function App() {
           </Route>
 
           {/* Recruiter Routes */}
-          <Route
-            element={<ProtectedRoute allowedRoles={["recruiter"]} />}
-          >
-            <Route
-              path="/recruiter/dashboard"
-              element={<Dashboard role="recruiter" />}
-            />
-          </Route>
+<Route
+  element={<ProtectedRoute allowedRoles={["recruiter"]} />}
+>
+  <Route
+    path="/recruiter/dashboard"
+    element={<Dashboard role="recruiter" />}
+  />
+  {/* ── NEW: Profile Pages ────────────────────────────────────── */}
+  <Route
+    path="/recruiter/profile"
+    element={<Profile />}
+  />
+  <Route
+    path="/recruiter/settings"
+    element={<Settings />}
+  />
+  <Route
+    path="/recruiter/change-password"
+    element={<ChangePassword />}
+  />
+</Route>
 
           {/* Joinee Routes*/}
           {/* Joinee Routes */}
@@ -196,6 +215,7 @@ export default function App() {
           <Route element={<ProtectedRoute allowedRoles={["joinee"]} />}>
             <Route path="/joinee/home"      element={<JoineeLayout><JoineeHomepage /></JoineeLayout>} />
             <Route path="/joinee/dashboard" element={<JoineeLayout><JoineeDashboard /></JoineeLayout>} />
+            <Route path="/joinee/browse"    element={<BrowseJobs />} />
             <Route path="/joinee/swipe"     element={<JoineeLayout><JobSwipe /></JoineeLayout>} />
             <Route path="/joinee/saved" element={<SavedJobs />} />
             <Route path="/joinee/setting" element={<Setting />} /> 

@@ -92,8 +92,8 @@ export default function JobFitCheck({ job, resumeType }: JobFitCheckProps) {
 
   // ── Clear stale result if the user switches resume type after running a check ──
   useEffect(() => {
+    // avoid cascading renders from multiple setState calls; keep it minimal
     setResult(null);
-    setError(null);
     return () => cancel(); // cancel any in-flight warm-up poll if job/resumeType changes
   }, [resumeType, job._id, cancel]);
 
