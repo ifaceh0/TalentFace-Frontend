@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { X, MapPin, DollarSign, Users, Clock } from 'lucide-react';
+import { X, MapPin, DollarSign, Users, Clock, Edit2 } from 'lucide-react';
 import { useStore } from '../../store/useStore';
 import PipelineBoardFiltered from './PipelineBoardFiltered';
 
@@ -7,19 +7,41 @@ interface JobDetailModalProps {
   isOpen: boolean;
   onClose: () => void;
   jobId: string;
+  onEdit?: (jobId: string) => void;
 }
 
-export default function JobDetailModal({ isOpen, onClose, jobId }: JobDetailModalProps) {
+export default function JobDetailModal({ isOpen, onClose, jobId, onEdit }: JobDetailModalProps) {
   const { jobs, jobCandidates, loading, fetchJobCandidates } = useStore();
   const [activeTab, setActiveTab] = useState<'details' | 'candidates'>('candidates');
+  const [canEdit, setCanEdit] = useState(false);
 
   const job = jobs.find((j) => j.id === jobId);
 
   useEffect(() => {
     if (isOpen && jobId) {
       fetchJobCandidates(jobId);
+
+      // Check if within 24 hours
+      if (job) {
+        const createdTime = new Date(job.postedDate);
+        const hoursDiff = (Date.now() - createdTime.getTime()) / (1000 * 60 * 60);
+        setCanEdit(hoursDiff <= 24);
+      }
     }
-  }, [isOpen, jobId, fetchJobCandidates]);
+  }, [isOpen, jobId, job, fetchJobCandidates]);
+
+  const handleEditClick = () => {
+    if (!canEdit) {
+      alert('Sorry but the edit option is available for the first 24 hours of job posting.');
+      return;
+    }
+
+    alert('⚠️ Note: Job can be edited only once and within 24 hours of posting. After that, it cannot be modified.');
+
+    if (onEdit) {
+      onEdit(jobId);
+    }
+  };
 
   if (!isOpen) return null;
 
@@ -32,16 +54,28 @@ export default function JobDetailModal({ isOpen, onClose, jobId }: JobDetailModa
             <h2 className="text-2xl font-bold text-gray-900">{job?.title}</h2>
             <p className="text-sm text-gray-500 mt-1">{job?.department}</p>
           </div>
-          <button
-            onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 transition"
-          >
-            <X size={24} />
-          </button>
+          <div className="flex gap-2 items-center">
+            {canEdit && (
+              <button
+                onClick={handleEditClick}
+                className="flex items-center gap-1 text-sm bg-blue-600 text-white px-3 py-2 rounded-lg hover:bg-blue-700 transition"
+                title="Edit job (24-hour window)"
+              >
+                <Edit2 size={14} />
+                Edit
+              </button>
+            )}
+            <button
+              onClick={onClose}
+              className="text-gray-400 hover:text-gray-600 transition"
+            >
+              <X size={24} />
+            </button>
+          </div>
         </div>
 
         {/* Job Info Cards */}
-        {activeTab === 'details' && job && (
+        {job && (
           <div className="border-b border-gray-200 p-6 grid grid-cols-2 md:grid-cols-4 gap-4">
             <div className="flex items-center gap-3">
               <MapPin size={18} className="text-gray-400" />
@@ -113,6 +147,18 @@ export default function JobDetailModal({ isOpen, onClose, jobId }: JobDetailModa
           {activeTab === 'details' && job && (
             <div className="p-6 space-y-6">
               <div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">Job Type</h3>
+                <span className="inline-block px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-700">
+                  {job.jobType || 'Full-time'}
+                </span>
+              </div>
+
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">Company</h3>
+                <p className="text-gray-600">{job.department}</p>
+              </div>
+
+              <div>
                 <h3 className="text-lg font-semibold text-gray-900 mb-2">Description</h3>
                 <p className="text-gray-600 whitespace-pre-wrap">{job.description}</p>
               </div>
@@ -141,6 +187,14 @@ export default function JobDetailModal({ isOpen, onClose, jobId }: JobDetailModa
                   </h3>
                   <p className="text-gray-600">
                     Maximum {job.maxApplicants} applicants ({jobCandidates.length} applied so far)
+                  </p>
+                </div>
+              )}
+
+              {!canEdit && (
+                <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                  <p className="text-sm text-yellow-800">
+                    ✓ Edit window has closed. This job cannot be modified further.
                   </p>
                 </div>
               )}

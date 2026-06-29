@@ -11,7 +11,7 @@ interface ChatMessageProps {
 
 export default function ChatMessage({ message }: ChatMessageProps) {
   const isBot = message.role === 'bot';
-  const time = new Date(message.timestamp || Date.now()).toLocaleTimeString([], {
+  const time = new Date(message.timestamp || new Date().toISOString()).toLocaleTimeString([], {
     hour: '2-digit',
     minute: '2-digit',
   });

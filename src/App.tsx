@@ -36,6 +36,11 @@ import SavedJobs from "./components/joinee/SavedJob";
 import Setting from "./pages/joinee/Setting";
 import JoineeApplications from "./pages/joinee/joineeApplications";
 
+// ── NEW: Import Recruiter Profile Pages ────────────────────────────────────
+import Profile from "./pages/recruiter/Profile";
+import Settings from "./pages/recruiter/Settings";
+import ChangePassword from "./pages/recruiter/Changepassword";
+
 // ───────────────── Dashboard Layout ─────────────────
 
 function Dashboard({ role }: { role: string }) {
@@ -169,14 +174,27 @@ export default function App() {
           </Route>
 
           {/* Recruiter Routes */}
-          <Route
-            element={<ProtectedRoute allowedRoles={["recruiter"]} />}
-          >
-            <Route
-              path="/recruiter/dashboard"
-              element={<Dashboard role="recruiter" />}
-            />
-          </Route>
+<Route
+  element={<ProtectedRoute allowedRoles={["recruiter"]} />}
+>
+  <Route
+    path="/recruiter/dashboard"
+    element={<Dashboard role="recruiter" />}
+  />
+  {/* ── NEW: Profile Pages ────────────────────────────────────── */}
+  <Route
+    path="/recruiter/profile"
+    element={<Profile />}
+  />
+  <Route
+    path="/recruiter/settings"
+    element={<Settings />}
+  />
+  <Route
+    path="/recruiter/change-password"
+    element={<ChangePassword />}
+  />
+</Route>
 
           {/* Joinee Routes*/}
           {/* Joinee Routes */}
