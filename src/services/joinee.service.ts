@@ -6,11 +6,22 @@ import type {
   Project,
   SocialProfile,
   Address,
+  ResumeAnalysis
 } from '../types/joinee.types';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 type ApiEnvelope<T> = { success: boolean; message: string; data: T };
+
+// ─── Python health check ──────────────────────────────────────────────────────
+export const checkPythonHealth = async (): Promise<boolean> => {
+  try {
+    const { data } = await api.get<{ success: boolean; pythonHealthy: boolean }>('/health/python');
+    return data.pythonHealthy;
+  } catch {
+    return false;
+  }
+};
 
 // ─── 1. Profile ───────────────────────────────────────────────────────────────
 
@@ -259,4 +270,83 @@ export const disable2FA = async (): Promise<{ success: boolean }> => {
 export const getAppliedJobIds = async (): Promise<string[]> => {
   const { data } = await api.get<ApiEnvelope<{ ids: string[] }>>('/applications/my-ids');
   return data.data.ids;
+};
+
+// export const analyzeResume = async (): Promise<ResumeAnalysis> => {
+//   const { data } = await api.post<ApiEnvelope<{ analysis: ResumeAnalysis }>>('/resume/analyze');
+//   return data.data.analysis;
+// };
+
+export interface AnalyzeResumeResult {
+  analysis: ResumeAnalysis;
+  cached: boolean;
+  nextAvailableAt: string;
+}
+
+export const analyzeResume = async (): Promise<AnalyzeResumeResult> => {
+  const { data } = await api.post<ApiEnvelope<AnalyzeResumeResult>>('/resume/analyze');
+  return data.data;
+};
+
+export const getExistingAnalysis = async (): Promise<ResumeAnalysis | null> => {
+  try {
+    const { data } = await api.get<ApiEnvelope<{ analysis: ResumeAnalysis }>>('/resume/analysis');
+    return data.data.analysis;
+  } catch {
+    return null;
+  }
+};
+// ─── 15. JOB PREFERENCES ─────────────────────────────────────────────────────
+
+
+// ─── Job Preferences ─────────────────────────────────────────────────────────
+
+export interface JobPreferencesPayload {
+  workMode: 'onsite' | 'remote' | 'remote-or-onsite' | 'hybrid';
+  salaryExpectation: number;
+  salaryOpenToMore: boolean;
+  currency: string;
+  showVerifiedOnly: boolean;
+  enableJobAlerts: boolean;
+}
+
+
+export const getJobPreferences = async (): Promise<JobPreferencesPayload> => {
+  const { data } = await api.get<ApiEnvelope<{ jobPreferences: JobPreferencesPayload }>>('/joinee/preferences/job');
+  return data.data.jobPreferences;
+};
+
+export const updateJobPreferences = async (payload: JobPreferencesPayload): Promise<JobPreferencesPayload> => {
+  const { data } = await api.put<ApiEnvelope<{ jobPreferences: JobPreferencesPayload }>>('/joinee/preferences/job', payload);
+  return data.data.jobPreferences;
+};
+
+export interface JobFitCheckResult {
+  _id: string;
+  joinee: string;
+  job: string;
+  source: 'generated' | 'uploaded';
+  stage: 'filtered' | 'analyzed';
+  keywordScore: number;
+  matchedKeywords: string[];
+  missingKeywords: string[];
+  atsScore: number | null;
+  extractedSkills: string[];
+  strengths: string[];
+  improvements: string[];
+  overallFeedback: string;
+  eligible: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export const checkJobFit = async (
+  jobId: string,
+  resumeType: 'ai' | 'uploaded'
+): Promise<JobFitCheckResult> => {
+  const { data } = await api.post<ApiEnvelope<{ fitCheck: JobFitCheckResult }>>(
+    `/jobs/${jobId}/check-fit`,
+    { resumeType }
+  );
+  return data.data.fitCheck;
 };

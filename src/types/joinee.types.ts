@@ -123,3 +123,19 @@ export interface JoineeProfile {
   createdAt?: string;
   updatedAt?: string;
 }
+
+// ─── Resume Analysis ──────────────────────────────────────────────────────────
+
+export interface ResumeAnalysis {
+  _id: string;
+  joinee: string;
+  atsScore: number;
+  source: 'generated' | 'uploaded';
+  extractedSkills: string[];
+  strengths: string[];
+  improvements: string[];
+  overallFeedback: string;
+  experienceSummary: string;
+  createdAt: string;
+  updatedAt: string;
+}
