@@ -61,7 +61,6 @@ const FILTERS: FilterOption[] = ["All", "Full-time", "Part-time", "Contract", "R
 
 const NAV_LINKS = [
     { label: "Browse Jobs", href: "/joinee/browse" },
-    { label: "Companies",   href: "/joinee/companies" },
     { label: "Saved",       href: "/joinee/saved" },
 ];
 

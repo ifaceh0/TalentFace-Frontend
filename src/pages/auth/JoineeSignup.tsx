@@ -1,5 +1,8 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import PhoneInput from 'react-phone-number-input';
+import { isValidPhoneNumber } from 'react-phone-number-input';
+import 'react-phone-number-input/style.css';
 import { signupJoinee as apiSignupJoinee } from "../../services/auth.service";
 import { useAuth } from "../../context/useAuth";
 
@@ -20,6 +23,7 @@ export default function JoineeSignup() {
   const [loading, setLoading]       = useState(false);
   const [errors, setErrors]         = useState<Partial<JoineeForm>>({});
   const [apiError, setApiError]     = useState("");
+  const [phoneError, setPhoneError] = useState('');
   const navigate                    = useNavigate();
   const { setAuth }                 = useAuth();
 
@@ -37,6 +41,11 @@ export default function JoineeSignup() {
     else if (form.password.length < 8) errs.password = "Minimum 8 characters";
     if (!form.confirmPassword)         errs.confirmPassword = "Please confirm your password";
     else if (form.password !== form.confirmPassword) errs.confirmPassword = "Passwords do not match";
+    if (form.phone && !isValidPhoneNumber(form.phone)) {
+  setPhoneError('Invalid phone number for selected country');
+  return false;
+}
+setPhoneError('');
     setErrors(errs);
     return Object.keys(errs).length === 0;
   };
@@ -148,9 +157,22 @@ export default function JoineeSignup() {
               <Input id="j-email" type="email" value={form.email} onChange={set("email")} placeholder="alex@email.com" color={RED} hasError={!!errors.email} />
             </Field>
 
-            <Field label="Phone Number (optional)">
-              <Input id="j-phone" type="tel" value={form.phone} onChange={set("phone")} placeholder="+91 98765 43210" color={RED} hasError={false} />
-            </Field>
+            <Field label="Phone Number (optional)" error={phoneError}>
+  <PhoneInput
+    international
+    defaultCountry="IN"
+    value={form.phone}
+    onChange={(val) => {
+      setForm((prev) => ({ ...prev, phone: val ?? '' }));
+      if (val && !isValidPhoneNumber(val)) {
+        setPhoneError('Invalid number for selected country');
+      } else {
+        setPhoneError('');
+      }
+    }}
+    className="phone-input-wrapper"
+  />
+</Field>
 
             <Field label="Password" error={errors.password}>
               <PasswordInput id="j-password" value={form.password} onChange={set("password")} show={showPw} toggle={() => setShowPw(!showPw)} color={RED} hasError={!!errors.password} placeholder="Min. 8 characters" />

@@ -1,4 +1,7 @@
 import { useState } from 'react';
+import PhoneInput from 'react-phone-number-input';
+import 'react-phone-number-input/style.css';
+import { isValidPhoneNumber } from 'react-phone-number-input';
 import FormField from '../ui/FormField';
 import { updateBasicDetails } from '../../services/joinee.service';
 import type { JoineeProfile } from '../../types/joinee.types';
@@ -22,6 +25,7 @@ export default function BasicDetailsForm({ profile, onUpdate }: BasicDetailsForm
 
   const [loading, setLoading] = useState(false);
   const [msg, setMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [phoneError, setPhoneError] = useState('');
 
   const handleChange = (field: string, value: string | number) =>
     setForm((prev) => ({ ...prev, [field]: value }));
@@ -30,6 +34,11 @@ export default function BasicDetailsForm({ profile, onUpdate }: BasicDetailsForm
     e.preventDefault();
     setLoading(true);
     setMsg(null);
+    if (form.phone && !isValidPhoneNumber(form.phone)) {
+  setMsg({ type: 'error', text: 'Please enter a valid phone number.' });
+  setLoading(false);
+  return;
+}
     try {
       const updated = await updateBasicDetails({
         ...form,
@@ -61,13 +70,33 @@ export default function BasicDetailsForm({ profile, onUpdate }: BasicDetailsForm
             onChange={(e) => handleChange('name', (e.target as HTMLInputElement).value)}
             placeholder="John Doe"
           />
-          <FormField
+          {/* <FormField
             label="Phone Number"
             type="tel"
             value={form.phone}
             onChange={(e) => handleChange('phone', (e.target as HTMLInputElement).value)}
             placeholder="+91 98765 43210"
-          />
+          /> */}
+          <div className="flex flex-col gap-1">
+  <label className="text-sm font-semibold text-gray-700">Phone Number</label>
+  <PhoneInput
+    international
+    defaultCountry="IN"
+    value={form.phone}
+    onChange={(val) => {
+      handleChange('phone', val ?? '');
+      if (val && !isValidPhoneNumber(val)) {
+        setPhoneError('Invalid phone number for selected country');
+      } else {
+        setPhoneError('');
+      }
+    }}
+    className="phone-input-wrapper"
+  />
+  {phoneError && (
+    <p className="text-xs text-red-500 mt-1">{phoneError}</p>
+  )}
+</div>
           <FormField
             label="Date of Birth"
             type="date"
