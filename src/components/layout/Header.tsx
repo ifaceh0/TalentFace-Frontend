@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Bell, Search, LogOut, Settings, User, HelpCircle, Lock } from 'lucide-react';
+import { Bell, LogOut, Settings, User, Lock } from 'lucide-react';
 import { useAuth } from '../../context/useAuth';
 import { useNavigate } from 'react-router-dom';
 
@@ -46,16 +46,6 @@ export default function Header({ activePage }: HeaderProps) {
 
       {/* Right Side */}
       <div className="flex items-center gap-4">
-        {/* Search */}
-        <div className="flex items-center gap-2 bg-gray-100 rounded-lg px-3 py-2">
-          <Search size={16} className="text-gray-400" />
-          <input
-            type="text"
-            placeholder="Search..."
-            className="bg-transparent text-sm outline-none text-gray-700 w-40"
-          />
-        </div>
-
         {/* Notifications */}
         <button className="relative p-2 rounded-lg hover:bg-gray-100 transition">
           <Bell size={20} className="text-blue-900" />
@@ -128,16 +118,6 @@ export default function Header({ activePage }: HeaderProps) {
                   >
                     <Lock size={16} className="text-blue-600" />
                     <span>Change Password</span>
-                  </button>
-
-                  <button
-                    onClick={() => {
-                      setIsProfileOpen(false);
-                    }}
-                    className="w-full flex items-center gap-3 px-4 py-3 text-sm text-slate-800 hover:bg-blue-50 transition"
-                  >
-                    <HelpCircle size={16} className="text-blue-600" />
-                    <span>Help & Support</span>
                   </button>
 
                   <div className="h-px bg-blue-100 my-2" />

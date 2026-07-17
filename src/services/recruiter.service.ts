@@ -15,6 +15,8 @@ const transformJob = (job: any): Job => ({
   department: job.company || job.department || '',
   location: job.location,
   description: job.description || '',
+  jobType: job.type || 'Full-time',
+  editedAt: job.editedAt,
 
   // Convert backend status to frontend status
   status:
@@ -46,7 +48,23 @@ const transformCandidate = (candidate: any): Candidate => ({
   name: candidate.name,
   role: candidate.role || 'Applicant',
   experience: candidate.experience ?? 0,
-  skills: Array.isArray(candidate.skills) ? candidate.skills : [],
+
+  workExperience: Array.isArray(candidate.workExperience)
+    ? candidate.workExperience.map((w: any) => ({
+        company: w.company || '',
+        role: w.role || '',
+        description: w.description || '',
+        type: w.type || '',
+        startDate: w.startDate ? new Date(w.startDate).toISOString() : undefined,
+        endDate: w.endDate ? new Date(w.endDate).toISOString() : undefined,
+      }))
+    : [],
+
+  skills: Array.isArray(candidate.skills)
+    ? candidate.skills
+    : Array.isArray(candidate.skillList)
+      ? candidate.skillList
+      : [],
   location: candidate.location || 'Not Specified',
   status: candidate.status || 'Applied',
   email: candidate.email || '',
@@ -56,6 +74,7 @@ const transformCandidate = (candidate: any): Candidate => ({
   avatar: candidate.avatar || candidate.name?.slice(0, 2).toUpperCase() || '??',
   jobTitle: candidate.jobTitle || candidate.appliedJob || candidate.job?.title || candidate.jobId?.title || '',
 });
+
 
 // ─── Jobs ───────────────────────────────────────────────────────
 
@@ -86,6 +105,7 @@ export const createJob = async (
 
 /**
  * PATCH /api/recruiter/jobs/:id
+ * Update job within 24-hour window (can only edit once)
  */
 export const updateJob = async (
   jobId: string,

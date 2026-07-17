@@ -300,7 +300,19 @@ function CooldownBanner({ nextAvailableAt }: { nextAvailableAt: string }) {
 // ─── Locked Re-analyze Button ─────────────────────────────────────────────────
 
 function LockedButton({ nextAvailableAt }: { nextAvailableAt: string }) {
-  const isAvailable = Date.now() >= new Date(nextAvailableAt).getTime();
+  const [isAvailable, setIsAvailable] = useState(false);
+
+  useEffect(() => {
+    const check = () => {
+      const now = Date.now();
+      setIsAvailable(now >= new Date(nextAvailableAt).getTime());
+    };
+
+    check();
+    const t = setInterval(check, 1000);
+    return () => clearInterval(t);
+  }, [nextAvailableAt]);
+
   if (isAvailable) return null;
   return (
     <div style={{
