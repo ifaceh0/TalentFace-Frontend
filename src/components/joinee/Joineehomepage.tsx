@@ -370,8 +370,10 @@ const confirmApply = async () => {
     if (!applyModalJob) return;
     const id = applyModalJob._id;
     setApplyModalJob(null);
+    // try {
+    //     await applyToJob(id);
     try {
-        await applyToJob(id);
+        await applyToJob(id, resumeType);
         setAppliedIds((prev) => new Set(prev).add(id));
         setProfile((p) =>
             p ? { ...p, applications: (p.applications ?? 0) + 1 } : p

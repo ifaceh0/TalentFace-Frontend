@@ -258,9 +258,10 @@ export const getSavedJobs = async () => {
  * Body: { jobId: number }
  * Returns 201 on success, 409 if already applied
  * Throws with .status = 409 if duplicate
- */export const applyToJob = async (jobId: string): Promise<void> =>  {
+ */
+export const applyToJob = async (jobId: string, resumeType: 'ai' | 'uploaded' = 'uploaded'): Promise<void> =>  {
   try {
-    await api.post("/applications", { jobId });
+    await api.post("/applications", { jobId, resumeType });
   } catch (err: any) {
     // Re-throw with status so the caller can detect 409 duplicate
     const status = err?.response?.status;
