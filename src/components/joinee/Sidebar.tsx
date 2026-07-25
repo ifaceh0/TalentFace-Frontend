@@ -1,5 +1,6 @@
 import CompletionRing from './CompletionRing';
 import type { JoineeProfile } from '../../types/joinee.types';
+import { extractTextFromTiptapJSON } from '../../utils/tiptap'; // adjust path as neede
 
 type Section =
   | 'overview' | 'basic' | 'summary' | 'address'
@@ -29,6 +30,7 @@ function getStatus(id: Section, profile: JoineeProfile | null): BadgeStatus {
   if (!profile) return 'empty';
 
   const score = profile.profileCompletionScore ?? 0;
+  const summaryText = extractTextFromTiptapJSON(profile.summary);
 
   switch (id) {
     case 'overview':
@@ -43,8 +45,10 @@ function getStatus(id: Section, profile: JoineeProfile | null): BadgeStatus {
       return 'empty';
 
     case 'summary':
-      if (profile.summary && profile.summary.trim().length > 50) return 'done';
-      if (profile.summary && profile.summary.trim().length > 0)   return 'partial';
+      if (summaryText.trim().length > 50) return 'done';
+      if (summaryText.trim().length > 0)  return 'partial';
+      // if (profile.summary && profile.summary.trim().length > 50) return 'done';
+      // if (profile.summary && profile.summary.trim().length > 0)   return 'partial';
       return 'empty';
 
     case 'address': {
@@ -198,6 +202,11 @@ export default function Sidebar({ profile, activeSection, onSelect, onPhotoClick
           <p className="text-white font-semibold text-sm leading-tight">{profile?.name ?? 'Your Name'}</p>
           {profile?.currentCollege && (
             <p className="text-slate-400 text-xs mt-0.5 leading-tight">{profile.currentCollege}</p>
+          )}
+          {profile?.uniqueId && (
+            <p className="mt-1.5 inline-block text-[10px] font-mono font-semibold tracking-wider text-slate-300 bg-slate-800 border border-slate-700 rounded-md px-2 py-0.5">
+              {profile.uniqueId}
+            </p>
           )}
         </div>
 

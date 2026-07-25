@@ -1,4 +1,5 @@
 import type { JoineeProfile } from '../../types/joinee.types';
+import { hasTiptapContent } from '../../utils/tiptap';
 
 interface OverviewProps {
   profile: JoineeProfile;
@@ -25,7 +26,8 @@ export default function Overview({ profile }: OverviewProps) {
     { label: 'Phone number',     done: !!profile.phone },
     { label: 'Date of birth',    done: !!profile.dateOfBirth },
     { label: 'Gender',           done: !!profile.gender },
-    { label: 'Profile summary',  done: !!profile.summary },
+    { label: 'Profile summary',  done: hasTiptapContent(profile.summary) },
+    // { label: 'Profile summary',  done: !!profile.summary },
     { label: 'College info',     done: !!profile.currentCollege },
     { label: 'Profile photo',    done: !!profile.profilePhoto },
     { label: 'Resume uploaded',  done: !!profile.resumeUrl },

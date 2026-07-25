@@ -1,7 +1,50 @@
 import { useRef } from 'react';
 import type { JoineeProfile, SocialProfile } from '../../types/joinee.types';
-
+import { generateHTML } from '@tiptap/html';
+import StarterKit from '@tiptap/starter-kit';
+// import Underline from '@tiptap/extension-underline';
+// import Link from '@tiptap/extension-link';
+import type { JSONContent } from '@tiptap/react';
 // ─── Helpers ────────────────────────────────────────────────────────────────
+
+/** Convert Tiptap JSON summary into safe HTML (bold/italic preserved) */
+function renderSummaryHTML(summary: JSONContent | null | undefined): string {
+  if (!summary) return '';
+  try {
+    return generateHTML(summary, [
+      StarterKit.configure({
+        heading: false,
+        orderedList: false,
+        codeBlock: false,
+        horizontalRule: false,
+        link: {
+          HTMLAttributes: {
+            class: 'text-red-600 underline underline-offset-2',
+          },
+        },
+      }),
+    ]);
+    // return generateHTML(summary, [
+    //   StarterKit.configure({
+    //     heading: false,
+    //     bulletList: false,
+    //     orderedList: false,
+    //     blockquote: false,
+    //     codeBlock: false,
+    //     horizontalRule: false,
+    //   }),
+    // ]);
+  } catch (err) {
+    console.error('[RecruiterSection] Failed to render summary HTML:', err);
+    return '';
+  }
+}
+
+/** True if the Tiptap doc has real visible text (not just an empty paragraph) */
+function hasSummaryContent(summary: JSONContent | null | undefined): boolean {
+  if (!summary) return false;
+  return renderSummaryHTML(summary).replace(/<[^>]*>/g, '').trim().length > 0;
+}
 
 /** Extract a social profile URL by platform from the socialProfiles[] array */
 function getSocial(profiles: SocialProfile[] | undefined, platform: SocialProfile['platform']): string | undefined {
@@ -129,6 +172,7 @@ export default function RecruiterSection({ profile }: RecruiterSectionProps) {
   const twitter    = getSocial(profile.socialProfiles, 'twitter');
   const leetcode   = getSocial(profile.socialProfiles, 'leetcode');
   const hackerrank = getSocial(profile.socialProfiles, 'hackerrank');
+  const summaryHTML = renderSummaryHTML(profile.summary);
 
   // Open a new window and print the resume card only
   const handlePrint = () => {
@@ -272,14 +316,24 @@ export default function RecruiterSection({ profile }: RecruiterSectionProps) {
         <div style={{ padding: '32px 40px', display: 'flex', flexDirection: 'column', gap: 30 }}>
 
           {/* Profile Summary */}
-          {profile.summary && (
+          {hasSummaryContent(profile.summary) && (
+            <section>
+            <SectionDivider title="Profile Summary" icon="👤" />
+            <div
+              className="recruiter-summary-html"
+              style={{ fontSize: 13.5, color: '#374151', lineHeight: 1.78 }}
+              dangerouslySetInnerHTML={{ __html: summaryHTML }}
+            />
+            </section>
+          )}
+          {/* {profile.summary && (
             <section>
               <SectionDivider title="Profile Summary" icon="👤" />
               <p style={{ fontSize: 13.5, color: '#374151', lineHeight: 1.78, margin: 0 }}>
-                {profile.summary}
+                {summaryHTML}
               </p>
             </section>
-          )}
+          )} */}
 
           {/* Skills */}
           {profile.skills && profile.skills.length > 0 && (
@@ -483,7 +537,30 @@ export default function RecruiterSection({ profile }: RecruiterSectionProps) {
             border-radius: 0 !important;
           }
         }
-      `}</style>
+        .recruiter-summary-html ul {
+          margin: 0 0 8px;
+          padding-left: 20px;
+          list-style: disc;
+        }
+        .recruiter-summary-html li {
+          margin-bottom: 2px;
+        }
+        .recruiter-summary-html blockquote {
+          border-left: 3px solid #E5E7EB;
+          padding-left: 12px;
+          margin: 8px 0;
+          color: #6B7280;
+          font-style: italic;
+        }
+        .recruiter-summary-html u {
+          text-decoration: underline;
+        }
+        .recruiter-summary-html a {
+          color: #D62B2B;
+          text-decoration: underline;
+        }
+      `}
+      </style>
     </div>
   );
 }

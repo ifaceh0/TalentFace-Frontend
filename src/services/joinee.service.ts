@@ -8,6 +8,7 @@ import type {
   Address,
   ResumeAnalysis
 } from '../types/joinee.types';
+import type { JSONContent } from '@tiptap/react';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -40,10 +41,15 @@ export const updateBasicDetails = async (payload: Partial<JoineeProfile>): Promi
   return data.data.joinee;
 };
 
-export const updateSummary = async (summary: string): Promise<{ summary: string }> => {
-  const { data } = await api.patch<ApiEnvelope<{ summary: string }>>('/joinee/profile/summary', { summary });
+export const updateSummary = async (summary: JSONContent): Promise<{ summary: JSONContent }> => {
+  const { data } = await api.patch<ApiEnvelope<{ summary: JSONContent }>>('/joinee/profile/summary', { summary });
   return data.data;
 };
+
+// export const updateSummary = async (summary: string): Promise<{ summary: string }> => {
+//   const { data } = await api.patch<ApiEnvelope<{ summary: string }>>('/joinee/profile/summary', { summary });
+//   return data.data;
+// };
 
 export const updateAddress = async (address: Address): Promise<{ address: Address }> => {
   const { data } = await api.patch<ApiEnvelope<{ address: Address }>>('/joinee/profile/address', { address });

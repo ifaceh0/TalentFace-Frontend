@@ -1,3 +1,4 @@
+import type { JSONContent } from '@tiptap/react';
 // ─── Sub-document types (matching current Joinee.model.js) ───────────────────
 
 export interface Education {
@@ -62,6 +63,7 @@ export interface JoineeProfile {
   initials: string;
   applications: number;
   savedJobs: number;
+  uniqueId?: string;
   _id?: string;
 
   // From User base schema
@@ -95,7 +97,8 @@ export interface JoineeProfile {
   state?: string;
 
   // Summary
-  summary?: string;
+  summary?: JSONContent | null;
+  //summary?: string;
 
   // Skills & experience
   skills?: string[];
