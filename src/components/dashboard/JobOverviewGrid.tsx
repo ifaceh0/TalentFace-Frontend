@@ -1,6 +1,5 @@
-import { useState, useEffect } from 'react';
+import { useEffect } from 'react';
 import { Briefcase, MapPin, Users, Loader } from 'lucide-react';
-import Modal from '../ui/Modal';
 import { useStore } from '../../store/useStore';
 import type { Job } from '../../store/useStore';
 
@@ -10,23 +9,19 @@ const statusColors: Record<Job['status'], string> = {
   Draft: 'bg-gray-100 text-gray-600',
 };
 
-export default function JobOverviewGrid() {
+interface JobOverviewGridProps {
+  setActivePage: React.Dispatch<React.SetStateAction<string>>;
+}
+
+export default function JobOverviewGrid({ setActivePage }: JobOverviewGridProps) {
   const { jobs, loading, fetchJobs } = useStore();
-  const [selectedJob, setSelectedJob] = useState<Job | null>(null);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   useEffect(() => {
-  fetchJobs();
-}, []);
+    fetchJobs();
+  }, [fetchJobs]);
 
-  const handleJobClick = (job: Job) => {
-    setSelectedJob(job);
-    setIsDialogOpen(true);
-  };
-
-  const handleCloseDialog = () => {
-    setIsDialogOpen(false);
-    setSelectedJob(null);
+  const handleJobClick = (_job: Job) => {
+    setActivePage('jobs');
   };
 
   if (loading) {
@@ -90,17 +85,6 @@ export default function JobOverviewGrid() {
         </div>
       )}
 
-      {/* Dialog Modal */}
-      <Modal
-        isOpen={isDialogOpen}
-        onClose={handleCloseDialog}
-        title={selectedJob?.title || 'Job Details'}
-        size="md"
-      >
-        <div className="p-6">
-          {/* Empty dialog content as per your requirement */}
-        </div>
-      </Modal>
     </>
   );
 }

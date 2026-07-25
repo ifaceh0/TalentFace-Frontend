@@ -32,7 +32,7 @@ interface Application {
     tags?: string[];
     isRemote?: boolean;
   } | null;
-  status: "applied" | "under_review" | "shortlisted" | "rejected" | "hired";
+  status: "applied" | "under_review" | "shortlisted" | "offer" | "rejected" | "hired";
   createdAt: string;
   coverLetter?: string;
 }
@@ -43,6 +43,7 @@ const STATUS_CONFIG = {
   applied:      { label: "Applied",       icon: Clock,        bg: "bg-blue-50",   border: "border-blue-200",   text: "text-blue-700"   },
   under_review: { label: "Under Review",  icon: Eye,          bg: "bg-amber-50",  border: "border-amber-200",  text: "text-amber-700"  },
   shortlisted:  { label: "Shortlisted",   icon: CheckCircle,  bg: "bg-green-50",  border: "border-green-200",  text: "text-green-700"  },
+  offer:        { label: "Offer",         icon: CheckCircle,  bg: "bg-orange-50", border: "border-orange-200", text: "text-orange-700" },
   rejected:     { label: "Rejected",      icon: XCircle,      bg: "bg-red-50",    border: "border-red-200",    text: "text-red-600"    },
   hired:        { label: "Hired 🎉",      icon: CheckCircle,  bg: "bg-emerald-50",border: "border-emerald-300",text: "text-emerald-700"},
 };
@@ -165,8 +166,8 @@ function ApplicationDetailModal({
               Application Status
             </p>
             <div className="flex items-center gap-1">
-              {(["applied", "under_review", "shortlisted", "hired"] as const).map((s, i, arr) => {
-                const statuses = ["applied", "under_review", "shortlisted", "rejected", "hired"];
+              {(["applied", "under_review", "shortlisted", "offer", "hired"] as const).map((s, i, arr) => {
+                const statuses = ["applied", "under_review", "shortlisted", "offer", "rejected", "hired"];
                 const currentIdx = statuses.indexOf(application.status);
                 const stepIdx = statuses.indexOf(s);
                 const isRejected = application.status === "rejected";
@@ -306,6 +307,7 @@ export default function JoineeApplications() {
     applied:      applications.filter(a => a.status === "applied").length,
     under_review: applications.filter(a => a.status === "under_review").length,
     shortlisted:  applications.filter(a => a.status === "shortlisted").length,
+    offer:        applications.filter(a => a.status === "offer").length,
     rejected:     applications.filter(a => a.status === "rejected").length,
     hired:        applications.filter(a => a.status === "hired").length,
   };
@@ -353,6 +355,7 @@ export default function JoineeApplications() {
             { key: "applied",      label: "Applied"      },
             { key: "under_review", label: "Under Review" },
             { key: "shortlisted",  label: "Shortlisted"  },
+            { key: "offer",        label: "Offer"        },
             { key: "rejected",     label: "Rejected"     },
             { key: "hired",        label: "Hired"        },
           ].map(({ key, label }) => {

@@ -49,7 +49,7 @@ function Dashboard({ role }: { role: string }) {
   const renderPage = () => {
     switch (activePage) {
       case "dashboard":
-        return <DashboardPage />;
+        return <DashboardPage setActivePage={setActivePage} />;
 
       case "candidates":
         return <CandidatesPage />;
@@ -58,7 +58,7 @@ function Dashboard({ role }: { role: string }) {
         return <JobsPage />;
 
       default:
-        return <DashboardPage />;
+        return <DashboardPage setActivePage={setActivePage} />;
     }
   };
 
@@ -341,5 +341,4 @@ export default function App() {
 //     </AuthProvider>
 //   );
 // }
-
 

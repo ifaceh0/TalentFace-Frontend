@@ -125,13 +125,28 @@ export default function CandidateCard({
 )}
 
       {/* Location */}
-      <div className="flex items-center gap-1 mb-2">
+      <div className="flex items-center gap-1 mb-1">
         <MapPin
           size={11}
           className="text-gray-400 shrink-0"
         />
         <span className="text-gray-600 truncate">
           {candidate.location}
+        </span>
+      </div>
+
+      {/* Experience */}
+      <div className="flex items-center gap-1 mb-2">
+        <Briefcase
+          size={11}
+          className="text-gray-400 shrink-0"
+        />
+        <span className="text-gray-600 truncate font-medium">
+          {candidate.experience === 0 || !candidate.experience
+            ? 'Fresher'
+            : candidate.experience === 1
+            ? '1 yr exp'
+            : `${parseFloat(Number(candidate.experience).toFixed(1))} yrs exp`}
         </span>
       </div>
 

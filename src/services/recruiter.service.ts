@@ -47,7 +47,7 @@ const transformCandidate = (candidate: any): Candidate => ({
   jobId: candidate.jobId,
   name: candidate.name,
   role: candidate.role || 'Applicant',
-  experience: candidate.experience ?? 0,
+  experience: candidate.experience ?? candidate.applicant?.experience ?? 0,
 
   workExperience: Array.isArray(candidate.workExperience)
     ? candidate.workExperience.map((w: any) => ({
@@ -129,6 +129,55 @@ export const deleteJob = async (
   await api.delete(`/recruiter/jobs/${jobId}`);
 };
 
+// ─── PROFILE ──────────────────────────────────────────────────
+
+export interface RecruiterProfile {
+  _id?: string;
+  name: string;
+  email: string;
+  countryCode?: string;
+  phone?: string;
+  companyName: string;
+  designation?: string;
+  companyWebsite?: string;
+  isVerified?: boolean;
+}
+
+export type UpdateRecruiterProfilePayload = {
+  name: string;
+  countryCode: string;
+  phone: string;
+  companyName: string;
+  designation: string;
+  companyWebsite: string;
+};
+
+/**
+ * GET /api/recruiter/profile
+ */
+export const getRecruiterProfile = async (): Promise<RecruiterProfile> => {
+  const { data } =
+    await api.get<ApiEnvelope<{ recruiter: RecruiterProfile }>>(
+      '/recruiter/profile'
+    );
+
+  return data.data.recruiter;
+};
+
+/**
+ * PATCH /api/recruiter/profile
+ */
+export const updateRecruiterProfile = async (
+  payload: UpdateRecruiterProfilePayload
+): Promise<RecruiterProfile> => {
+  const { data } =
+    await api.patch<ApiEnvelope<{ recruiter: RecruiterProfile }>>(
+      '/recruiter/profile',
+      payload
+    );
+
+  return data.data.recruiter;
+};
 // ─── Candidates ────────────────────────────────────────────────
 
 /**
@@ -182,4 +231,6 @@ export const recruiterService = {
   getRecruiterCandidates,
   getJobCandidates,
   updateCandidateStatus,
+  getRecruiterProfile,
+  updateRecruiterProfile,
 };

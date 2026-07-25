@@ -1,7 +1,8 @@
-import { useState, useEffect } from 'react';
+
+import { useEffect, useState } from 'react';
+import { Filter, Loader, X } from 'lucide-react';
 import { useStore } from '../../store/useStore';
 import type { CandidateStatus } from '../../store/useStore';
-import { Filter, Loader, X } from 'lucide-react';
 import LocationSelect from '../ui/LocationSelect';
 
 const statusColors: Record<CandidateStatus, string> = {
@@ -17,74 +18,84 @@ export default function CandidateTable() {
   const loading = useStore((state) => state.loading);
   const fetchCandidates = useStore((state) => state.fetchCandidates);
 
-  const [skillFilter, setSkillFilter] = useState('');
-  const [expFilter, setExpFilter] = useState('');
-  const [locationFilter, setLocationFilter] = useState('');
+  const [skillFilter, setSkillFilter] = useState<string>('');
+  const [expFilter, setExpFilter] = useState<string>('');
+  const [locationFilter, setLocationFilter] = useState<string>('');
 
   useEffect(() => {
     console.log('CandidateTable MOUNTED');
+
     fetchCandidates();
+
     return () => {
       console.log('CandidateTable UNMOUNTED');
     };
-  }, []);
+  }, [fetchCandidates]);
 
-  console.log('TABLE RECEIVED:', candidates);
-
-  const filtered = candidates.filter((c) => {
+  const filtered = candidates.filter((candidate) => {
     // Skill filter
     const matchSkill = skillFilter
-      ? c.skills.some((s) =>
-          s.toLowerCase().includes(skillFilter.toLowerCase())
+      ? candidate.skills.some((skill) =>
+          skill.toLowerCase().includes(skillFilter.toLowerCase())
         )
       : true;
 
     // Experience filter
-    const matchExp =
+    const matchExperience =
       expFilter === '0-2'
-        ? c.experience <= 2
+        ? candidate.experience <= 2
         : expFilter === '2-5'
-        ? c.experience > 2 && c.experience <= 5
+        ? candidate.experience > 2 && candidate.experience <= 5
         : expFilter === '5+'
-        ? c.experience > 5
+        ? candidate.experience > 5
         : true;
 
-    // Location filter - FIXED!
+    // Location filter
     const trimmedLocation = locationFilter.trim().toLowerCase();
+
     const matchLocation = trimmedLocation
-      ? c.location?.toLowerCase().includes(trimmedLocation)
+      ? candidate.location?.toLowerCase().includes(trimmedLocation)
       : true;
 
-    return matchSkill && matchExp && matchLocation;
+    return matchSkill && matchExperience && matchLocation;
   });
 
-  console.log('FILTERED:', filtered);
-
-  const handleClearFilters = () => {
+  const handleClearFilters = (): void => {
     setSkillFilter('');
     setExpFilter('');
     setLocationFilter('');
   };
 
-  const hasActiveFilters = skillFilter || expFilter || locationFilter;
+  const activeFilterCount = [
+    skillFilter,
+    expFilter,
+    locationFilter,
+  ].filter(Boolean).length;
+
+  const hasActiveFilters = activeFilterCount > 0;
 
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-100">
+      {/* Filters */}
       <div className="p-4 border-b border-gray-100">
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
             <Filter size={16} className="text-gray-500" />
+
             <span className="text-sm font-semibold text-gray-700">
               Filters
             </span>
+
             {hasActiveFilters && (
               <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full">
-                {[skillFilter, expFilter, locationFilter].filter(Boolean).length} active
+                {activeFilterCount} active
               </span>
             )}
           </div>
+
           {hasActiveFilters && (
             <button
+              type="button"
               onClick={handleClearFilters}
               className="text-xs text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1 transition"
             >
@@ -95,17 +106,23 @@ export default function CandidateTable() {
         </div>
 
         <div className="flex flex-wrap gap-3">
+          {/* Skill Filter */}
           <input
             type="text"
             placeholder="Search by skill..."
             value={skillFilter}
-            onChange={(e) => setSkillFilter(e.target.value)}
+            onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
+              setSkillFilter(event.target.value)
+            }
             className="text-sm border border-gray-200 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-indigo-300 w-40"
           />
 
+          {/* Experience Filter */}
           <select
             value={expFilter}
-            onChange={(e) => setExpFilter(e.target.value)}
+            onChange={(event: React.ChangeEvent<HTMLSelectElement>) =>
+              setExpFilter(event.target.value)
+            }
             className="text-sm border border-gray-200 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-indigo-300"
           >
             <option value="">All Experience</option>
@@ -114,11 +131,11 @@ export default function CandidateTable() {
             <option value="5+">5+ Years</option>
           </select>
 
+          {/* Location Filter */}
           <div className="w-40">
             <LocationSelect
               value={locationFilter}
-              onChange={(location) => {
-                console.log('Location changed to:', location);
+              onChange={(location: string) => {
                 setLocationFilter(location);
               }}
               placeholder="Filter by location..."
@@ -127,24 +144,26 @@ export default function CandidateTable() {
         </div>
       </div>
 
+      {/* Loading State */}
       {loading && candidates.length === 0 && (
         <div className="text-center py-12">
           <Loader
             size={24}
             className="animate-spin text-indigo-600 mx-auto mb-2"
           />
+
           <p className="text-sm text-gray-500">
             Loading candidates...
           </p>
         </div>
       )}
 
+      {/* Candidates Table */}
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
             <tr className="bg-gray-50 text-gray-500 text-left">
               <th className="px-4 py-3">Name</th>
-              <th className="px-4 py-3">Skills</th>
               <th className="px-4 py-3">Experience</th>
               <th className="px-4 py-3">Role</th>
               <th className="px-4 py-3">Applied Job</th>
@@ -157,15 +176,19 @@ export default function CandidateTable() {
             {filtered.length === 0 ? (
               <tr>
                 <td
-                  colSpan={7}
+                  colSpan={6}
                   className="text-center py-8 text-gray-400"
                 >
                   {candidates.length === 0 ? (
-                    <span>No candidates found. Check back later!</span>
+                    <span>
+                      No candidates found. Check back later!
+                    </span>
                   ) : (
                     <div>
                       <p>No candidates match your filters.</p>
+
                       <button
+                        type="button"
                         onClick={handleClearFilters}
                         className="text-xs text-blue-600 hover:text-blue-700 mt-2 underline"
                       >
@@ -176,57 +199,52 @@ export default function CandidateTable() {
                 </td>
               </tr>
             ) : (
-              filtered.map((c) => (
+              filtered.map((candidate) => (
                 <tr
-                  key={c.id}
+                  key={candidate.id}
                   className="border-t border-gray-50 hover:bg-gray-50 transition"
                 >
+                  {/* Name */}
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-2">
                       <div className="w-6 h-6 rounded-full bg-indigo-600 text-white text-xs font-semibold flex items-center justify-center">
-                        {c.avatar}
+                        {candidate.avatar}
                       </div>
-                      <span>{c.name}</span>
-                    </div>
-                  </td>
-                  <td className="px-4 py-3">
-                    <div className="flex flex-wrap gap-1">
-                      {c.skills.slice(0, 2).map((skill, idx) => (
-                        <span
-                          key={idx}
-                          className="text-xs bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded"
-                        >
-                          {skill}
-                        </span>
-                      ))}
-                      {c.skills.length > 2 && (
-                        <span className="text-xs text-gray-500">
-                          +{c.skills.length - 2}
-                        </span>
-                      )}
-                    </div>
-                  </td>
-                  <td className="px-4 py-3">
-                    <div className="flex flex-col">
-                      <span>{c.experience} yrs</span>
-                      {c.workExperience && c.workExperience.length > 0 && (
-                        <span className="text-xs text-gray-500">
-                          {c.workExperience.length} items
-                        </span>
-                      )}
+
+                      <span>{candidate.name}</span>
                     </div>
                   </td>
 
-                  <td className="px-4 py-3">{c.role}</td>
-                  <td className="px-4 py-3">
-                    {c.appliedJob || c.jobTitle || '-'}
+                  {/* Experience */}
+                  <td className="px-4 py-3 font-medium text-gray-700">
+                    {candidate.experience ?? 0}
                   </td>
-                  <td className="px-4 py-3">{c.location}</td>
+
+                  {/* Role */}
+                  <td className="px-4 py-3">
+                    {candidate.role}
+                  </td>
+
+                  {/* Applied Job */}
+                  <td className="px-4 py-3">
+                    {candidate.appliedJob ||
+                      candidate.jobTitle ||
+                      '-'}
+                  </td>
+
+                  {/* Location */}
+                  <td className="px-4 py-3">
+                    {candidate.location || '-'}
+                  </td>
+
+                  {/* Status */}
                   <td className="px-4 py-3">
                     <span
-                      className={`px-2 py-1 rounded-full text-xs font-medium ${statusColors[c.status]}`}
+                      className={`px-2 py-1 rounded-full text-xs font-medium ${
+                        statusColors[candidate.status]
+                      }`}
                     >
-                      {c.status}
+                      {candidate.status}
                     </span>
                   </td>
                 </tr>

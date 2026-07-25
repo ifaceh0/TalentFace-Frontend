@@ -83,18 +83,18 @@ export default function CandidateCard({ candidate }: CandidateCardProps) {
       )}
 
       {/* Experience */}
-      {candidate.experience && candidate.experience > 0 && (
-        <p className="text-xs text-gray-600 mt-2">
-          {candidate.experience} yrs exp
-        </p>
-      )}
-
-      {/* Work experience count */}
-      {candidate.workExperience && candidate.workExperience.length > 0 && (
-        <p className="text-xs text-gray-500 mt-1">
-          {candidate.workExperience.length} work history item(s)
-        </p>
-      )}
+      <div className="mt-2">
+        {candidate.experience === 0 ? (
+          <span className="inline-block text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full font-medium">
+            Fresher
+          </span>
+        ) : (
+          <span className="inline-flex items-center gap-1 text-xs text-gray-700 font-medium">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2"/></svg>
+            {candidate.experience === 1 ? '1 yr exp' : `${parseFloat(candidate.experience.toFixed(1))} yrs exp`}
+          </span>
+        )}
+      </div>
 
 
     </div>
