@@ -216,20 +216,8 @@ export function restoreAppState(userId?: string) {
   if (typeof window === 'undefined') return;
 
   try {
-    const raw = localStorage.getItem(getStorageKey(userId));
-    if (!raw) return;
-
-    const parsed = JSON.parse(raw);
-    if (
-      parsed &&
-      Array.isArray(parsed.jobs) &&
-      Array.isArray(parsed.candidates)
-    ) {
-      useStore.setState({
-        jobs: parsed.jobs,
-        candidates: parsed.candidates,
-      });
-    }
+    const key = getStorageKey(userId);
+    localStorage.removeItem(key);
   } catch {
     // Silently ignore invalid saved state.
   }

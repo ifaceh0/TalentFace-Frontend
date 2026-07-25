@@ -69,8 +69,8 @@ function PipelineColumn({
     <div
       ref={setNodeRef}
       className={`
-        w-[280px]
-        min-w-[280px]
+        w-full
+        min-w-0
         h-[420px]
         rounded-xl
         border-2
@@ -170,7 +170,7 @@ export default function PipelineBoardFiltered({ candidates }: PipelineBoardFilte
         items={candidates.map((c) => c.id)}
         strategy={verticalListSortingStrategy}
       >
-        <div className="flex gap-3 justify-start overflow-x-auto pb-4">
+        <div className="grid grid-cols-5 gap-3 pb-4">
           {columns.map((col) => {
             const columnCandidates = candidates.filter(
               (c) => c.status === col.id

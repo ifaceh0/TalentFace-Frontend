@@ -17,7 +17,11 @@ const VALID_CURRENCIES = [
   'DKK', 'NZD', 'AED', 'SAR', 'KWD', 'QAR', 'BHD', 'OMR', 'JOD'
 ];
 
-export default function JobList() {
+interface JobListProps {
+  onJobClick?: (jobId: string) => void;
+}
+
+export default function JobList({ onJobClick }: JobListProps) {
   const { jobs, loading, error, fetchJobs, createJob, deleteJob, setSelectedJobId } = useStore();
   const [showForm, setShowForm] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
@@ -100,6 +104,11 @@ export default function JobList() {
   };
 
   const handleJobClick = (jobId: string) => {
+    if (onJobClick) {
+      onJobClick(jobId);
+      return;
+    }
+
     setSelectedJobIdLocal(jobId);
     setSelectedJobId(jobId);
     setShowDetailModal(true);
@@ -246,6 +255,17 @@ export default function JobList() {
         return `${job.salaryMin}–${job.salaryMax} ${job.salaryCurrency}`;
     }
   };
+
+  if (showDetailModal && selectedJobId) {
+    return (
+      <JobDetailModal
+        isOpen
+        onClose={handleCloseModal}
+        jobId={selectedJobId}
+        displayMode="inline-fullscreen"
+      />
+    );
+  }
 
   return (
     <>
@@ -656,13 +676,6 @@ export default function JobList() {
         </div>
       </div>
 
-      {selectedJobId && (
-        <JobDetailModal
-          isOpen={showDetailModal}
-          onClose={handleCloseModal}
-          jobId={selectedJobId}
-        />
-      )}
     </>
   );
 }

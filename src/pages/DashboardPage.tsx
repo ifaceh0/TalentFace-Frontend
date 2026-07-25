@@ -7,7 +7,11 @@ import HiringChart from '../components/dashboard/HiringChart';
 import JobOverviewGrid from '../components/dashboard/JobOverviewGrid';
 import { useStore } from '../store/useStore';
 
-export default function DashboardPage() {
+interface DashboardPageProps {
+  setActivePage: React.Dispatch<React.SetStateAction<string>>;
+}
+
+export default function DashboardPage({ setActivePage }: DashboardPageProps) {
   const { fetchJobs, fetchCandidates } = useStore();
 
   useEffect(() => {
@@ -20,7 +24,7 @@ export default function DashboardPage() {
       {/* Overview - Job Postings Grid */}
       <div>
         <h3 className="text-lg font-semibold text-blue-900 mb-4">Overview</h3>
-        <JobOverviewGrid />
+        <JobOverviewGrid setActivePage={setActivePage} />
       </div>
 
       
@@ -34,7 +38,7 @@ export default function DashboardPage() {
         <div className="space-y-6">
           <div>
             <h3 className="text-lg font-semibold text-blue-900 mb-4">Job Postings</h3>
-            <JobList />
+            <JobList onJobClick={() => setActivePage('jobs')} />
           </div>
           <div>
             <h3 className="text-lg font-semibold text-blue-900 mb-4">Hiring Overview</h3>

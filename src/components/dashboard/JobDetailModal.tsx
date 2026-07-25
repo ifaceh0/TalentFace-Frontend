@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { X, MapPin, DollarSign, Users, Clock, Edit2 } from 'lucide-react';
+import { X, MapPin, DollarSign, Users, Clock, Edit2, ArrowLeft } from 'lucide-react';
 import { useStore } from '../../store/useStore';
 import PipelineBoardFiltered from './PipelineBoardFiltered';
 
@@ -8,12 +8,20 @@ interface JobDetailModalProps {
   onClose: () => void;
   jobId: string;
   onEdit?: (jobId: string) => void;
+  displayMode?: 'modal' | 'inline-fullscreen';
 }
 
-export default function JobDetailModal({ isOpen, onClose, jobId, onEdit }: JobDetailModalProps) {
+export default function JobDetailModal({
+  isOpen,
+  onClose,
+  jobId,
+  onEdit,
+  displayMode = 'modal',
+}: JobDetailModalProps) {
   const { jobs, jobCandidates, loading, fetchJobCandidates } = useStore();
   const [activeTab, setActiveTab] = useState<'details' | 'candidates'>('candidates');
   const [canEdit, setCanEdit] = useState(false);
+  const isInlineFullscreen = displayMode === 'inline-fullscreen';
 
   const job = jobs.find((j) => j.id === jobId);
 
@@ -45,16 +53,25 @@ export default function JobDetailModal({ isOpen, onClose, jobId, onEdit }: JobDe
 
   if (!isOpen) return null;
 
-  return (
-    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-xl max-w-5xl w-full max-h-[90vh] overflow-hidden flex flex-col">
+  const modalContent = (
+    <>
         {/* Header */}
-        <div className="border-b border-gray-200 p-6 flex items-start justify-between">
+        <div className="border-b border-gray-200 p-6 flex items-start justify-between gap-4">
           <div className="flex-1">
             <h2 className="text-2xl font-bold text-gray-900">{job?.title}</h2>
             <p className="text-sm text-gray-500 mt-1">{job?.department}</p>
           </div>
           <div className="flex gap-2 items-center">
+            {isInlineFullscreen && (
+              <button
+                type="button"
+                onClick={onClose}
+                className="flex items-center gap-1 text-sm text-gray-600 border border-gray-200 px-3 py-2 rounded-lg hover:bg-gray-50 transition"
+              >
+                <ArrowLeft size={14} />
+                Back to jobs
+              </button>
+            )}
             {canEdit && (
               <button
                 onClick={handleEditClick}
@@ -65,12 +82,14 @@ export default function JobDetailModal({ isOpen, onClose, jobId, onEdit }: JobDe
                 Edit
               </button>
             )}
-            <button
-              onClick={onClose}
-              className="text-gray-400 hover:text-gray-600 transition"
-            >
-              <X size={24} />
-            </button>
+            {!isInlineFullscreen && (
+              <button
+                onClick={onClose}
+                className="text-gray-400 hover:text-gray-600 transition"
+              >
+                <X size={24} />
+              </button>
+            )}
           </div>
         </div>
 
@@ -218,6 +237,21 @@ export default function JobDetailModal({ isOpen, onClose, jobId, onEdit }: JobDe
             </div>
           )}
         </div>
+    </>
+  );
+
+  if (isInlineFullscreen) {
+    return (
+      <div className="w-full min-h-[calc(100vh-8.5rem)] bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden flex flex-col">
+        {modalContent}
+      </div>
+    );
+  }
+
+  return (
+    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+      <div className="bg-white rounded-2xl shadow-xl max-w-5xl w-full max-h-[90vh] overflow-hidden flex flex-col">
+        {modalContent}
       </div>
     </div>
   );
