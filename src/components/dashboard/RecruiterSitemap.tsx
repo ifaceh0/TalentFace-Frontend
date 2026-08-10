@@ -8,17 +8,17 @@ export default function RecruiterSitemap() {
     {
       category: 'Main',
       links: [
-        { icon: Home, label: 'Dashboard', path: '/recruiter/dashboard', description: 'Main dashboard overview' },
-        { icon: Briefcase, label: 'Jobs', path: '/recruiter/dashboard', description: 'Manage job postings' },
-        { icon: Users, label: 'Candidates', path: '/recruiter/dashboard', description: 'View all applicants' },
+        { id: 'dashboard', icon: Home, label: 'Dashboard', path: '/recruiter/dashboard', description: 'Main dashboard overview' },
+        { id: 'jobs', icon: Briefcase, label: 'Jobs', path: '/recruiter/dashboard?page=jobs', description: 'Manage job postings' },
+        { id: 'candidates', icon: Users, label: 'Candidates', path: '/recruiter/dashboard?page=candidates', description: 'View all applicants' },
       ]
     },
     {
       category: 'Account',
       links: [
-        { icon: User, label: 'View Profile', path: '/recruiter/profile', description: 'Edit your profile' },
-        { icon: Settings, label: 'Settings', path: '/recruiter/settings', description: 'Manage preferences' },
-        { icon: Lock, label: 'Change Password', path: '/recruiter/change-password', description: 'Update password' },
+        { id: 'profile', icon: User, label: 'View Profile', path: '/recruiter/profile', description: 'Edit your profile' },
+        { id: 'settings', icon: Settings, label: 'Settings', path: '/recruiter/settings', description: 'Manage preferences' },
+        { id: 'change-password', icon: Lock, label: 'Change Password', path: '/recruiter/change-password', description: 'Update password' },
       ]
     },
   ];
@@ -41,7 +41,7 @@ export default function RecruiterSitemap() {
                 const IconComponent = link.icon;
                 return (
                   <button
-                    key={link.path}
+                    key={link.id}
                     onClick={() => navigate(link.path)}
                     className="w-full flex items-start gap-4 p-4 bg-white rounded-xl border border-gray-200 hover:border-blue-400 hover:shadow-md transition group"
                   >

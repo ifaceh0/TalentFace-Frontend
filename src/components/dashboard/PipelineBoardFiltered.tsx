@@ -170,7 +170,7 @@ export default function PipelineBoardFiltered({ candidates }: PipelineBoardFilte
         items={candidates.map((c) => c.id)}
         strategy={verticalListSortingStrategy}
       >
-        <div className="grid grid-cols-5 gap-3 pb-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-3 pb-4">
           {columns.map((col) => {
             const columnCandidates = candidates.filter(
               (c) => c.status === col.id

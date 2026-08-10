@@ -9,6 +9,26 @@ type ApiEnvelope<T> = {
 
 // ─── Helpers ─────────────────────────────────────────────────────
 
+const normalizeCandidateStatus = (status: string): Candidate['status'] => {
+  switch (status) {
+    case 'Shortlisted':
+      return 'Shortlisted';
+    case 'Interview':
+    case 'Under Review':
+    case 'under_review':
+      return 'Interview';
+    case 'Offer':
+    case 'Offered':
+      return 'Offer';
+    case 'Hired':
+      return 'Hired';
+    case 'Rejected':
+      return 'Rejected';
+    default:
+      return 'Applied';
+  }
+};
+
 const transformJob = (job: any): Job => ({
   id: job._id || job.id,
   title: job.title,
@@ -42,7 +62,8 @@ const transformJob = (job: any): Job => ({
 });
 
 const transformCandidate = (candidate: any): Candidate => ({
-  id: candidate.id,
+  id: candidate.id || candidate.applicationId || candidate._id || '',
+  uniqueID: candidate.uniqueID || candidate.uniqueId || '',
   applicationId: candidate.applicationId,
   jobId: candidate.jobId,
   name: candidate.name,
@@ -66,8 +87,9 @@ const transformCandidate = (candidate: any): Candidate => ({
       ? candidate.skillList
       : [],
   location: candidate.location || 'Not Specified',
-  status: candidate.status || 'Applied',
+  status: normalizeCandidateStatus(candidate.status),
   email: candidate.email || '',
+  phone: candidate.phone || '',
   appliedDate: candidate.appliedDate
     ? new Date(candidate.appliedDate).toISOString().split('T')[0]
     : '',
@@ -223,6 +245,54 @@ export const updateCandidateStatus = async (
   );
 };
 
+// recruiterService exported after all function declarations to avoid temporal-dead-zone issues
+
+
+export interface CandidateDetail {
+  id: string;
+  applicationId?: string;
+  uniqueID: string;
+  name: string;
+  email: string;
+  phone?: string;
+  location?: string;
+  bio?: string;
+  experience?: string;
+  skills?: string[];
+  education?: { degree?: string; institution?: string; year?: string }[];
+  resumeUrl?: string;
+  resumeThumbnailUrl?: string;
+  resumeMimeType?: string;
+  isResumePdf?: boolean;
+  appliedJob?: string;
+  status?: Candidate['status'];
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+/**
+ * GET /api/recruiter/candidates/:uniqueID
+ */
+export const getCandidateDetail = async (
+  uniqueID: string
+): Promise<CandidateDetail> => {
+  const { data } = await api.get<ApiEnvelope<{ candidate: CandidateDetail }>>(
+    `/recruiter/candidates/${uniqueID}`
+  );
+
+  return data.data.candidate;
+};
+
+export const getCandidateResumeDownload = async (
+  uniqueID: string
+): Promise<{ downloadUrl: string; filename: string }> => {
+  const { data } = await api.get<ApiEnvelope<{ downloadUrl: string; filename: string }>>(
+    `/recruiter/candidates/${uniqueID}/resume/download`
+  );
+
+  return data.data;
+};
+
 export const recruiterService = {
   getMyJobs,
   createJob,
@@ -231,6 +301,8 @@ export const recruiterService = {
   getRecruiterCandidates,
   getJobCandidates,
   updateCandidateStatus,
+  getCandidateDetail,
+  getCandidateResumeDownload,
   getRecruiterProfile,
   updateRecruiterProfile,
 };

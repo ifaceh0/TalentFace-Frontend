@@ -20,6 +20,8 @@ const statusOptions: CandidateStatus[] = [
 const statusColors: Record<CandidateStatus, string> = {
   Applied: 'text-blue-600',
   Shortlisted: 'text-yellow-600',
+  Rejected: 'text-red-600',
+  Offered: 'text-green-600',
   Interview: 'text-purple-600',
   Offer: 'text-orange-600',
   Hired: 'text-green-600',

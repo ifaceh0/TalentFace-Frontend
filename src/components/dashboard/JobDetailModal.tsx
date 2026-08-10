@@ -18,9 +18,10 @@ export default function JobDetailModal({
   onEdit,
   displayMode = 'modal',
 }: JobDetailModalProps) {
-  const { jobs, jobCandidates, loading, fetchJobCandidates } = useStore();
+  const { jobs, jobCandidates, loading, fetchJobCandidates, updateCandidateStatus } = useStore();
   const [activeTab, setActiveTab] = useState<'details' | 'candidates'>('candidates');
   const [canEdit, setCanEdit] = useState(false);
+  const [updatingCandidateId, setUpdatingCandidateId] = useState<string | null>(null);
   const isInlineFullscreen = displayMode === 'inline-fullscreen';
 
   const job = jobs.find((j) => j.id === jobId);
@@ -51,7 +52,38 @@ export default function JobDetailModal({
     }
   };
 
+  const getStatusBadgeClass = (status: string) => {
+    if (status === 'Shortlisted') return 'bg-yellow-100 text-yellow-800';
+    if (status === 'Interview') return 'bg-purple-100 text-purple-700';
+    if (status === 'Offer') return 'bg-orange-100 text-orange-700';
+    if (status === 'Hired') return 'bg-green-100 text-green-700';
+    if (status === 'Rejected') return 'bg-red-100 text-red-700';
+    return 'bg-blue-100 text-blue-700';
+  };
+
+  const handleRejectCandidate = async (candidateId: string) => {
+    try {
+      setUpdatingCandidateId(candidateId);
+      await updateCandidateStatus(candidateId, 'Rejected');
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to reject candidate.';
+      window.alert(message);
+    } finally {
+      setUpdatingCandidateId(null);
+    }
+  };
+
+  const openCandidateProfile = (uniqueID?: string) => {
+    if (!uniqueID) {
+      window.alert('Candidate unique ID is missing.');
+      return;
+    }
+    window.open(`/recruiter/candidate/${uniqueID}`, '_blank');
+  };
+
   if (!isOpen) return null;
+  const visibleCandidates = jobCandidates.filter((candidate) => candidate.status !== 'Rejected');
+  const rejectedCandidates = jobCandidates.filter((candidate) => candidate.status === 'Rejected');
 
   const modalContent = (
     <>
@@ -232,7 +264,85 @@ export default function JobDetailModal({
                   <p className="text-sm">No applications yet</p>
                 </div>
               ) : (
-                <PipelineBoardFiltered candidates={jobCandidates} />
+                <div className="space-y-5">
+                  <div>
+                    <h3 className="text-base font-semibold text-gray-900 mb-3">Candidate Pipeline</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
+                      {visibleCandidates.map((candidate) => (
+                        <div
+                          key={`pipeline-card-${candidate.id}`}
+                          onClick={() => openCandidateProfile(candidate.uniqueID)}
+                          role="button"
+                          tabIndex={0}
+                          onKeyDown={(event) => {
+                            if (event.key === 'Enter' || event.key === ' ') {
+                              event.preventDefault();
+                              openCandidateProfile(candidate.uniqueID);
+                            }
+                          }}
+                          className="text-left p-4 rounded-xl border border-gray-200 bg-white hover:border-blue-400 hover:shadow-sm transition cursor-pointer"
+                        >
+                          <div className="flex justify-between items-start gap-3">
+                            <div>
+                              <p className="text-sm font-semibold text-gray-900">{candidate.name}</p>
+                              <p className="text-xs text-gray-600">{candidate.email || 'N/A'}</p>
+                              <p className="text-xs text-gray-500 mt-1">{candidate.phone || 'Phone not provided'}</p>
+                              <p className="text-xs text-gray-500">{candidate.location || 'Location not provided'}</p>
+                            </div>
+                            <span className={`text-xs px-2 py-1 rounded-full font-medium ${getStatusBadgeClass(candidate.status)}`}>
+                              {candidate.status}
+                            </span>
+                          </div>
+                          <div className="mt-2 flex flex-wrap gap-1">
+                            {(candidate.skills || []).slice(0, 4).map((skill) => (
+                              <span key={`${candidate.id}-${skill}`} className="text-xs px-2 py-0.5 rounded bg-gray-100 text-gray-700">
+                                {skill}
+                              </span>
+                            ))}
+                          </div>
+                          <div className="mt-3">
+                            <button
+                              type="button"
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                void handleRejectCandidate(candidate.id);
+                              }}
+                              disabled={updatingCandidateId === candidate.id}
+                              className="text-xs px-3 py-1.5 rounded-lg border border-red-200 text-red-700 hover:bg-red-50 transition disabled:opacity-60 disabled:cursor-not-allowed"
+                            >
+                              {updatingCandidateId === candidate.id ? 'Rejecting...' : 'Reject'}
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  <PipelineBoardFiltered candidates={visibleCandidates} />
+                  {rejectedCandidates.length > 0 && (
+                    <div className="rounded-xl border-2 border-red-200 bg-red-50 p-4">
+                      <div className="flex items-center justify-between mb-3">
+                        <h3 className="text-sm font-semibold text-red-800">Rejected Candidates</h3>
+                        <span className="text-xs bg-white border border-red-200 text-red-700 px-2 py-0.5 rounded-full">
+                          {rejectedCandidates.length}
+                        </span>
+                      </div>
+                      <div className="space-y-2 max-h-72 overflow-y-auto pr-1">
+                        {rejectedCandidates.map((candidate) => (
+                          <button
+                            key={`rejected-card-${candidate.id}`}
+                            type="button"
+                            onClick={() => openCandidateProfile(candidate.uniqueID)}
+                            className="w-full text-left p-3 rounded-lg border border-red-200 bg-white hover:border-red-300 transition"
+                          >
+                            <p className="text-sm font-semibold text-gray-900">{candidate.name}</p>
+                            <p className="text-xs text-gray-600">{candidate.email || 'N/A'}</p>
+                            <p className="text-xs text-gray-500 mt-1">{candidate.phone || 'Phone not provided'}</p>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
               )}
             </div>
           )}

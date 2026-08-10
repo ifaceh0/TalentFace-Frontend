@@ -6,7 +6,7 @@ const APP_STATE_KEY = 'tf_autosave_state';
 const getStorageKey = (userId?: string) =>
   userId ? `${APP_STATE_KEY}_${userId}` : APP_STATE_KEY;
 
-export type CandidateStatus = 'Applied' | 'Shortlisted' | 'Interview' | 'Offer' | 'Hired';
+export type CandidateStatus = 'Applied' | 'Shortlisted' | 'Rejected' | 'Offered' | 'Interview' | 'Offer' | 'Hired';
 
 export interface CandidateWorkExperience {
   company: string;
@@ -19,6 +19,7 @@ export interface CandidateWorkExperience {
 
 export interface Candidate {
   id: string;
+  uniqueID?: string;
   applicationId?: string;
   jobId?: string;
 
@@ -36,6 +37,7 @@ export interface Candidate {
   status: CandidateStatus;
 
   email: string;
+  phone?: string;
 
   appliedDate: string;
 
