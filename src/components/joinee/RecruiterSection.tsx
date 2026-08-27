@@ -379,7 +379,11 @@ export default function RecruiterSection({ profile }: RecruiterSectionProps) {
                     </div>
                     {exp.description && (
                       <p style={{ fontSize: 13, color: '#4A5568', lineHeight: 1.65, margin: '8px 0 0' }}>
-                        {exp.description}
+                        {typeof exp.description === 'string' ? (
+                          exp.description
+                        ) : (
+                          <span dangerouslySetInnerHTML={{ __html: renderSummaryHTML(exp.description) }} />
+                        )}
                       </p>
                     )}
                   </div>
@@ -439,9 +443,16 @@ export default function RecruiterSection({ profile }: RecruiterSectionProps) {
                       )}
                     </div>
                     {proj.description && (
-                      <p style={{ fontSize: 13, color: '#4A5568', lineHeight: 1.65, margin: '0 0 8px' }}>
-                        {proj.description}
-                      </p>
+                      typeof proj.description === 'string' ? (
+                        <p style={{ fontSize: 13, color: '#4A5568', lineHeight: 1.65, margin: '0 0 8px' }}>
+                          {proj.description}
+                        </p>
+                      ) : (
+                        <div
+                          style={{ fontSize: 13, color: '#4A5568', lineHeight: 1.65, margin: '0 0 8px' }}
+                          dangerouslySetInnerHTML={{ __html: renderSummaryHTML(proj.description) }}
+                        />
+                      )
                     )}
                     {proj.techStack && proj.techStack.length > 0 && (
                       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>

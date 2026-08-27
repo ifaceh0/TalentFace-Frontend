@@ -22,7 +22,7 @@ export interface WorkExperience {
   jobTitle?: string;    // alias for role used in resume display
   company?: string;
   role?: string;
-  description?: string;
+  description?: JSONContent | string;
   type?: 'internship' | 'full-time' | 'part-time' | 'freelance';
   startDate?: string;
   endDate?: string;
@@ -32,7 +32,7 @@ export interface WorkExperience {
 export interface Project {
   _id?: string;
   title?: string;
-  description?: string;
+  description?:  JSONContent | string;
   techStack?: string[];
   link?: string;
   startDate?: string | null;

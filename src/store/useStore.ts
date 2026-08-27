@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { recruiterService } from '../services/recruiter.service';
+import type { JSONContent } from '@tiptap/react';
 
 const APP_STATE_KEY = 'tf_autosave_state';
 
@@ -49,12 +50,13 @@ export interface Candidate {
 export interface Job {
   id: string;
   title: string;
+  company: string;
   department: string;
   location: string;
   applicants: number;
   status: 'Active' | 'Closed' | 'Draft';
   postedDate: string;
-  description: string;
+  description: JSONContent | string;
   salaryMin?: number;
   salaryMax?: number;
   salaryCurrency?: 'LPA' | 'USD/year' | 'Custom';
