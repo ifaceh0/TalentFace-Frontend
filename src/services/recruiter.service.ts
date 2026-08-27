@@ -12,6 +12,7 @@ type ApiEnvelope<T> = {
 const transformJob = (job: any): Job => ({
   id: job._id || job.id,
   title: job.title,
+  company: job.company || '',
   department: job.company || job.department || '',
   location: job.location,
   description: job.description || '',
