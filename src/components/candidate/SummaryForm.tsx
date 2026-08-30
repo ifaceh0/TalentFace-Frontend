@@ -12,12 +12,12 @@ import {
   Undo2,
   Redo2,
 } from 'lucide-react';
-import { updateSummary } from '../../services/joinee.service';
-import type { JoineeProfile } from '../../types/joinee.types';
+import { updateSummary } from '../../services/candidate.service';
+import type { CandidateProfile } from '../../types/candidate.types';
 
 interface SummaryFormProps {
-  profile: JoineeProfile; // profile.summary: JSONContent | null
-  onUpdate: (p: JoineeProfile) => void;
+  profile: CandidateProfile; // profile.summary: JSONContent | null
+  onUpdate: (p: CandidateProfile) => void;
 }
 
 const MAX_CHARS = 1000;
@@ -317,12 +317,12 @@ function ToolbarButton({
 }
 
 // import { useState } from 'react';
-// import { updateSummary } from '../../services/joinee.service';
-// import type { JoineeProfile } from '../../types/joinee.types';
+// import { updateSummary } from '../../services/candidate.service';
+// import type { CandidateProfile } from '../../types/candidate.types';
 
 // interface SummaryFormProps {
-//   profile: JoineeProfile;
-//   onUpdate: (p: JoineeProfile) => void;
+//   profile: CandidateProfile;
+//   onUpdate: (p: CandidateProfile) => void;
 // }
 
 // const MAX = 1000;
@@ -408,3 +408,7 @@ function ToolbarButton({
 //     </div>
 //   );
 // }
+
+
+// 
+
