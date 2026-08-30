@@ -20,21 +20,21 @@ import JobsPage from "./pages/JobsPage";
 
 import Login from "./pages/auth/Login";
 import RecruiterSignup from "./pages/auth/RecruiterSignup";
-import JoineeSignup from "./pages/auth/JoineeSignup";
+import CandidateSignup from "./pages/auth/CandidateSignup";
 
 
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import Home from "./pages/Home";
-import BrowseJobs    from "./pages/joinee/BrowseJobs";   //
-import JoineeHomepage from "./components/joinee/Joineehomepage";
-import JoineeDashboard from "./pages/joinee/JoineeDashboard";
-import JobSwipe from "./pages/joinee/JobSwipe";
+import BrowseJobs    from "./pages/candidate/BrowseJobs";   //
+import CandidateHomepage from "./components/candidate/Candidatehomepage";
+import CandidateDashboard from "./pages/candidate/CandidateDashboard";
+import JobSwipe from "./pages/candidate/JobSwipe";
 
 import ChatWidget from "./components/ChatWidget/ChatWidget";
-import SavedJobs from "./components/joinee/SavedJob";
+import SavedJobs from "./components/candidate/SavedJob";
 
-import Setting from "./pages/joinee/Setting";
-import JoineeApplications from "./pages/joinee/joineeApplications";
+import Setting from "./pages/candidate/Setting";
+import CandidateApplications from "./pages/candidate/candidateApplications";
 
 // ── NEW: Import Recruiter Profile Pages ────────────────────────────────────
 import Profile from "./pages/recruiter/Profile";
@@ -87,15 +87,15 @@ function Dashboard({ role }: { role: string }) {
   );
 }
 
-// ───────────────── Joinee Layout wrapper ─────────────────────────────────────
-// Wraps all joinee pages so ChatWidget appears on every joinee route
-// without touching JoineeHomepage / JoineeDashboard / JobSwipe individually.
+// ───────────────── Candidate Layout wrapper ─────────────────────────────────────
+// Wraps all candidate pages so ChatWidget appears on every candidate route
+// without touching CandidateHomepage / CandidateDashboard / JobSwipe individually.
  
-function JoineeLayout({ children }: { children: React.ReactNode }) {
+function CandidateLayout({ children }: { children: React.ReactNode }) {
   return (
     <>
       {children}
-      <ChatWidget />   {/* ← joinee sees the widget */}
+      <ChatWidget />   {/* ← candidate sees the widget */}
     </>
   );
 }
@@ -152,8 +152,8 @@ export default function App() {
           />
 
           <Route
-            path="/signup/joinee"
-            element={<JoineeSignup />}
+            path="/signup/candidate"
+            element={<CandidateSignup />}
           />
 
           <Route
@@ -196,30 +196,30 @@ export default function App() {
   />
 </Route>
 
-          {/* Joinee Routes*/}
-          {/* Joinee Routes */}
+          {/* Candidate Routes*/}
+          {/* Candidate Routes */}
          {/* <Route
-            element={<ProtectedRoute allowedRoles={["joinee"]} />}
+            element={<ProtectedRoute allowedRoles={["candidate"]} />}
           >
             <Route
-              path="/joinee/home"
-              element={<JoineeHomepage />}
+              path="/candidate/home"
+              element={<CandidateHomepage />}
             />
             <Route
-              path="/joinee/dashboard"
-              element={<JoineeDashboard />}
+              path="/candidate/dashboard"
+              element={<CandidateDashboard />}
 
             />
           </Route> */}
-          {/* Joinee Routes */}
-          <Route element={<ProtectedRoute allowedRoles={["joinee"]} />}>
-            <Route path="/joinee/home"      element={<JoineeLayout><JoineeHomepage /></JoineeLayout>} />
-            <Route path="/joinee/dashboard" element={<JoineeLayout><JoineeDashboard /></JoineeLayout>} />
-            <Route path="/joinee/browse"    element={<BrowseJobs />} />
-            <Route path="/joinee/swipe"     element={<JoineeLayout><JobSwipe /></JoineeLayout>} />
-            <Route path="/joinee/saved" element={<SavedJobs />} />
-            <Route path="/joinee/setting" element={<Setting />} /> 
-            <Route path="/joinee/applications" element={<JoineeLayout><JoineeApplications /></JoineeLayout>} />
+          {/* Candidate Routes */}
+          <Route element={<ProtectedRoute allowedRoles={["candidate"]} />}>
+            <Route path="/candidate/home"      element={<CandidateLayout><CandidateHomepage /></CandidateLayout>} />
+            <Route path="/candidate/dashboard" element={<CandidateLayout><CandidateDashboard /></CandidateLayout>} />
+            <Route path="/candidate/browse"    element={<BrowseJobs />} />
+            <Route path="/candidate/swipe"     element={<CandidateLayout><JobSwipe /></CandidateLayout>} />
+            <Route path="/candidate/saved" element={<SavedJobs />} />
+            <Route path="/candidate/setting" element={<Setting />} /> 
+            <Route path="/candidate/applications" element={<CandidateLayout><CandidateApplications /></CandidateLayout>} />
           </Route>
 
 
@@ -253,7 +253,7 @@ export default function App() {
 // import ProtectedRoute from "./components/common/ProtectedRoute";
 // import Login from "./pages/auth/Login";
 // import RecruiterSignup from "./pages/auth/RecruiterSignup";
-// import JoineeSignup from "./pages/auth/JoineeSignup";
+// import CandidateSignup from "./pages/auth/CandidateSignup";
 // import AdminDashboard from "./pages/admin/AdminDashboard";
 // import Home from "./pages/Home";
 
@@ -316,7 +316,7 @@ export default function App() {
 //           <Route path="/"                element={<Home />} />
 //           <Route path="/login"            element={<Login />} />
 //           <Route path="/signup/recruiter" element={<RecruiterSignup />} />
-//           <Route path="/signup/joinee"    element={<JoineeSignup />} />
+//           <Route path="/signup/candidate"    element={<CandidateSignup />} />
 //           <Route path="/unauthorized"     element={<Unauthorized />} />
 
 //           {/* Protected: Admin */}
@@ -329,9 +329,9 @@ export default function App() {
 //             <Route path="/recruiter/dashboard" element={<Dashboard role="recruiter" />} />
 //           </Route>
 
-//           {/* Protected: Joinee */}
-//           <Route element={<ProtectedRoute allowedRoles={["joinee"]} />}>
-//             <Route path="/joinee/dashboard" element={<Dashboard role="joinee" />} />
+//           {/* Protected: Candidate */}
+//           <Route element={<ProtectedRoute allowedRoles={["candidate"]} />}>
+//             <Route path="/candidate/dashboard" element={<Dashboard role="candidate" />} />
 //           </Route>
 
 //           {/* Catch-all */}
@@ -341,4 +341,350 @@ export default function App() {
 //     </AuthProvider>
 //   );
 // }
+
+
+
+// import { useState } from "react";
+
+// import {
+//   BrowserRouter,
+//   Routes,
+//   Route,
+//   Navigate,
+// } from "react-router-dom";
+
+// import { AuthProvider } from "./context/AuthContext";
+// //import { ThemeProvider } from "./context/ThemeContext";
+// import ProtectedRoute from "./components/common/ProtectedRoute";
+
+// import Sidebar from "./components/layout/Sidebar";
+// import Header from "./components/layout/Header";
+
+// import DashboardPage from "./pages/DashboardPage";
+// import CandidatesPage from "./pages/CandidatesPage";
+// import JobsPage from "./pages/JobsPage";
+
+// import Login from "./pages/auth/Login";
+// import RecruiterSignup from "./pages/auth/RecruiterSignup";
+// import JoineeSignup from "./pages/auth/CandidateSignup";
+
+
+// import AdminDashboard from "./pages/admin/AdminDashboard";
+// import Home from "./pages/Home";
+// import BrowseJobs    from "./pages/candidate/BrowseJobs";   //
+// import JoineeHomepage from "./components/candidate/Candidatehomepage";
+// import JoineeDashboard from "./pages/candidate/CandidateDashboard";
+// import JobSwipe from "./pages/candidate/JobSwipe";
+
+// import ChatWidget from "./components/ChatWidget/ChatWidget";
+// import SavedJobs from "./components/candidate/SavedJob";
+
+// import Setting from "./pages/candidate/Setting";
+// import JoineeApplications from "./pages/candidate/candidateApplications";
+
+// // ── NEW: Import Recruiter Profile Pages ────────────────────────────────────
+// import Profile from "./pages/recruiter/Profile";
+// import Settings from "./pages/recruiter/Settings";
+// import ChangePassword from "./pages/recruiter/Changepassword";
+
+// // ───────────────── Dashboard Layout ─────────────────
+
+// function Dashboard({ role }: { role: string }) {
+//   const [activePage, setActivePage] = useState("dashboard");
+
+//   const renderPage = () => {
+//     switch (activePage) {
+//       case "dashboard":
+//         return <DashboardPage setActivePage={setActivePage} />;
+
+//       case "candidates":
+//         return <CandidatesPage />;
+
+//       case "jobs":
+//         return <JobsPage />;
+
+//       default:
+//         return <DashboardPage setActivePage={setActivePage} />;
+//     }
+//   };
+
+//   return (
+//     <div className="min-h-screen bg-gray-50 flex">
+//       <Sidebar
+//         activePage={activePage}
+//         setActivePage={setActivePage}
+//         role={role}
+//       />
+
+//       <div className="flex-1 ml-64 min-h-screen overflow-y-auto">
+//         <Header activePage={activePage} />
+
+//         <main className="mt-16 p-6">
+//           {renderPage()}
+//         </main>
+
+//         <footer className="text-center text-xs text-gray-400 py-4 border-t border-gray-100">
+//           TalentFace Recruiter Portal · Version 1.0 · Built by Priyansu
+//         </footer>
+        
+//       </div>
+//       <ChatWidget />   {/* ← add this */}
+//     </div>
+//   );
+// }
+
+// // ───────────────── Joinee Layout wrapper ─────────────────────────────────────
+// // Wraps all joinee pages so ChatWidget appears on every joinee route
+// // without touching JoineeHomepage / JoineeDashboard / JobSwipe individually.
+ 
+// function JoineeLayout({ children }: { children: React.ReactNode }) {
+//   return (
+//     <>
+//       {children}
+//       <ChatWidget />   {/* ← joinee sees the widget */}
+//     </>
+//   );
+// }
+
+
+// // ───────────────── 403 Page ─────────────────
+
+// function Unauthorized() {
+//   return (
+//     <div
+//       className="min-h-screen bg-gray-50 flex items-center justify-center"
+//       style={{ fontFamily: "'Inter', sans-serif" }}
+//     >
+//       <div className="text-center">
+//         <p className="text-8xl font-black text-red-600">403</p>
+
+//         <h1 className="mt-4 text-2xl font-bold text-gray-900">
+//           Access Denied
+//         </h1>
+
+//         <p className="mt-2 text-gray-500">
+//           You don't have permission to view this page.
+//         </p>
+
+//         <a
+//           href="/login"
+//           className="inline-block mt-6 px-6 py-2.5 rounded-xl text-sm font-semibold text-white bg-blue-700"
+//         >
+//           Back to Login
+//         </a>
+//       </div>
+//     </div>
+//   );
+// }
+
+
+// // ───────────────── Main App ─────────────────
+
+// export default function App() {
+//   return (
+//     // <ThemeProvider>
+//     <AuthProvider>
+//       <BrowserRouter>
+//         <Routes>
+
+//           {/* Public Routes */}
+//           <Route path="/" element={<Home />} />
+
+//           <Route path="/login" element={<Login />} />
+
+//           <Route
+//             path="/signup/recruiter"
+//             element={<RecruiterSignup />}
+//           />
+
+//           <Route
+//             path="/signup/joinee"
+//             element={<JoineeSignup />}
+//           />
+
+//           <Route
+//             path="/unauthorized"
+//             element={<Unauthorized />}
+//           />
+
+
+
+//           {/* Admin Routes */}
+//           <Route
+//             element={<ProtectedRoute allowedRoles={["admin"]} />}
+//           >
+//             <Route
+//               path="/admin/dashboard"
+//               element={<AdminDashboard />}
+//             />
+//           </Route>
+
+//           {/* Recruiter Routes */}
+// <Route
+//   element={<ProtectedRoute allowedRoles={["recruiter"]} />}
+// >
+//   <Route
+//     path="/recruiter/dashboard"
+//     element={<Dashboard role="recruiter" />}
+//   />
+//   {/* ── NEW: Profile Pages ────────────────────────────────────── */}
+//   <Route
+//     path="/recruiter/profile"
+//     element={<Profile />}
+//   />
+//   <Route
+//     path="/recruiter/settings"
+//     element={<Settings />}
+//   />
+//   <Route
+//     path="/recruiter/change-password"
+//     element={<ChangePassword />}
+//   />
+// </Route>
+
+//           {/* Joinee Routes*/}
+//           {/* Joinee Routes */}
+//          {/* <Route
+//             element={<ProtectedRoute allowedRoles={["joinee"]} />}
+//           >
+//             <Route
+//               path="/joinee/home"
+//               element={<JoineeHomepage />}
+//             />
+//             <Route
+//               path="/joinee/dashboard"
+//               element={<JoineeDashboard />}
+
+//             />
+//           </Route> */}
+//           {/* Joinee Routes */}
+//           <Route element={<ProtectedRoute allowedRoles={["joinee"]} />}>
+//             <Route path="/joinee/home"      element={<JoineeLayout><JoineeHomepage /></JoineeLayout>} />
+//             <Route path="/joinee/dashboard" element={<JoineeLayout><JoineeDashboard /></JoineeLayout>} />
+//             <Route path="/joinee/browse"    element={<BrowseJobs />} />
+//             <Route path="/joinee/swipe"     element={<JoineeLayout><JobSwipe /></JoineeLayout>} />
+//             <Route path="/joinee/saved" element={<SavedJobs />} />
+//             <Route path="/joinee/setting" element={<Setting />} /> 
+//             <Route path="/joinee/applications" element={<JoineeLayout><JoineeApplications /></JoineeLayout>} />
+//           </Route>
+
+
+
+
+//           {/* Catch-all */}
+//           <Route
+//             path="*"
+//             element={<Navigate to="/login" replace />}
+//           />
+
+//         </Routes>
+//       </BrowserRouter>
+//    </AuthProvider>
+//     // </ThemeProvider>
+//   );
+// }
+
+
+
+// // import { useState } from 'react';
+// // import Sidebar from './components/layout/Sidebar';
+// // import Header from './components/layout/Header';
+// // import DashboardPage from './pages/DashboardPage';
+// // import CandidatesPage from './pages/CandidatesPage';
+// // import JobsPage from './pages/JobsPage';
+
+// // import { BrowserRouter, Routes, Route, Navigate, useNavigate } from "react-router-dom";
+// // import { AuthProvider } from "./context/AuthContext";
+// // import { useAuth } from "./context/useAuth";
+// // import ProtectedRoute from "./components/common/ProtectedRoute";
+// // import Login from "./pages/auth/Login";
+// // import RecruiterSignup from "./pages/auth/RecruiterSignup";
+// // import JoineeSignup from "./pages/auth/JoineeSignup";
+// // import AdminDashboard from "./pages/admin/AdminDashboard";
+// // import Home from "./pages/Home";
+
+
+// // export default function App() {
+// //   const [activePage, setActivePage] = useState('dashboard');
+
+// //   const renderPage = () => {
+// //     switch (activePage) {
+// //       case 'dashboard': return <DashboardPage />;
+// //       case 'candidates': return <CandidatesPage />;
+// //       case 'jobs': return <JobsPage />;
+// //       default: return <DashboardPage />;
+// //     }
+// //   };
+
+// //   return (
+// //     <div className="min-h-screen bg-gray-50 flex">
+// //       <Sidebar activePage={activePage} setActivePage={setActivePage} />
+// //       <div className="flex-1 ml-64">
+// //         <Header activePage={activePage} />
+// //         <main className="mt-16 p-6">
+// //           {renderPage()}
+// //         </main>
+// //         <footer className="text-center text-xs text-gray-400 py-4 border-t border-gray-100">
+// //           TalentFace Recruiter Portal · Version 1.0 · Built by Priyansu
+// //         </footer>
+// //       </div>
+// //     </div>
+// //   );
+
+// // }
+
+// // }
+
+// // // ── 403 page ──────────────────────────────────────────────────────────────────
+
+// // function Unauthorized() {
+// //   return (
+// //     <div className="min-h-screen bg-gray-50 flex items-center justify-center" style={{ fontFamily: "'Inter', sans-serif" }}>
+// //       <div className="text-center">
+// //         <p className="text-8xl font-black" style={{ color: "#DC2626" }}>403</p>
+// //         <h1 className="mt-4 text-2xl font-bold text-gray-900">Access Denied</h1>
+// //         <p className="mt-2 text-gray-500">You don't have permission to view this page.</p>
+// //         <a href="/login" className="inline-block mt-6 px-6 py-2.5 rounded-xl text-sm font-semibold text-white"
+// //           style={{ background: "#1D4ED8" }}>Back to Login</a>
+// //       </div>
+// //     </div>
+// //   );
+// // }
+
+// // // ── App ────────────────────────────────────────────────────────────────────────
+
+// // export default function App() {
+// //   return (
+// //     <AuthProvider>
+// //       <BrowserRouter>
+// //         <Routes>
+// //           {/* Public */}
+// //           <Route path="/"                element={<Home />} />
+// //           <Route path="/login"            element={<Login />} />
+// //           <Route path="/signup/recruiter" element={<RecruiterSignup />} />
+// //           <Route path="/signup/joinee"    element={<JoineeSignup />} />
+// //           <Route path="/unauthorized"     element={<Unauthorized />} />
+
+// //           {/* Protected: Admin */}
+// //           <Route element={<ProtectedRoute allowedRoles={["admin"]} />}>
+// //             <Route path="/admin/dashboard" element={<AdminDashboard />} />
+// //           </Route>
+
+// //           {/* Protected: Recruiter */}
+// //           <Route element={<ProtectedRoute allowedRoles={["recruiter"]} />}>
+// //             <Route path="/recruiter/dashboard" element={<Dashboard role="recruiter" />} />
+// //           </Route>
+
+// //           {/* Protected: Joinee */}
+// //           <Route element={<ProtectedRoute allowedRoles={["joinee"]} />}>
+// //             <Route path="/joinee/dashboard" element={<Dashboard role="joinee" />} />
+// //           </Route>
+
+// //           {/* Catch-all */}
+// //           <Route path="*" element={<Navigate to="/login" replace />} />
+// //         </Routes>
+// //       </BrowserRouter>
+// //     </AuthProvider>
+// //   );
+// // }
 
