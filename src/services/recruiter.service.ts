@@ -43,9 +43,10 @@ const transformJob = (job: any): Job => ({
 });
 
 const transformCandidate = (candidate: any): Candidate => ({
-  id: candidate.id,
+  id: candidate.id || candidate._id,
   applicationId: candidate.applicationId,
   jobId: candidate.jobId,
+  uniqueId: candidate.uniqueId,
   name: candidate.name,
   role: candidate.role || 'Applicant',
   experience: candidate.experience ?? candidate.applicant?.experience ?? 0,
@@ -69,12 +70,33 @@ const transformCandidate = (candidate: any): Candidate => ({
   location: candidate.location || 'Not Specified',
   status: candidate.status || 'Applied',
   email: candidate.email || '',
+  phone: candidate.phone || '',
+  resumeUrl: candidate.resumeUrl || '',
   appliedDate: candidate.appliedDate
     ? new Date(candidate.appliedDate).toISOString().split('T')[0]
     : '',
   avatar: candidate.avatar || candidate.name?.slice(0, 2).toUpperCase() || '??',
   jobTitle: candidate.jobTitle || candidate.appliedJob || candidate.job?.title || candidate.jobId?.title || '',
 });
+
+export interface CandidateProfile extends Candidate {
+  profilePhoto?: string;
+  summary?: unknown;
+  education?: Array<{
+    degree?: string;
+    institution?: string;
+    board?: string;
+    startYear?: number;
+    endYear?: number;
+    percentage?: number;
+    cgpa?: number;
+    isCurrentlyStudying?: boolean;
+  }>;
+  socialProfiles?: Array<{ platform?: string; url?: string }>;
+  currentCollege?: string;
+  department?: string;
+  course?: string;
+}
 
 
 // ─── Jobs ───────────────────────────────────────────────────────
@@ -212,6 +234,28 @@ export const getJobCandidates = async (jobId: string): Promise<Candidate[]> => {
 };
 
 /**
+ * GET /api/recruiter/candidates/:uniqueId/profile
+ */
+export const getCandidateProfile = async (
+  uniqueId: string
+): Promise<CandidateProfile> => {
+  const { data } = await api.get<ApiEnvelope<{ candidate: any }>>(
+    `/recruiter/candidates/${encodeURIComponent(uniqueId)}/profile`
+  );
+
+  return {
+    ...transformCandidate(data.data.candidate),
+    profilePhoto: data.data.candidate.profilePhoto,
+    summary: data.data.candidate.summary,
+    education: data.data.candidate.education || [],
+    socialProfiles: data.data.candidate.socialProfiles || [],
+    currentCollege: data.data.candidate.currentCollege,
+    department: data.data.candidate.department,
+    course: data.data.candidate.course,
+  };
+};
+
+/**
  * PATCH /api/recruiter/candidates/:applicationId/status
  */
 export const updateCandidateStatus = async (
@@ -231,6 +275,7 @@ export const recruiterService = {
   deleteJob,
   getRecruiterCandidates,
   getJobCandidates,
+  getCandidateProfile,
   updateCandidateStatus,
   getRecruiterProfile,
   updateRecruiterProfile,

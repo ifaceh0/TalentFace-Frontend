@@ -202,7 +202,12 @@ export default function CandidateTable() {
               filtered.map((candidate) => (
                 <tr
                   key={candidate.id}
-                  className="border-t border-gray-50 hover:bg-gray-50 transition"
+                  onClick={() => {
+                    if (candidate.uniqueId) {
+                      window.open(`/recruiter/candidate/${encodeURIComponent(candidate.uniqueId)}`, '_blank', 'noopener,noreferrer');
+                    }
+                  }}
+                  className={`border-t border-gray-50 hover:bg-gray-50 transition ${candidate.uniqueId ? 'cursor-pointer' : ''}`}
                 >
                   {/* Name */}
                   <td className="px-4 py-3">

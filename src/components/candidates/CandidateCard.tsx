@@ -1,5 +1,6 @@
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import { ExternalLink } from 'lucide-react';
 import type { Candidate } from '../../store/useStore';
 
 interface CandidateCardProps {
@@ -61,6 +62,21 @@ export default function CandidateCard({ candidate }: CandidateCardProps) {
             </p>
           )}
         </div>
+        {candidate.uniqueId && (
+          <button
+            type="button"
+            aria-label={`Open ${candidate.name}'s profile`}
+            title="Open profile"
+            onPointerDown={(event) => event.stopPropagation()}
+            onClick={(event) => {
+              event.stopPropagation();
+              window.open(`/recruiter/candidate/${encodeURIComponent(candidate.uniqueId!)}`, '_blank', 'noopener,noreferrer');
+            }}
+            className="text-gray-400 hover:text-indigo-600 p-1 rounded"
+          >
+            <ExternalLink size={15} />
+          </button>
+        )}
       </div>
 
       {/* Skills */}

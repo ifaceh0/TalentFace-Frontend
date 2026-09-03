@@ -22,6 +22,7 @@ export interface Candidate {
   id: string;
   applicationId?: string;
   jobId?: string;
+  uniqueId?: string;
 
   name: string;
   role: string;
@@ -37,6 +38,8 @@ export interface Candidate {
   status: CandidateStatus;
 
   email: string;
+  phone?: string;
+  resumeUrl?: string;
 
   appliedDate: string;
 
