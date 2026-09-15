@@ -1,7 +1,8 @@
-import { useEffect, useMemo, useState } from 'react';
-import { ArrowLeft, Download, ExternalLink, Mail, MapPin, Phone } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { ArrowLeft, Download, ExternalLink, Mail, MapPin, Phone, X } from 'lucide-react';
 import { useParams } from 'react-router-dom';
 import { getCandidateProfile, type CandidateProfile } from '../../services/recruiter.service';
+import { formatExperience } from '../../store/useStore';
 
 const summaryText = (value: unknown): string => {
   if (typeof value === 'string') return value;
@@ -14,8 +15,15 @@ const summaryText = (value: unknown): string => {
 };
 
 const thumbnailUrl = (url: string): string => {
-  const marker = '/upload/';
-  return url.includes(marker) ? url.replace(marker, '/upload/pg_1,f_jpg/') : url;
+  return url.replace(/\/upload\/(?:v\d+\/)?/, '/upload/pg_1,f_jpg/');
+};
+
+const leaveDetailPage = () => {
+  if (window.opener && !window.opener.closed) {
+    window.close();
+    return;
+  }
+  window.history.back();
 };
 
 export default function CandidateDetailPage() {
@@ -23,26 +31,39 @@ export default function CandidateDetailPage() {
   const [candidate, setCandidate] = useState<CandidateProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [resumePreviewFailed, setResumePreviewFailed] = useState(false);
+  const [showResumePreview, setShowResumePreview] = useState(false);
 
   useEffect(() => {
-    if (!uniqueId) {
-      setError('Candidate identifier is missing.');
-      setLoading(false);
-      return;
-    }
+    if (!uniqueId) return;
     getCandidateProfile(uniqueId)
       .then(setCandidate)
       .catch((err: unknown) => setError(err instanceof Error ? err.message : 'Failed to load candidate profile.'))
       .finally(() => setLoading(false));
   }, [uniqueId]);
 
-  const isPdf = useMemo(
-    () => Boolean(candidate?.resumeUrl && /\.pdf(?:[?#]|$)/i.test(candidate.resumeUrl)),
-    [candidate?.resumeUrl],
+  const hasResume = Boolean(candidate?.resumeUrl?.trim());
+  const isCloudinaryRaw = Boolean(
+    hasResume && candidate?.resumeUrl && /res\.cloudinary\.com\/[^/]+\/raw\/upload\//i.test(candidate.resumeUrl),
   );
+  const isPdf = Boolean(
+    hasResume &&
+    (candidate?.resumeUrl && /\.pdf(?:[?#]|$)/i.test(candidate.resumeUrl) ||
+      isCloudinaryRaw),
+  );
+  const transformedThumbnailUrl =
+    candidate?.resumeUrl && !isCloudinaryRaw ? thumbnailUrl(candidate.resumeUrl) : '';
+  const resumePreviewUrl = `${import.meta.env.VITE_API_BASE_URL}/recruiter/candidates/${encodeURIComponent(candidate?.uniqueId || uniqueId || '')}/resume/preview`;
+
+  useEffect(() => {
+    console.log('Candidate Resume URL:', candidate?.resumeUrl);
+    if (candidate?.resumeUrl) {
+      console.log('Candidate resume thumbnail URL:', transformedThumbnailUrl || 'raw PDF viewer fallback');
+    }
+  }, [candidate?.resumeUrl, transformedThumbnailUrl]);
 
   if (loading) return <div className="min-h-screen flex items-center justify-center text-gray-500">Loading candidate profile...</div>;
-  if (error || !candidate) return <div className="min-h-screen flex flex-col items-center justify-center gap-4 text-gray-500"><p>{error || 'Candidate not found.'}</p><button onClick={() => window.history.back()} className="text-indigo-600">Go back</button></div>;
+  if (error || !candidate) return <div className="min-h-screen flex flex-col items-center justify-center gap-4 text-gray-500"><p>{error || (uniqueId ? 'Candidate not found.' : 'Candidate identifier is missing.')}</p><button onClick={leaveDetailPage} className="text-indigo-600">Go back</button></div>;
 
   const location = candidate.location || 'Location not specified';
   const summary = summaryText(candidate.summary);
@@ -50,17 +71,19 @@ export default function CandidateDetailPage() {
   return (
     <main className="min-h-screen bg-gray-50 p-4 sm:p-8">
       <div className="max-w-5xl mx-auto">
-        <button onClick={() => window.history.back()} className="flex items-center gap-2 text-sm text-gray-600 hover:text-indigo-600 mb-6"><ArrowLeft size={16} /> Back</button>
+        <button onClick={leaveDetailPage} className="flex items-center gap-2 text-sm text-gray-600 hover:text-indigo-600 mb-6"><ArrowLeft size={16} /> Back</button>
         <section className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 sm:p-8">
           <div className="flex flex-col sm:flex-row gap-5 items-start">
             {candidate.profilePhoto ? <img src={candidate.profilePhoto} alt="" className="w-20 h-20 rounded-full object-cover" /> : <div className="w-20 h-20 rounded-full bg-indigo-600 text-white flex items-center justify-center text-2xl font-bold">{candidate.avatar}</div>}
             <div>
               <h1 className="text-2xl font-bold text-gray-900">{candidate.name}</h1>
               <p className="text-gray-500">{candidate.role}</p>
+              <span className={`inline-block mt-2 px-2.5 py-1 rounded-full text-xs font-medium ${candidate.status === 'Rejected' ? 'bg-red-100 text-red-700' : 'bg-indigo-100 text-indigo-700'}`}>{candidate.status}</span>
               <div className="flex flex-wrap gap-4 mt-3 text-sm text-gray-600">
                 <span className="flex items-center gap-1"><Mail size={14} />{candidate.email || 'No email'}</span>
                 {candidate.phone && <span className="flex items-center gap-1"><Phone size={14} />{candidate.phone}</span>}
                 <span className="flex items-center gap-1"><MapPin size={14} />{location}</span>
+                <span>{formatExperience(candidate.experience)} experience</span>
               </div>
             </div>
           </div>
@@ -75,13 +98,29 @@ export default function CandidateDetailPage() {
             </div>
             <div>
               <Section title="Resume">
-                {isPdf ? <div className="relative rounded-lg overflow-hidden border border-gray-200"><img src={thumbnailUrl(candidate.resumeUrl!)} alt="Resume preview" className="w-full aspect-[3/4] object-cover" /><div className="absolute inset-0 flex items-center justify-center bg-black/20"><a href={candidate.resumeUrl} target="_blank" rel="noreferrer" className="bg-white text-indigo-700 px-3 py-2 rounded-lg text-sm font-medium flex items-center gap-2"><ExternalLink size={15} /> View Resume</a></div></div> : <div className="h-40 rounded-lg bg-gray-100 flex items-center justify-center text-sm text-gray-500">Resume not provided</div>}
+                {isPdf && !resumePreviewFailed ? <div className="relative rounded-lg overflow-hidden border border-gray-200">{isCloudinaryRaw ? <iframe src={`${resumePreviewUrl}#toolbar=0&page=1`} title="Resume Snapshot" className="w-full h-64" /> : <img src={transformedThumbnailUrl} alt="Resume Snapshot" onError={(event) => { console.error('Resume thumbnail failed to load:', event.currentTarget.src, 'Original PDF:', candidate.resumeUrl); setResumePreviewFailed(true); }} className="w-full h-auto rounded border object-cover" />}<div className="absolute inset-0 flex items-center justify-center bg-black/20"><button type="button" onClick={() => setShowResumePreview(true)} className="bg-white text-indigo-700 px-3 py-2 rounded-lg text-sm font-medium flex items-center gap-2"><ExternalLink size={15} /> View Resume</button></div></div> : <div className="h-40 rounded-lg bg-gray-100 flex flex-col items-center justify-center gap-2 text-sm text-gray-500"><span className="text-3xl">PDF</span><span>{isPdf ? 'Preview unavailable' : 'Resume not provided'}</span>{isPdf && <button type="button" onClick={() => setShowResumePreview(true)} className="text-indigo-600 underline">Open PDF viewer</button>}</div>}
                 {isPdf && <a href={`${import.meta.env.VITE_API_BASE_URL}/recruiter/candidates/${encodeURIComponent(candidate.uniqueId || uniqueId || '')}/resume/download`} className="mt-3 w-full justify-center flex items-center gap-2 px-3 py-2 rounded-lg bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-700"><Download size={15} /> Download PDF</a>}
               </Section>
             </div>
           </div>
         </section>
       </div>
+      {showResumePreview && isPdf && (
+        <div className="fixed inset-0 z-50 bg-black/75 p-4 sm:p-8 flex items-center justify-center" role="dialog" aria-modal="true" aria-label="Resume preview">
+          <div className="bg-white rounded-xl w-full max-w-6xl h-full max-h-[90vh] flex flex-col overflow-hidden">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200">
+              <h2 className="font-semibold text-gray-900">Resume Preview</h2>
+              <button type="button" onClick={() => setShowResumePreview(false)} aria-label="Close resume preview" className="p-1 text-gray-500 hover:text-gray-900"><X size={20} /></button>
+            </div>
+            <iframe
+              src={`${resumePreviewUrl}#toolbar=0`}
+              title="Candidate resume"
+              className="w-full flex-1"
+              onError={() => console.error('Resume PDF viewer failed to load:', candidate.resumeUrl)}
+            />
+          </div>
+        </div>
+      )}
     </main>
   );
 }

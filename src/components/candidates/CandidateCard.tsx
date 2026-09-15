@@ -1,13 +1,16 @@
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { ExternalLink } from 'lucide-react';
+import { XCircle } from 'lucide-react';
+import { formatExperience, useStore } from '../../store/useStore';
 import type { Candidate } from '../../store/useStore';
 
 interface CandidateCardProps {
   candidate: Candidate;
+  showReject?: boolean;
 }
 
-export default function CandidateCard({ candidate }: CandidateCardProps) {
+export default function CandidateCard({ candidate, showReject = false }: CandidateCardProps) {
   const {
     attributes,
     listeners,
@@ -70,7 +73,7 @@ export default function CandidateCard({ candidate }: CandidateCardProps) {
             onPointerDown={(event) => event.stopPropagation()}
             onClick={(event) => {
               event.stopPropagation();
-              window.open(`/recruiter/candidate/${encodeURIComponent(candidate.uniqueId!)}`, '_blank', 'noopener,noreferrer');
+              window.open(`/recruiter/candidate/${encodeURIComponent(candidate.uniqueId!)}`, '_blank');
             }}
             className="text-gray-400 hover:text-indigo-600 p-1 rounded"
           >
@@ -78,6 +81,19 @@ export default function CandidateCard({ candidate }: CandidateCardProps) {
           </button>
         )}
       </div>
+      {showReject && candidate.status !== 'Rejected' && (
+        <button
+          type="button"
+          onPointerDown={(event) => event.stopPropagation()}
+          onClick={(event) => {
+            event.stopPropagation();
+            void useStore.getState().updateCandidateStatus(candidate.id, 'Rejected');
+          }}
+          className="mt-2 w-full flex items-center justify-center gap-1 rounded border border-red-200 px-2 py-1 text-xs font-medium text-red-600 hover:bg-red-50"
+        >
+          <XCircle size={13} /> Reject
+        </button>
+      )}
 
       {/* Skills */}
       {candidate.skills && candidate.skills.length > 0 && (
@@ -107,7 +123,7 @@ export default function CandidateCard({ candidate }: CandidateCardProps) {
         ) : (
           <span className="inline-flex items-center gap-1 text-xs text-gray-700 font-medium">
             <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2"/></svg>
-            {candidate.experience === 1 ? '1 yr exp' : `${parseFloat(candidate.experience.toFixed(1))} yrs exp`}
+            {formatExperience(candidate.experience)} exp
           </span>
         )}
       </div>

@@ -49,7 +49,7 @@ const transformCandidate = (candidate: any): Candidate => ({
   uniqueId: candidate.uniqueId,
   name: candidate.name,
   role: candidate.role || 'Applicant',
-  experience: candidate.experience ?? candidate.applicant?.experience ?? 0,
+  experience: Number(candidate.experience ?? candidate.applicant?.experience ?? 0) || 0,
 
   workExperience: Array.isArray(candidate.workExperience)
     ? candidate.workExperience.map((w: any) => ({
@@ -71,7 +71,13 @@ const transformCandidate = (candidate: any): Candidate => ({
   status: candidate.status || 'Applied',
   email: candidate.email || '',
   phone: candidate.phone || '',
-  resumeUrl: candidate.resumeUrl || '',
+  resumeUrl:
+    candidate.resumeUrl ||
+    candidate.resume ||
+    candidate.user?.resumeUrl ||
+    candidate.user?.resume ||
+    candidate.resumeSnapshot?.url ||
+    '',
   appliedDate: candidate.appliedDate
     ? new Date(candidate.appliedDate).toISOString().split('T')[0]
     : '',
@@ -260,7 +266,7 @@ export const getCandidateProfile = async (
  */
 export const updateCandidateStatus = async (
   applicationId: string,
-  status: string
+  status: Candidate['status']
 ): Promise<void> => {
   await api.patch(
     `/recruiter/candidates/${applicationId}/status`,

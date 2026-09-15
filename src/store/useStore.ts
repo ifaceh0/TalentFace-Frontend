@@ -7,7 +7,20 @@ const APP_STATE_KEY = 'tf_autosave_state';
 const getStorageKey = (userId?: string) =>
   userId ? `${APP_STATE_KEY}_${userId}` : APP_STATE_KEY;
 
-export type CandidateStatus = 'Applied' | 'Shortlisted' | 'Interview' | 'Offer' | 'Hired';
+export type CandidateStatus = 'Applied' | 'Shortlisted' | 'Interview' | 'Offer' | 'Hired' | 'Rejected';
+
+export const formatExperience = (value: number | null | undefined): string => {
+  const yearsValue = Number(value);
+  if (!Number.isFinite(yearsValue) || yearsValue <= 0) return '0 yrs';
+
+  const totalMonths = Math.max(0, Math.round(yearsValue * 12));
+  const years = Math.floor(totalMonths / 12);
+  const months = totalMonths % 12;
+  const parts: string[] = [];
+  if (years > 0) parts.push(`${years} ${years === 1 ? 'yr' : 'yrs'}`);
+  if (months > 0) parts.push(`${months} ${months === 1 ? 'mo' : 'mos'}`);
+  return parts.join(' ') || '0 yrs';
+};
 
 export interface CandidateWorkExperience {
   company: string;

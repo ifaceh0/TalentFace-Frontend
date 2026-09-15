@@ -38,7 +38,7 @@ export default function DashboardPage({ setActivePage }: DashboardPageProps) {
         <div className="space-y-6">
           <div>
             <h3 className="text-lg font-semibold text-blue-900 mb-4">Job Postings</h3>
-            <JobList onJobClick={() => setActivePage('jobs')} />
+            <JobList onJobClick={() => setActivePage('jobs')} scrollable />
           </div>
           <div>
             <h3 className="text-lg font-semibold text-blue-900 mb-4">Hiring Overview</h3>

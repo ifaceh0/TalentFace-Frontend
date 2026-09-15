@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react';
 import { Filter, Loader, X } from 'lucide-react';
 import { useStore } from '../../store/useStore';
+import { formatExperience } from '../../store/useStore';
 import type { CandidateStatus } from '../../store/useStore';
 import LocationSelect from '../ui/LocationSelect';
 
@@ -11,6 +12,7 @@ const statusColors: Record<CandidateStatus, string> = {
   Interview: 'bg-purple-100 text-purple-700',
   Offer: 'bg-orange-100 text-orange-700',
   Hired: 'bg-green-100 text-green-700',
+  Rejected: 'bg-red-100 text-red-700',
 };
 
 export default function CandidateTable() {
@@ -159,9 +161,9 @@ export default function CandidateTable() {
       )}
 
       {/* Candidates Table */}
-      <div className="overflow-x-auto">
+      <div className="relative max-h-[500px] overflow-x-auto overflow-y-auto">
         <table className="w-full text-sm">
-          <thead>
+          <thead className="sticky top-0 z-10 bg-gray-50">
             <tr className="bg-gray-50 text-gray-500 text-left">
               <th className="px-4 py-3">Name</th>
               <th className="px-4 py-3">Experience</th>
@@ -204,7 +206,7 @@ export default function CandidateTable() {
                   key={candidate.id}
                   onClick={() => {
                     if (candidate.uniqueId) {
-                      window.open(`/recruiter/candidate/${encodeURIComponent(candidate.uniqueId)}`, '_blank', 'noopener,noreferrer');
+                      window.open(`/recruiter/candidate/${encodeURIComponent(candidate.uniqueId)}`, '_blank');
                     }
                   }}
                   className={`border-t border-gray-50 hover:bg-gray-50 transition ${candidate.uniqueId ? 'cursor-pointer' : ''}`}
@@ -222,7 +224,7 @@ export default function CandidateTable() {
 
                   {/* Experience */}
                   <td className="px-4 py-3 font-medium text-gray-700">
-                    {candidate.experience ?? 0}
+                    {formatExperience(candidate.experience)}
                   </td>
 
                   {/* Role */}
