@@ -1,4 +1,4 @@
-import { LayoutDashboard, Users, Briefcase, LogOut } from 'lucide-react';
+import { LayoutDashboard, Users, Briefcase, Heart, LogOut } from 'lucide-react';
 import { useAuth } from '../../context/useAuth';
 
 interface SidebarProps {
@@ -11,6 +11,7 @@ const navItems = [
   { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { id: 'candidates', label: 'Candidates', icon: Users },
   { id: 'jobs', label: 'Jobs', icon: Briefcase },
+  { id: 'swipe', label: 'Swipe Candidates', icon: Heart },
 ];
 
 export default function Sidebar({ activePage, setActivePage }: SidebarProps) {

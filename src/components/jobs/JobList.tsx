@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import type { JSONContent } from '@tiptap/react';
 import { useStore } from '../../store/useStore';
 import type { Job } from '../../store/useStore';
-import { Plus, Trash2, Users, Loader, AlertCircle, DollarSign, Edit2, Globe, ChevronDown } from 'lucide-react';
+import { Plus, Trash2, Users, Loader, AlertCircle, DollarSign, Edit2, Globe, ChevronDown, Heart } from 'lucide-react';
 import LocationSelect from '../ui/LocationSelect';
 import JobDetailModal from '../dashboard/JobDetailModal';
 import RichTextEditor from '../ui/RichTextEditor';
@@ -21,10 +21,13 @@ const VALID_CURRENCIES = [
 
 interface JobListProps {
   onJobClick?: (jobId: string) => void;
+  onReviewCandidates?: (jobId: string) => void;
 }
 
-export default function JobList({ onJobClick }: JobListProps) {
+export default function JobList({ onJobClick, onReviewCandidates }: JobListProps) {
   const { jobs, loading, error, fetchJobs, createJob, deleteJob, setSelectedJobId } = useStore();
+// export default function JobList({ onJobClick }: JobListProps) {
+//   const { jobs, loading, error, fetchJobs, createJob, deleteJob, setSelectedJobId } = useStore();
   const [showForm, setShowForm] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editingJobId, setEditingJobId] = useState<string | null>(null);
@@ -613,7 +616,21 @@ export default function JobList({ onJobClick }: JobListProps) {
                         {departmentText}{departmentText && locationText ? ' · ' : ''}{locationText}{job.isRemote ? ' (Remote)' : ''}
                       </p>
                     </div>
-                    <div className="flex gap-2">
+                    {/* <div className="flex gap-2">
+                      {canEdit && ( */}
+                                        <div className="flex gap-2">
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedJobId(job.id);
+                          onReviewCandidates?.(job.id);
+                        }}
+                        className="text-gray-400 hover:text-red-500 transition"
+                        title="Review candidates for this job"
+                      >
+                        <Heart size={15} />
+                      </button>
                       {canEdit && (
                         <button
                           type="button"

@@ -29,6 +29,7 @@ import BrowseJobs    from "./pages/candidate/BrowseJobs";   //
 import CandidateHomepage from "./components/candidate/Candidatehomepage";
 import CandidateDashboard from "./pages/candidate/CandidateDashboard";
 import JobSwipe from "./pages/candidate/JobSwipe";
+import CandidateSwipe from "./pages/recruiter/CandidateSwipe";
 
 import ChatWidget from "./components/ChatWidget/ChatWidget";
 import SavedJobs from "./components/candidate/SavedJob";
@@ -55,7 +56,10 @@ function Dashboard({ role }: { role: string }) {
         return <CandidatesPage />;
 
       case "jobs":
-        return <JobsPage />;
+        return <JobsPage onReviewCandidates={() => setActivePage("swipe")} />;
+
+      case "swipe":
+        return <CandidateSwipe />;
 
       default:
         return <DashboardPage setActivePage={setActivePage} />;

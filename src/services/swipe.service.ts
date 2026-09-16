@@ -26,6 +26,22 @@ export const swipeJob = async (payload: SwipePayload): Promise<SwipeResponse> =>
   return data.data;
 };
 
+// ─── Candidate: undo the most recent swipe (real, server-side rewind) ───────
+
+export const undoSwipe = async (): Promise<{ jobId: string; direction: 'left' | 'right' }> => {
+  const { data } = await api.delete('/swipe/last');
+  return data.data;
+};
+
+// ─── Recruiter: undo the most recent swipe for a job ─────────────────────────
+
+export const undoRecruiterSwipe = async (
+  jobId: string,
+  ): Promise<{ candidateId: string; direction: 'left' | 'right' }> => {
+    const { data } = await api.delete('/swipe/recruiter/last', { params: { jobId } });
+    return data.data;
+};
+
 // ─── Candidate: get swipe history ────────────────────────────────────────────────
 
 export const getSwipeHistory = async (

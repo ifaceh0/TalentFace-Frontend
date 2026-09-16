@@ -1,8 +1,8 @@
 import { useState, useCallback, useEffect } from "react";
 import SwipeCard, { ScoreBadge, SwipeDeckEmpty } from "../../components/common/SwipeCard";
-import { getCandidateDeck, swipeCandidate } from "../../services/swipe.service";
+import { getCandidateDeck, swipeCandidate, undoRecruiterSwipe } from "../../services/swipe.service";
 import type { DeckCandidate } from "../../types/swipe.types";
-
+import { useStore } from "../../store/useStore";
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 interface LocalSwipeResult {
@@ -167,7 +167,9 @@ interface CandidateSwipeProps {
 }
 
 export default function CandidateSwipe({ jobId: propJobId }: CandidateSwipeProps) {
-  const [jobId, setJobId]                   = useState(propJobId || "");
+  const storeSelectedJobId = useStore((s) => s.selectedJobId);
+  const [jobId, setJobId]                   = useState(propJobId || storeSelectedJobId || "");
+  // const [jobId, setJobId]                   = useState(propJobId || "");
   const [deck, setDeck]                     = useState<DeckCandidate[]>([]);
   const [currentIndex, setCurrentIndex]     = useState(0);
   const [swipeResult, setSwipeResult]       = useState<LocalSwipeResult | null>(null);
@@ -180,6 +182,7 @@ export default function CandidateSwipe({ jobId: propJobId }: CandidateSwipeProps
   const [matchPopup, setMatchPopup]         = useState<DeckCandidate | null>(null);
   const [page, setPage]                     = useState(1);
   const [hasMore, setHasMore]               = useState(true);
+  
 
   // ── Load deck when jobId is set ─────────────────────────────────────────────
   useEffect(() => {
@@ -258,12 +261,26 @@ export default function CandidateSwipe({ jobId: propJobId }: CandidateSwipeProps
     }
   }, [currentCandidate, loading, animatingOut, jobId]);
 
-  const handleUndo = () => {
-    if (history.length === 0 || currentIndex === 0) return;
+  const handleUndo = async () => {
+  if (history.length === 0 || currentIndex === 0 || loading) return;
+  try {
+    // Real server-side rewind, same as the candidate side: deletes the
+    // recruiter's last swipe for this job (and any match it created).
+    await undoRecruiterSwipe(jobId);
     setCurrentIndex((i) => i - 1);
     setSwipeResult(null);
     setHistory((h) => h.slice(0, -1));
-  };
+  } catch (err) {
+    console.error('[handleUndo]', err);
+  }
+};
+  
+  // const handleUndo = () => {
+  //   if (history.length === 0 || currentIndex === 0) return;
+  //   setCurrentIndex((i) => i - 1);
+  //   setSwipeResult(null);
+  //   setHistory((h) => h.slice(0, -1));
+  // };
 
   const shortlisted = history.filter((h) => h.direction === "right").length;
   const passed      = history.filter((h) => h.direction === "left").length;
