@@ -41,6 +41,7 @@ import CandidateApplications from "./pages/candidate/candidateApplications";
 import Profile from "./pages/recruiter/Profile";
 import Settings from "./pages/recruiter/Settings";
 import ChangePassword from "./pages/recruiter/Changepassword";
+import CandidateDetailPage from "./pages/recruiter/CandidateDetailPage";
 
 // ───────────────── Dashboard Layout ─────────────────
 
@@ -197,6 +198,10 @@ export default function App() {
   <Route
     path="/recruiter/change-password"
     element={<ChangePassword />}
+  />
+  <Route
+    path="/recruiter/candidate/:uniqueId"
+    element={<CandidateDetailPage />}
   />
 </Route>
 
@@ -691,4 +696,3 @@ export default function App() {
 // //     </AuthProvider>
 // //   );
 // // }
-
