@@ -12,7 +12,10 @@ import {
     getSavedJobIds,
     getAppliedJobIds,
     getProfileCompletion,
-    getProfile
+    getProfile,
+    getJobPreferences,
+    updateJobPreferences,
+    type JobPreferencesPayload
 } from "../../services/candidate.service";
 import type { CandidateProfile } from "../../types/candidate.types";
 import JobCard, { type Job } from "./JobCard";
@@ -89,21 +92,21 @@ const richTextToPlain = (v: unknown): string => {
 function JobDeckBanner({ onEnter }: { onEnter: () => void }) {
     return (
         <div style={{
-            maxWidth: 1100,
+            maxWidth: 1240,
             margin: "0 auto",
-            padding: "28px 32px 0",
+            padding: "24px 32px 0",
         }}>
             <div style={{
                 background: "linear-gradient(120deg, #0D1B3E 0%, #1C3FA8 55%, #D62B2B 100%)",
-                borderRadius: 18,
-                padding: "28px 32px",
+                borderRadius: 10,
+                padding: "16px 24px",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "space-between",
                 gap: 24,
                 position: "relative",
                 overflow: "hidden",
-                boxShadow: "0 8px 32px rgba(13,27,62,0.18)",
+                
             }}>
                 {/* Decorative circles */}
                 <div style={{ position: "absolute", top: -30, right: 180, width: 120, height: 120, borderRadius: "50%", border: "24px solid rgba(255,255,255,0.07)", pointerEvents: "none" }} />
@@ -123,18 +126,18 @@ function JobDeckBanner({ onEnter }: { onEnter: () => void }) {
                         </span>
                     </div>
                     <h2 style={{
-                        fontFamily: "'Sora',sans-serif", fontSize: 22, fontWeight: 700,
+                        fontFamily: "'Sora',sans-serif", fontSize: 18, fontWeight: 700,
                         color: "#fff", lineHeight: 1.2, marginBottom: 6,
                     }}>
                         Your personalised Job Deck
                     </h2>
-                    <p style={{ fontSize: 13, color: "rgba(255,255,255,0.65)", maxWidth: 420, lineHeight: 1.6 }}>
+                    <p style={{ fontSize: 13, color: "rgba(255,255,255,0.65)", maxWidth: 560, lineHeight: 1.6 }}>
                         Swipe through jobs ranked by your skills, experience and location.
                         Right swipe to apply — left swipe to skip. Matches appear when a recruiter likes you back.
                     </p>
 
                     {/* Mini feature pills */}
-                    <div style={{ display: "flex", gap: 8, marginTop: 14, flexWrap: "wrap" }}>
+                    <div style={{ display: "flex", gap: 8, marginTop: 10, flexWrap: "wrap" }}>
                         {["⚡ Ranked by AI match score", "🎯 Tailored to your profile", "🤝 Mutual matching"].map((pill) => (
                             <span key={pill} style={{
                                 fontSize: 11, color: "rgba(255,255,255,0.75)",
@@ -150,7 +153,7 @@ function JobDeckBanner({ onEnter }: { onEnter: () => void }) {
 
                 {/* Right: CTA */}
                 <div style={{ position: "relative", zIndex: 1, flexShrink: 0, textAlign: "center" }}>
-                    {/* Stacked card preview */}
+                    {/* Stacked card preview
                     <div style={{ position: "relative", width: 90, height: 90, margin: "0 auto 16px" }}>
                         {[2, 1, 0].map((i) => (
                             <div key={i} style={{
@@ -170,15 +173,15 @@ function JobDeckBanner({ onEnter }: { onEnter: () => void }) {
                                 {i === 0 ? "💼" : ""}
                             </div>
                         ))}
-                    </div>
+                    </div> */}
 
                     <button
                         onClick={onEnter}
                         style={{
                             background: "#fff",
                             border: "none",
-                            borderRadius: 12,
-                            padding: "11px 28px",
+                            borderRadius: 6,
+                            padding: "10px 24px",
                             fontSize: 13,
                             fontWeight: 700,
                             color: "#0D1B3E",
@@ -187,7 +190,7 @@ function JobDeckBanner({ onEnter }: { onEnter: () => void }) {
                             boxShadow: "0 4px 16px rgba(0,0,0,0.2)",
                             transition: "transform 0.15s, box-shadow 0.15s",
                             display: "block",
-                            width: "100%",
+                            width: "auto",
                         }}
                         onMouseEnter={(e) => {
                             e.currentTarget.style.transform = "translateY(-2px)";
@@ -212,6 +215,26 @@ function JobDeckBanner({ onEnter }: { onEnter: () => void }) {
 // ─────────────────────────────────────────────
 // MAIN COMPONENT
 // ─────────────────────────────────────────────
+const WORK_MODES: { value: JobPreferencesPayload["workMode"]; label: string }[] = [
+    { value: "onsite",           label: "Onsite" },
+    { value: "remote",           label: "Remote" },
+    { value: "remote-or-onsite", label: "Remote or Onsite" },
+    { value: "hybrid",           label: "Hybrid" },
+];
+const CURRENCIES = ["INR", "USD", "EUR", "GBP", "AED", "SGD", "AUD", "CAD"];
+const CURRENCY_SYMBOLS: Record<string, string> = {
+    INR: "₹", USD: "$", EUR: "€", GBP: "£", AED: "د.إ", SGD: "S$", AUD: "A$", CAD: "C$",
+};
+const formatSalary = (v: number, currency: string) => {
+    const sym = CURRENCY_SYMBOLS[currency] ?? "₹";
+    if (currency === "INR") {
+        if (v === 0) return `${sym}0 LPA`;
+        if (v <= 99) return `${sym}${v} LPA`;
+        const cr = v / 100;
+        return `${sym}${Number.isInteger(cr) ? cr : cr.toFixed(1)} Cr`;
+    }
+    return v === 0 ? `${sym}0` : `${sym}${v}K/yr`;
+};
 export default function CandidateHomepage() {
     const navigate = useNavigate();
     const { logout } = useAuth();
@@ -234,6 +257,39 @@ export default function CandidateHomepage() {
     const profileRef    = useRef<HTMLDivElement>(null);
     const searchTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
     const [resumeType, setResumeType] = useState<"ai" | "uploaded">("ai");
+        const [jobPrefs, setJobPrefs] = useState<JobPreferencesPayload>({
+        workMode: "onsite", salaryExpectation: 0, salaryOpenToMore: false,
+        currency: "INR", showVerifiedOnly: true, enableJobAlerts: true,
+    });
+    const [prefsSaving, setPrefsSaving] = useState<boolean>(false);
+
+    useEffect(() => {
+        getJobPreferences()
+            .then((p) => {
+                if (!p) return;
+                setJobPrefs({
+                    workMode:          p.workMode          ?? "onsite",
+                    salaryExpectation: p.salaryExpectation ?? 0,
+                    salaryOpenToMore:  p.salaryOpenToMore  ?? false,
+                    currency:          p.currency          ?? "INR",
+                    showVerifiedOnly:  p.showVerifiedOnly  ?? true,
+                    enableJobAlerts:   p.enableJobAlerts   ?? true,
+                });
+            })
+            .catch(() => {});
+    }, []);
+
+    const handleSavePrefs = async () => {
+        try {
+            setPrefsSaving(true);
+            await updateJobPreferences(jobPrefs);
+            showToast("Job preferences saved!");
+        } catch {
+            showToast("Failed to save preferences.", "error");
+        } finally {
+            setPrefsSaving(false);
+        }
+    };
 
     // ── Fetch jobs on mount ──────────────────────────────────────────────────
     useEffect(() => { fetchJobs(1, "All", ""); }, []);
@@ -437,7 +493,26 @@ const confirmApply = async () => {
         .apply-btn:hover { opacity: 0.88; }
         .apply-btn:disabled { opacity: 0.5; cursor: not-allowed; }
         .nav-link:hover { color: #D62B2B !important; }
-        .menu-item:hover { background: rgba(214,43,43,0.06) !important; }
+        .menu-item:hover { background: rgba(214,43,43,0.06) !important; }        .tf-main { max-width: 1240px; margin: 0 auto; padding: 20px 32px 60px; }
+        .tf-layout { display: grid; grid-template-columns: 232px minmax(0, 1fr); gap: 24px; align-items: start; }
+        .tf-filters { position: sticky; top: 78px; }
+        .tf-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
+        .tf-radios { display: flex; flex-direction: column; gap: 2px; }
+        .tf-radio { display: flex; align-items: center; gap: 10px; padding: 6px 0; font-size: 13px; color: #374151; cursor: pointer; }
+        .tf-radio:hover { color: #D62B2B; }
+        .tf-search:focus-within { border-color: #D62B2B !important; box-shadow: 0 0 0 3px rgba(214,43,43,0.10); }
+        .tf-primary { height: 42px; padding: 0 24px; font-family: inherit; font-size: 14px; font-weight: 600; color: #fff; background: #D62B2B; border: none; border-radius: 6px; cursor: pointer; transition: background 0.15s; }
+        .tf-primary:hover { background: #B82424; }
+        .tf-secondary { padding: 9px 24px; font-family: inherit; font-size: 13px; font-weight: 500; color: #374151; background: #fff; border: 1px solid #D1D5DB; border-radius: 6px; cursor: pointer; transition: border-color 0.15s, color 0.15s; }
+        .tf-secondary:hover:not(:disabled) { border-color: #D62B2B; color: #D62B2B; }
+        .tf-secondary:disabled { color: #9CA3AF; cursor: default; }
+        @media (max-width: 860px) {
+          .tf-layout { grid-template-columns: 1fr; }
+          .tf-filters { position: static; }
+          .tf-radios { flex-direction: row; flex-wrap: wrap; gap: 2px 18px; }
+        }
+        @media (max-width: 600px) { .tf-main { padding: 16px 16px 40px; } }
+
         @keyframes skeleton-pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
         .skeleton { animation: skeleton-pulse 1.4s ease-in-out infinite; background: #E5E7EB; border-radius: 8px; }
       `}</style>
@@ -571,7 +646,7 @@ const confirmApply = async () => {
             </nav>
 
             {/* ══ HERO ══ */}
-            <section style={{ padding: "60px 32px 40px", textAlign: "center", background: "linear-gradient(160deg,#fff 60%,#F3F5FF 100%)", borderBottom: "1px solid #E5E7EB", position: "relative", overflow: "hidden" }}>
+            {/* <section style={{ padding: "60px 32px 40px", textAlign: "center", background: "linear-gradient(160deg,#fff 60%,#F3F5FF 100%)", borderBottom: "1px solid #E5E7EB", position: "relative", overflow: "hidden" }}>
                 <div style={{ position: "absolute", top: -40, right: -40, width: 220, height: 220, borderRadius: "50%", border: "40px solid rgba(214,43,43,0.07)", pointerEvents: "none" }} />
                 <div style={{ position: "absolute", bottom: -60, left: -60, width: 260, height: 260, borderRadius: "50%", border: "50px solid rgba(28,63,168,0.06)", pointerEvents: "none" }} />
 
@@ -592,51 +667,52 @@ const confirmApply = async () => {
                         Browse roles from {stats.companies > 0 ? `${stats.companies}+` : "hundreds of"} companies. Apply in one click with your candidate profile.
                     </p>
 
-                    {/* Search bar */}
-                    <div style={{ display: "flex", alignItems: "center", maxWidth: 560, margin: "0 auto", background: "#fff", border: "2px solid #E8EDF8", borderRadius: 14, padding: "5px 5px 5px 16px", boxShadow: "0 4px 20px rgba(13,27,62,0.08)" }}>
-                        <svg width="15" height="15" viewBox="0 0 17 17" fill="none" style={{ marginRight: 9, flexShrink: 0 }}>
-                            <circle cx="7" cy="7" r="5.5" stroke="#A0AABF" strokeWidth="1.5" />
-                            <path d="M11 11l4 4" stroke="#A0AABF" strokeWidth="1.5" strokeLinecap="round" />
-                        </svg>
-                        <input
-                            value={search}
-                            onChange={(e) => handleSearchChange(e.target.value)}
-                            placeholder="Search jobs, companies, skills…"
-                            style={{ flex: 1, background: "none", border: "none", outline: "none", fontSize: 13, color: "#0D1B3E", fontFamily: "inherit" }}
+                    // {/* Search bar */}
+                    {/* // <div style={{ display: "flex", alignItems: "center", maxWidth: 560, margin: "0 auto", background: "#fff", border: "2px solid #E8EDF8", borderRadius: 14, padding: "5px 5px 5px 16px", boxShadow: "0 4px 20px rgba(13,27,62,0.08)" }}>
+                    //     <svg width="15" height="15" viewBox="0 0 17 17" fill="none" style={{ marginRight: 9, flexShrink: 0 }}>
+                    //         <circle cx="7" cy="7" r="5.5" stroke="#A0AABF" strokeWidth="1.5" />
+                    //         <path d="M11 11l4 4" stroke="#A0AABF" strokeWidth="1.5" strokeLinecap="round" />
+                    //     </svg>
+                    //     <input */}
+                    {/* {/* //         value={search}
+                    //         onChange={(e) => handleSearchChange(e.target.value)}
+                    //         placeholder="Search jobs, companies, skills…"
+                    //         style={{ flex: 1, background: "none", border: "none", outline: "none", fontSize: 13, color: "#0D1B3E", fontFamily: "inherit" }}
                         />
-                        <button
-                            onClick={() => { if (searchTimeout.current) clearTimeout(searchTimeout.current); setPage(1); fetchJobs(1, activeFilter, search); }}
-                            style={{ background: "linear-gradient(135deg,#D62B2B,#1C3FA8)", border: "none", borderRadius: 10, padding: "9px 20px", fontSize: 13, fontWeight: 600, color: "#fff", cursor: "pointer", fontFamily: "inherit", flexShrink: 0 }}
-                        >
-                            Search
-                        </button>
-                    </div>
-                </div>
-            </section>
+                        <button */} 
+                    {/* //         onClick={() => { if (searchTimeout.current) clearTimeout(searchTimeout.current); setPage(1); fetchJobs(1, activeFilter, search); }}
+                    //         style={{ background: "linear-gradient(135deg,#D62B2B,#1C3FA8)", border: "none", borderRadius: 10, padding: "9px 20px", fontSize: 13, fontWeight: 600, color: "#fff", cursor: "pointer", fontFamily: "inherit", flexShrink: 0 }}
+                    //     >
+                    //         Search
+                    //     </button>
+                    </div> */}
+                {/* </div>
+            </section> */} 
 
-            {/* ══ STATS BAR ══ */}
-            {/* background: "#FFFFFF", */}
-            <div style={{  background: "#ffffff",borderBottom: "1px solid #E5E7EB", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                {[
-                    { value: stats.open > 0      ? `${stats.open.toLocaleString()}+`  : "—", label: "Open positions",   color: "#D62B2B" },
-                    { value: stats.companies > 0  ? `${stats.companies}+`              : "—", label: "Companies hiring", color: "#1C3FA8" },
-                    { value: stats.remote > 0     ? `${stats.remote}+`                 : "—", label: "Remote friendly",  color: "#111827" },
-                ].map(({ value, label, color }, i, arr) => (
-                    <div key={label} style={{ textAlign: "center", padding: "18px 44px", borderRight: i < arr.length - 1 ? "1px solid #E5E7EB" : "none" }}>
-                        <div style={{ fontSize: 20, fontWeight: 700, color, fontFamily: "'Sora',sans-serif" }}>{value}</div>
-                        <div style={{ fontSize: 11, color: "#6B7280", marginTop: 2 }}>{label}</div>
-                    </div>
-                ))}
-            </div>
+
+            {/* ══ STATS BAR ══
+            // background: "#FFFFFF",
+            // <div style={{  background: "#ffffff",borderBottom: "1px solid #E5E7EB", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            //     {[ */}
+            {/* //         { value: stats.open > 0      ? `${stats.open.toLocaleString()}+`  : "—", label: "Open positions",   color: "#D62B2B" },
+            //         { value: stats.companies > 0  ? `${stats.companies}+`              : "—", label: "Companies hiring", color: "#1C3FA8" },
+            //         { value: stats.remote > 0     ? `${stats.remote}+`                 : "—", label: "Remote friendly",  color: "#111827" },
+            //     ].map(({ value, label, color }, i, arr) => (
+            //         <div key={label} style={{ textAlign: "center", padding: "18px 44px", borderRight: i < arr.length - 1 ? "1px solid #E5E7EB" : "none" }}>
+            //             <div style={{ fontSize: 20, fontWeight: 700, color, fontFamily: "'Sora',sans-serif" }}>{value}</div>
+            //             <div style={{ fontSize: 11, color: "#6B7280", marginTop: 2 }}>{label}</div>
+            //         </div>
+            //     ))}
+            // // </div> */}
 
             {/* ══ JOB DECK BANNER ══ */}
             <JobDeckBanner onEnter={() => navigate("/candidate/swipe")} />
 
             {/* ══ MAIN ══ */}
-            <main style={{ maxWidth: 1100, margin: "0 auto", padding: "32px 32px 60px" }}>
+            {/* <main style={{ maxWidth: 1100, margin: "0 auto", padding: "32px 32px 60px" }}> */}
 
                 {/* Section heading */}
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
+                {/* <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
                     <h2 style={{ fontFamily: "'Sora',sans-serif", fontSize: 18, fontWeight: 700, color: "#111827" }}>
                         Browse all jobs
                     </h2>
@@ -646,10 +722,10 @@ const confirmApply = async () => {
                     >
                         Try Job Deck instead →
                     </button>
-                </div>
+                </div> */}
 
                 {/* Filter pills */}
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 10, marginBottom: 24 }}>
+                {/* <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 10, marginBottom: 24 }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 7, flexWrap: "wrap" }}>
                         {FILTERS.map((f) => {
                             const isActive = activeFilter === f;
@@ -665,16 +741,16 @@ const confirmApply = async () => {
                                 </button>
                             );
                         })}
-                    </div>
-                    {!loading && (
+                    </div> */}
+                    {/* {!loading && (
                         <span style={{ fontSize: 12, color: "#6B7280" }}>
                             {jobs.length} result{jobs.length !== 1 ? "s" : ""} found
                         </span>
                     )}
-                </div>
+                </div> */}
 
                 {/* Job grid */}
-                {loading ? (
+                {/* {loading ? (
                     <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(320px,1fr))", gap: 16 }}>
                         {Array.from({ length: 9 }).map((_, i) => (
                             <div key={i} style={{ background: "#fff", border: "1.5px solid #E8EDF8", borderRadius: 14, padding: 20, display: "flex", flexDirection: "column", gap: 12 }}>
@@ -690,8 +766,8 @@ const confirmApply = async () => {
                                     {[60, 80, 50].map((w, j) => (
                                         <div key={j} className="skeleton" style={{ height: 20, width: w }} />
                                     ))}
-                                </div>
-                                <div style={{ display: "flex", justifyContent: "space-between", paddingTop: 10, borderTop: "1px solid #F0F4FF" }}>
+                                </div> */}
+                                {/* <div style={{ display: "flex", justifyContent: "space-between", paddingTop: 10, borderTop: "1px solid #F0F4FF" }}>
                                     <div className="skeleton" style={{ height: 13, width: 80 }} />
                                     <div className="skeleton" style={{ height: 34, width: 80, borderRadius: 9 }} />
                                 </div>
@@ -716,10 +792,10 @@ const confirmApply = async () => {
                             />
                         ))}
                     </div>
-                )}
+                )} */}
 
                 {/* Load more */}
-                {!loading && hasNextPage && jobs.length > 0 && (
+                {/* {!loading && hasNextPage && jobs.length > 0 && (
                     <div style={{ textAlign: "center", marginTop: 36 }}>
                         <button
                             onClick={handleLoadMore}
@@ -732,6 +808,209 @@ const confirmApply = async () => {
                         </button>
                     </div>
                 )}
+            </main> */}
+                        {/* ══ MAIN ══ */}
+            <main className="tf-main">
+                <div className="tf-layout">
+
+                    {/* ── Left: filters ── */}
+                    <aside className="tf-filters" style={{ background: "#FFFFFF", border: "1px solid #E5E7EB", borderRadius: 8, padding: 20 }}>
+                        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", paddingBottom: 12, borderBottom: "1px solid #E5E7EB" }}>
+                            <h2 style={{ fontSize: 16, fontWeight: 700, color: "#202124" }}>Filter</h2>
+                            {activeFilter !== "All" && (
+                                <button
+                                    onClick={() => handleFilterChange("All")}
+                                    style={{ fontSize: 12, fontWeight: 600, color: "#D62B2B", background: "none", border: "none", cursor: "pointer", fontFamily: "inherit" }}
+                                >
+                                    Reset
+                                </button>
+                            )}
+                        </div>
+
+                        <div style={{ paddingTop: 16 }}>
+                            <div style={{ fontSize: 13, fontWeight: 600, color: "#202124", marginBottom: 8 }}>Job type</div>
+                            <div className="tf-radios" role="radiogroup" aria-label="Job type">
+                                {FILTERS.map((f) => (
+                                    <label key={f} className="tf-radio">
+                                        <input
+                                            type="radio"
+                                            name="job-type"
+                                            checked={activeFilter === f}
+                                            onChange={() => handleFilterChange(f)}
+                                            style={{ accentColor: "#D62B2B", width: 15, height: 15, cursor: "pointer" }}
+                                        />
+                                        {f === "All" ? "All types" : f}
+                                    </label>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Work mode */}
+                        <div style={{ paddingTop: 20, marginTop: 20, borderTop: "1px solid #E5E7EB" }}>
+                            <div style={{ fontSize: 13, fontWeight: 600, color: "#202124", marginBottom: 8 }}>Work mode</div>
+                            <div className="tf-radios" role="radiogroup" aria-label="Work mode">
+                                {WORK_MODES.map(({ value, label }) => (
+                                    <label key={value} className="tf-radio">
+                                        <input
+                                            type="radio"
+                                            name="work-mode"
+                                            checked={jobPrefs.workMode === value}
+                                            onChange={() => setJobPrefs((p) => ({ ...p, workMode: value }))}
+                                            style={{ accentColor: "#D62B2B", width: 15, height: 15, cursor: "pointer" }}
+                                        />
+                                        {label}
+                                    </label>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Salary */}
+                        <div style={{ paddingTop: 20, marginTop: 20, borderTop: "1px solid #E5E7EB" }}>
+                            <div style={{ fontSize: 13, fontWeight: 600, color: "#202124", marginBottom: 8 }}>Salary range</div>
+                            <select
+                                value={jobPrefs.currency}
+                                onChange={(e) => setJobPrefs((p) => ({ ...p, currency: e.target.value }))}
+                                style={{ width: "100%", height: 34, fontSize: 13, color: "#202124", background: "#fff", border: "1px solid #D1D5DB", borderRadius: 6, padding: "0 8px", marginBottom: 12, fontFamily: "inherit" }}
+                            >
+                                {CURRENCIES.map((c) => <option key={c} value={c}>{c}</option>)}
+                            </select>
+                            <div style={{ fontSize: 14, fontWeight: 600, color: "#202A44", marginBottom: 6 }}>
+                                {formatSalary(jobPrefs.salaryExpectation, jobPrefs.currency)}
+                                {jobPrefs.salaryOpenToMore ? " & above" : ""}
+                            </div>
+                            <input
+                                type="range"
+                                min={0}
+                                max={jobPrefs.currency === "INR" ? 999 : 500}
+                                step={1}
+                                value={jobPrefs.salaryExpectation}
+                                onChange={(e) => setJobPrefs((p) => ({ ...p, salaryExpectation: Number(e.target.value) }))}
+                                aria-label="Expected salary"
+                                style={{ width: "100%", accentColor: "#D62B2B", cursor: "pointer" }}
+                            />
+                            <label className="tf-radio" style={{ marginTop: 6 }}>
+                                <input
+                                    type="checkbox"
+                                    checked={jobPrefs.salaryOpenToMore}
+                                    onChange={() => setJobPrefs((p) => ({ ...p, salaryOpenToMore: !p.salaryOpenToMore }))}
+                                    style={{ accentColor: "#D62B2B", width: 15, height: 15, cursor: "pointer" }}
+                                />
+                                Open to higher offers
+                            </label>
+                        </div>
+
+                        <button
+                            className="tf-primary"
+                            onClick={handleSavePrefs}
+                            disabled={prefsSaving}
+                            style={{ width: "100%", marginTop: 20, opacity: prefsSaving ? 0.6 : 1 }}
+                        >
+                            {prefsSaving ? "Saving…" : "Save preferences"}
+                        </button>
+                    </aside>
+
+                    {/* ── Right: search + results ── */}
+                    <section style={{ minWidth: 0 }}>
+
+                        {/* Search card */}
+                        <div style={{ background: "#FFFFFF", border: "1px solid #E5E7EB", borderRadius: 8, padding: 20, marginBottom: 20 }}>
+                            <h1 style={{ fontSize: 20, fontWeight: 700, color: "#202124", marginBottom: 4 }}>
+                                Search jobs
+                            </h1>
+                            <p style={{ fontSize: 13, color: "#6B7280", marginBottom: 16 }}>
+                                {stats.open > 0
+                                    ? `${stats.open.toLocaleString()}+ open positions${stats.companies > 0 ? ` from ${stats.companies}+ companies` : ""}`
+                                    : "Loading openings…"}
+                            </p>
+
+                            <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+                                <div className="tf-search" style={{ flex: "1 1 260px", display: "flex", alignItems: "center", background: "#FFFFFF", border: "1px solid #D1D5DB", borderRadius: 6, padding: "0 12px", height: 42 }}>
+                                    <svg width="15" height="15" viewBox="0 0 17 17" fill="none" style={{ marginRight: 9, flexShrink: 0 }}>
+                                        <circle cx="7" cy="7" r="5.5" stroke="#9CA3AF" strokeWidth="1.5" />
+                                        <path d="M11 11l4 4" stroke="#9CA3AF" strokeWidth="1.5" strokeLinecap="round" />
+                                    </svg>
+                                    <input
+                                        value={search}
+                                        onChange={(e) => handleSearchChange(e.target.value)}
+                                        placeholder="Search jobs, companies, skills…"
+                                        style={{ flex: 1, background: "none", border: "none", outline: "none", fontSize: 14, color: "#202124", fontFamily: "inherit" }}
+                                    />
+                                </div>
+                                <button
+                                    className="tf-primary"
+                                    onClick={() => { if (searchTimeout.current) clearTimeout(searchTimeout.current); setPage(1); fetchJobs(1, activeFilter, search); }}
+                                >
+                                    Search
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* Results header */}
+                        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 8, marginBottom: 14 }}>
+                            <span style={{ fontSize: 14, color: "#202124" }}>
+                                {loading ? "Loading jobs…" : <>Showing <strong>{jobs.length}</strong> job{jobs.length !== 1 ? "s" : ""}</>}
+                            </span>
+                            <button
+                                onClick={() => navigate("/candidate/swipe")}
+                                style={{ fontSize: 13, color: "#D62B2B", background: "none", border: "none", cursor: "pointer", fontWeight: 600, fontFamily: "inherit", textDecoration: "underline" }}
+                            >
+                                Try Job Deck instead →
+                            </button>
+                        </div>
+
+                        {/* Job grid */}
+                        {loading ? (
+                            <div className="tf-grid">
+                                {Array.from({ length: 6 }).map((_, i) => (
+                                    <div key={i} style={{ background: "#fff", border: "1px solid #E5E7EB", borderRadius: 8, padding: 18, display: "flex", flexDirection: "column", gap: 12 }}>
+                                        <div style={{ display: "flex", gap: 12 }}>
+                                            <div className="skeleton" style={{ width: 40, height: 40, borderRadius: 8, flexShrink: 0 }} />
+                                            <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 6 }}>
+                                                <div className="skeleton" style={{ height: 14, width: "70%" }} />
+                                                <div className="skeleton" style={{ height: 11, width: "40%" }} />
+                                            </div>
+                                        </div>
+                                        <div className="skeleton" style={{ height: 11, width: "55%" }} />
+                                        <div style={{ display: "flex", justifyContent: "space-between", paddingTop: 12, borderTop: "1px solid #E5E7EB" }}>
+                                            <div className="skeleton" style={{ height: 13, width: 80 }} />
+                                            <div className="skeleton" style={{ height: 34, width: 72, borderRadius: 6 }} />
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        ) : jobs.length === 0 ? (
+                            <div style={{ background: "#fff", border: "1px solid #E5E7EB", borderRadius: 8, textAlign: "center", padding: "48px 20px" }}>
+                                <div style={{ color: "#6B7280", fontSize: 14 }}>No jobs match your search. Try different keywords.</div>
+                            </div>
+                        ) : (
+                            <div className="tf-grid">
+                                {jobs.map((job) => (
+                                    <JobCard
+                                        key={job._id}
+                                        job={job}
+                                        isSaved={savedIds.has(job._id)}
+                                        isApplied={appliedIds.has(job._id)}
+                                        onSave={handleToggleSave}
+                                        onApply={handleApply}
+                                    />
+                                ))}
+                            </div>
+                        )}
+
+                        {/* Load more */}
+                        {!loading && hasNextPage && jobs.length > 0 && (
+                            <div style={{ textAlign: "center", marginTop: 28 }}>
+                                <button
+                                    className="tf-secondary"
+                                    onClick={handleLoadMore}
+                                    disabled={loadingMore}
+                                >
+                                    {loadingMore ? "Loading…" : "Load more jobs"}
+                                </button>
+                            </div>
+                        )}
+                    </section>
+                </div>
             </main>
             {/* ══ Apply Resume Modal ══ */}
 {applyModalJob && profile && (
