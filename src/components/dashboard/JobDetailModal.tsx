@@ -22,7 +22,6 @@ export default function JobDetailModal({
 }: JobDetailModalProps) {
   const { jobs, jobCandidates, loading, fetchJobCandidates } = useStore();
   const [activeTab, setActiveTab] = useState<'details' | 'candidates'>('candidates');
-  const [canEdit, setCanEdit] = useState(false);
   const isInlineFullscreen = displayMode === 'inline-fullscreen';
 
   const job = jobs.find((j) => j.id === jobId);
@@ -30,14 +29,11 @@ export default function JobDetailModal({
   useEffect(() => {
     if (isOpen && jobId) {
       fetchJobCandidates(jobId);
-
-      if (job) {
-        const createdTime = new Date(job.postedDate);
-        const hoursDiff = (Date.now() - createdTime.getTime()) / (1000 * 60 * 60);
-        setCanEdit(hoursDiff <= 24);
       }
-    }
   }, [isOpen, jobId, job, fetchJobCandidates]);
+  // The edit window is evaluated when the modal renders.
+  // eslint-disable-next-line react-hooks/purity
+  const canEdit = Boolean(job && (Date.now() - new Date(job.postedDate).getTime()) / (1000 * 60 * 60) <= 24);
 
   const handleEditClick = () => {
     if (!canEdit) {
@@ -249,7 +245,29 @@ export default function JobDetailModal({
                   <p className="text-sm">No applications yet</p>
                 </div>
               ) : (
-                <PipelineBoardFiltered candidates={jobCandidates} />
+                <>
+                  <PipelineBoardFiltered
+                    candidates={jobCandidates.filter((candidate) => candidate.status !== 'Rejected')}
+                    showReject
+                  />
+                  {jobCandidates.some((candidate) => candidate.status === 'Rejected') && (
+                    <section className="mt-8 border-t border-red-200 pt-5">
+                      <h3 className="text-base font-semibold text-red-700 mb-3">
+                        Rejected Candidates ({jobCandidates.filter((candidate) => candidate.status === 'Rejected').length})
+                      </h3>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                        {jobCandidates
+                          .filter((candidate) => candidate.status === 'Rejected')
+                          .map((candidate) => (
+                            <div key={candidate.id} className="rounded-lg border border-red-100 bg-red-50 p-3 text-sm text-gray-700">
+                              <p className="font-semibold">{candidate.name}</p>
+                              <p className="text-xs text-gray-500">{candidate.email}</p>
+                            </div>
+                          ))}
+                      </div>
+                    </section>
+                  )}
+                </>
               )}
             </div>
           )}

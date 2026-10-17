@@ -75,6 +75,17 @@ const DASHBOARD_LINKS = [
 // ─────────────────────────────────────────────
 // JOB DECK BANNER
 // ─────────────────────────────────────────────
+// Converts Tiptap JSON (or a plain string) to plain text for simple <p> display
+const richTextToPlain = (v: unknown): string => {
+    if (!v) return "";
+    if (typeof v === "string") return v;
+    const node = v as { type?: string; text?: string; content?: unknown[] };
+    if (node.text) return node.text;
+    const parts = (node.content ?? []).map(richTextToPlain);
+    return ["paragraph", "heading", "listItem"].includes(node.type ?? "")
+        ? parts.join("")
+        : parts.join("\n");
+};
 function JobDeckBanner({ onEnter }: { onEnter: () => void }) {
     return (
         <div style={{
@@ -773,12 +784,13 @@ const confirmApply = async () => {
             {/* ── Two column body ── */}
             <div style={{
                 display: "grid", gridTemplateColumns: "1fr 1fr",
-                flex: 1, minHeight: 0, overflowY: "auto",
+                gridTemplateRows: "minmax(0, 1fr)",
+                flex: 1, minHeight: 0, overflow: "hidden",
             }}>
                 {/* ── Left: job details ── */}
                 <div style={{
                     borderRight: "1.5px solid #E5E7EB",
-                    padding: "22px", overflowY: "auto",
+                    padding: "22px", overflowY: "auto", minHeight: 0,
                 }}>
                     <p style={{ fontSize: 10, fontWeight: 600, color: "#6B7280", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 14 }}>
                         Job Details
@@ -848,8 +860,8 @@ const confirmApply = async () => {
                     {applyModalJob.description && (
                         <>
                             <p style={{ fontSize: 10, fontWeight: 600, color: "#6B7280", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 8 }}>Description</p>
-                            <p style={{ fontSize: 12, color: "#6B7280", lineHeight: 1.65, marginBottom: 16 }}>
-                                {applyModalJob.description}
+                                                        <p style={{ fontSize: 12, color: "#6B7280", lineHeight: 1.65, marginBottom: 16, whiteSpace: "pre-line", overflowWrap: "anywhere" }}>
+                                 {richTextToPlain(applyModalJob.description)}
                             </p>
                         </>
                     )}
@@ -871,7 +883,7 @@ const confirmApply = async () => {
                 </div>
 
                 {/* ── Right: resume picker ── */}
-                <div style={{ padding: "22px", display: "flex", flexDirection: "column", gap: 14 }}>
+                 <div style={{ padding: "22px", display: "flex", flexDirection: "column", gap: 14, overflowY: "auto", minHeight: 0 }}>
                     <JobFitCheck job={applyModalJob} resumeType={resumeType} />
                     <p style={{ fontSize: 10, fontWeight: 600, color: "#6B7280", textTransform: "uppercase", letterSpacing: "0.08em" }}>
                         Choose resume to submit

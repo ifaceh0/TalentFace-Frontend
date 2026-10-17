@@ -57,9 +57,11 @@ const columns: {
 function PipelineColumn({
   col,
   columnCandidates,
+  showReject,
 }: {
   col: (typeof columns)[number];
   columnCandidates: Candidate[];
+  showReject: boolean;
 }) {
   const { setNodeRef, isOver } = useDroppable({
     id: col.id,
@@ -101,6 +103,7 @@ function PipelineColumn({
             <CandidateCard
               key={candidate.id}
               candidate={candidate}
+              showReject={showReject}
             />
           ))
         ) : (
@@ -115,9 +118,10 @@ function PipelineColumn({
 
 interface PipelineBoardFilteredProps {
   candidates: Candidate[];
+  showReject?: boolean;
 }
 
-export default function PipelineBoardFiltered({ candidates }: PipelineBoardFilteredProps) {
+export default function PipelineBoardFiltered({ candidates, showReject = false }: PipelineBoardFilteredProps) {
   const { updateCandidateStatus } = useStore();
 
   const sensors = useSensors(
@@ -181,6 +185,7 @@ export default function PipelineBoardFiltered({ candidates }: PipelineBoardFilte
                 key={col.id}
                 col={col}
                 columnCandidates={columnCandidates}
+                showReject={showReject}
               />
             );
           })}
