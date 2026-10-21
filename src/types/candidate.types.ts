@@ -145,6 +145,30 @@ export interface ResumeAnalysis {
   updatedAt: string;
 }
 
+export interface Job {
+    _id: string;
+    title: string;
+    company: string;
+    location: string;
+    type: "Full-time" | "Part-time" | "Contract";
+    workMode?: "onsite" | "remote" | "hybrid";
+    salary: string;
+    tags: string[];
+    posted: string;
+    logo: string;
+    color: string;
+    description?: string;
+    requirements?: string[];
+    isRemote?: boolean;
+}
+
+export interface JobCardProps {
+    job: Job;
+    isSaved: boolean;
+    isApplied: boolean;
+    onSave: (id: string) => void;
+    onApply: (id: string) => void;
+}
 
 // import type { JSONContent } from '@tiptap/react';
 // // ─── Sub-document types (matching current Joinee.model.js) ───────────────────

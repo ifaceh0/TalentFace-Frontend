@@ -37,10 +37,23 @@ const transformJob = (job: any): Job => ({
     ? new Date(job.createdAt).toISOString().split('T')[0]
     : new Date().toISOString().split('T')[0],
 
+  // salaryMin: job.salaryMin || undefined,
+  // salaryMax: job.salaryMax || undefined,
+  // maxApplicants: job.maxApplicants || undefined,
   salaryMin: job.salaryMin || undefined,
   salaryMax: job.salaryMax || undefined,
+  salaryCurrency: job.salaryCurrency || 'INR',
+  salaryPeriod: job.salaryPeriod || 'annually',
+  workMode: job.workMode || (job.isRemote ? 'remote' : 'onsite'),
+  isRemote: job.workMode ? job.workMode === 'remote' : !!job.isRemote,
   maxApplicants: job.maxApplicants || undefined,
 });
+
+// Frontend calls it `jobType`; the backend field is `type`
+const toApiJobPayload = <T extends { jobType?: string }>(payload: T) => {
+  const { jobType, ...rest } = payload;
+  return jobType !== undefined ? { ...rest, type: jobType } : rest;
+};
 
 const transformCandidate = (candidate: any): Candidate => ({
   id: candidate.id || candidate._id,
@@ -126,7 +139,8 @@ export const createJob = async (
   const { data } =
     await api.post<ApiEnvelope<{ job: any }>>(
       '/recruiter/jobs',
-      payload
+      toApiJobPayload(payload)
+      //payload
     );
 
   return transformJob(data.data.job);
@@ -143,7 +157,8 @@ export const updateJob = async (
   const { data } =
     await api.patch<ApiEnvelope<{ job: any }>>(
       `/recruiter/jobs/${jobId}`,
-      payload
+      toApiJobPayload(payload)
+      // payload
     );
 
   return transformJob(data.data.job);

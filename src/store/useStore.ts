@@ -75,7 +75,10 @@ export interface Job {
   description: JSONContent | string;
   salaryMin?: number;
   salaryMax?: number;
-  salaryCurrency?: 'LPA' | 'USD/year' | 'Custom';
+  // salaryCurrency?: 'LPA' | 'USD/year' | 'Custom';
+  salaryCurrency?: 'INR' | 'USD' | 'EUR' | 'GBP';
+  salaryPeriod?: 'hourly' | 'monthly' | 'annually';
+  workMode?: 'onsite' | 'remote' | 'hybrid';
   maxApplicants?: number | null;
   jobType?: string;
   isRemote?: boolean;
@@ -179,6 +182,7 @@ export const useStore = create<RecruiterStore>()((set) => ({
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to create job';
       set({ error: message });
+      throw err;
     }
   },
 

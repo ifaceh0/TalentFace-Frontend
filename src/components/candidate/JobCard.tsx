@@ -15,6 +15,7 @@ export interface Job {
     company: string;
     location: string;
     type: "Full-time" | "Part-time" | "Contract";
+    workMode?: "onsite" | "remote" | "hybrid";
     salary: string;
     tags: string[];
     posted: string;
@@ -159,7 +160,13 @@ export interface JobCardProps {
 //     );
 // }
 export default function JobCard({ job, isSaved, isApplied, onSave, onApply }: JobCardProps) {
-    const metaParts = [job.location, job.type, job.isRemote ? "Remote" : null].filter(Boolean);
+    const mode = job.workMode ?? (job.isRemote ? "remote" : "onsite");
+    const modeLabel = mode === "remote" ? "Remote" : mode === "hybrid" ? "Hybrid" : null;
+    const metaParts = [
+        job.location,
+        job.type,
+        modeLabel && modeLabel !== job.location ? modeLabel : null, // remote jobs already have location "Remote"
+    ].filter(Boolean);
 
     return (
         <div
