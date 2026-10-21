@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect } from "react";
 import SwipeCard, { SwipeButtons, ScoreBadge, SwipeDeckEmpty } from "../../components/common/SwipeCard";
-import { getJobDeck, swipeJob } from "../../services/swipe.service";
+import { getJobDeck, swipeJob, undoSwipe } from "../../services/swipe.service";
 import type { DeckJob } from "../../types/swipe.types";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -225,12 +225,29 @@ export default function JobSwipe() {
     }
   }, [currentJob, loading, animatingOut]);
 
-  const handleUndo = () => {
-    if (history.length === 0 || currentIndex === 0) return;
+  
+  const handleUndo = async () => {
+  if (history.length === 0 || currentIndex === 0 || loading) return;
+  try {
+    // Real server-side rewind: deletes the last swipe (and any match it
+    // created) so the card is genuinely re-eligible, not just visually
+    // put back on screen.
+    await undoSwipe();
     setCurrentIndex((i) => i - 1);
     setSwipeResult(null);
     setHistory((h) => h.slice(0, -1));
-  };
+  } catch (err) {
+    // Nothing to undo server-side (e.g. already undone elsewhere) — leave
+    // the UI as-is rather than rewinding to a card that can't be re-swiped.
+    console.error('[handleUndo]', err);
+  }
+};
+  // const handleUndo = () => {
+  //   if (history.length === 0 || currentIndex === 0) return;
+  //   setCurrentIndex((i) => i - 1);
+  //   setSwipeResult(null);
+  //   setHistory((h) => h.slice(0, -1));
+  // };
 
   const applied  = history.filter((h) => h.direction === "right").length;
   const skipped  = history.filter((h) => h.direction === "left").length;

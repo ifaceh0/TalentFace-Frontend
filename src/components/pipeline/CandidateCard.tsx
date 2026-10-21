@@ -1,9 +1,9 @@
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { useState } from 'react';
+import { formatExperience, useStore } from '../../store/useStore';
 import type { Candidate, CandidateStatus } from '../../store/useStore';
-import { useStore } from '../../store/useStore';
-import { MapPin, Briefcase } from 'lucide-react';
+import { MapPin, Briefcase, XCircle } from 'lucide-react';
 
 interface CandidateCardProps {
   candidate: Candidate;
@@ -23,6 +23,7 @@ const statusColors: Record<CandidateStatus, string> = {
   Interview: 'text-purple-600',
   Offer: 'text-orange-600',
   Hired: 'text-green-600',
+  Rejected: 'text-red-600',
 };
 
 export default function CandidateCard({
@@ -146,7 +147,7 @@ export default function CandidateCard({
             ? 'Fresher'
             : candidate.experience === 1
             ? '1 yr exp'
-            : `${parseFloat(Number(candidate.experience).toFixed(1))} yrs exp`}
+            : `${formatExperience(candidate.experience)} exp`}
         </span>
       </div>
 
@@ -227,6 +228,16 @@ export default function CandidateCard({
                 {status}
               </button>
             ))}
+            {candidate.status !== 'Rejected' && (
+              <button
+                type="button"
+                onClick={() => handleStatusChange('Rejected')}
+                className="w-full text-left px-2 py-1.5 text-xs rounded text-red-600 hover:bg-red-50 transition-colors"
+              >
+                <XCircle size={12} className="inline mr-1" />
+                Reject Candidate
+              </button>
+            )}
           </div>
         </div>
       )}
