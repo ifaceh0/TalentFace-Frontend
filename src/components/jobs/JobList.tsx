@@ -2,12 +2,11 @@ import { useState, useEffect } from 'react';
 import type { JSONContent } from '@tiptap/react';
 import { useStore } from '../../store/useStore';
 import type { Job } from '../../store/useStore';
-import { Plus, Trash2, Users, Loader, AlertCircle, DollarSign, Edit2, Globe, ChevronDown } from 'lucide-react';
+import { Plus, Trash2, Users, Loader, AlertCircle, DollarSign, Edit2, Globe, ChevronDown, Heart, Trophy } from 'lucide-react';
 import LocationSelect from '../ui/LocationSelect';
 import JobDetailModal from '../dashboard/JobDetailModal';
+import type { JobDetailTab } from '../dashboard/JobDetailModal';
 import RichTextEditor from '../ui/RichTextEditor';
-
-
 
 const jobTypes = ['Full-time', 'Part-time', 'Contract', 'Internship', 'Freelance'];
 const salaryTypes = ['LPA', 'USD/year', 'Custom'];
@@ -21,10 +20,11 @@ const VALID_CURRENCIES = [
 
 interface JobListProps {
   onJobClick?: (jobId: string) => void;
+  onReviewCandidates?: (jobId: string) => void;
   scrollable?: boolean;
 }
 
-export default function JobList({ onJobClick, scrollable = false }: JobListProps) {
+export default function JobList({ onJobClick, onReviewCandidates, scrollable = false }: JobListProps) {
   const { jobs, loading, error, fetchJobs, createJob, deleteJob, setSelectedJobId } = useStore();
   const [showForm, setShowForm] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
@@ -34,6 +34,7 @@ export default function JobList({ onJobClick, scrollable = false }: JobListProps
   const [formError, setFormError] = useState<string | null>(null);
   const [selectedJobId, setSelectedJobIdLocal] = useState<string | null>(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
+  const [modalTab, setModalTab] = useState<JobDetailTab>('ranked');
   const [showCurrencyChecklist, setShowCurrencyChecklist] = useState(false);
   const [form, setForm] = useState<{
     title: string;
@@ -119,7 +120,7 @@ export default function JobList({ onJobClick, scrollable = false }: JobListProps
     setShowForm(true);
   };
 
-  const handleJobClick = (jobId: string) => {
+  const handleJobClick = (jobId: string, initialTab: JobDetailTab = 'ranked') => {
     if (onJobClick) {
       onJobClick(jobId);
       return;
@@ -127,6 +128,7 @@ export default function JobList({ onJobClick, scrollable = false }: JobListProps
 
     setSelectedJobIdLocal(jobId);
     setSelectedJobId(jobId);
+    setModalTab(initialTab);
     setShowDetailModal(true);
   };
 
@@ -279,6 +281,14 @@ export default function JobList({ onJobClick, scrollable = false }: JobListProps
         onClose={handleCloseModal}
         jobId={selectedJobId}
         displayMode="inline-fullscreen"
+        initialTab={modalTab}
+        onEdit={(jobId) => {
+          const job = jobs.find((j) => j.id === jobId);
+          if (job) {
+            handleCloseModal();
+            handleEditClick(job);
+          }
+        }}
       />
     );
   }
@@ -608,7 +618,7 @@ export default function JobList({ onJobClick, scrollable = false }: JobListProps
               return (
                 <div
                   key={job.id}
-                  onClick={() => handleJobClick(job.id)}
+                  onClick={() => handleJobClick(job.id, 'ranked')}
                   className="p-4 hover:bg-indigo-50 transition cursor-pointer border-l-4 border-transparent hover:border-indigo-600"
                 >
                   <div className="flex items-start justify-between mb-2">
@@ -618,7 +628,34 @@ export default function JobList({ onJobClick, scrollable = false }: JobListProps
                         {departmentText}{departmentText && locationText ? ' · ' : ''}{locationText}{job.isRemote ? ' (Remote)' : ''}
                       </p>
                     </div>
-                    <div className="flex gap-2">
+
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleJobClick(job.id, 'ranked');
+                        }}
+                        className="flex items-center gap-1 text-[11px] font-semibold px-2 py-1 rounded bg-indigo-50 text-indigo-700 hover:bg-indigo-100 border border-indigo-200 transition"
+                        title="View ATS Ranked Applicants"
+                      >
+                        <Trophy size={13} className="text-indigo-600" />
+                        Ranked
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedJobId(job.id);
+                          onReviewCandidates?.(job.id);
+                        }}
+                        className="text-gray-400 hover:text-red-500 transition p-1"
+                        title="Review candidates for this job"
+                      >
+                        <Heart size={15} />
+                      </button>
+
                       {canEdit && (
                         <button
                           type="button"
@@ -626,19 +663,20 @@ export default function JobList({ onJobClick, scrollable = false }: JobListProps
                             e.stopPropagation();
                             handleEditClick(job);
                           }}
-                          className="text-gray-400 hover:text-blue-500 transition"
+                          className="text-gray-400 hover:text-blue-500 transition p-1"
                           title="Edit job (24-hour window)"
                         >
                           <Edit2 size={15} />
                         </button>
                       )}
+
                       <button
                         type="button"
                         onClick={(e) => {
                           e.stopPropagation();
                           handleDelete(job.id);
                         }}
-                        className="text-gray-300 hover:text-red-500 transition"
+                        className="text-gray-300 hover:text-red-500 transition p-1"
                         disabled={deletingJobId === job.id}
                       >
                         <Trash2 size={15} />
@@ -695,8 +733,6 @@ export default function JobList({ onJobClick, scrollable = false }: JobListProps
           )}
         </div>
       </div>
-
     </>
   );
 }
-
