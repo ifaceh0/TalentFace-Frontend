@@ -47,8 +47,10 @@ export default function ProfileMenu({ profile, completion, appliedCount, savedCo
                 aria-expanded={open}
                 style={{ display: "flex", alignItems: "center", gap: 8, background: "#F3F5FF", border: "1.5px solid #C7D2F8", borderRadius: 40, padding: "4px 14px 4px 4px", cursor: "pointer" }}
             >
-                <div className="avatar" style={{ width: 30, height: 30, fontSize: 11 }}>
-                    {profile?.initials ?? "?"}
+                <div className="avatar" style={{ width: 30, height: 30, fontSize: 11, overflow: "hidden" }}>
+                    {profile?.profilePhoto
+                        ? <img src={profile.profilePhoto} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                        : (profile?.initials ?? "?")}
                 </div>
                 <span style={{ fontSize: 13, fontWeight: 600, color: "#111827" }}>
                     {profile?.name?.split(" ")[0] ?? "…"}
@@ -66,8 +68,10 @@ export default function ProfileMenu({ profile, completion, appliedCount, savedCo
                     {/* Header */}
                     <div style={{ padding: "12px 14px", borderBottom: "1px solid #E5E7EB", marginBottom: 4 }}>
                         <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 11 }}>
-                            <div className="avatar" style={{ width: 40, height: 40, fontSize: 13 }}>
-                                {profile?.initials ?? "?"}
+                            <div className="avatar" style={{ width: 40, height: 40, fontSize: 13, overflow: "hidden" }}>
+                                {profile?.profilePhoto
+                                    ? <img src={profile.profilePhoto} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                                    : (profile?.initials ?? "?")}
                             </div>
                             <div>
                                 <div style={{ fontSize: 14, fontWeight: 700, color: "#111827" }}>{profile?.name ?? "Loading…"}</div>

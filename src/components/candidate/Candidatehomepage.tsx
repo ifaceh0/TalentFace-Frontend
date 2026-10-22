@@ -6,7 +6,7 @@ import { useJobActions } from "../../hooks/useJobActions";
 import { useJobs } from "../../hooks/useJobs";
 import { useCandidateProfile } from "../../hooks/useCandidateProfile";
 import { useJobStats } from "../../hooks/useJobStats";
-import JobDeckBanner from "./JobDeckBanner";
+import { HomeBanners } from "./JobDeckBanner";
 import ApplyModal from "./ApplyModal/ApplyModal";
 import CandidateNavbar from "./CandidateNavbar";
 import JobFilters from "./JobFilters";
@@ -38,79 +38,71 @@ export default function CandidateHomepage() {
                 savedCount={savedIds.size}
             />
             {/* ══ MAIN ══ */}
-<main className="tf-main">
-    <div className="tf-layout">
-        <JobFilters
-            filters={filters}
-            onToggle={toggleFilter}
-            onCurrencyChange={setCurrency}
-            onMinSalaryChange={setMinSalary}
-            onReset={resetFilters}
-        />
-        {/* <JobFilters
-            activeFilter={activeFilter}
-            onFilterChange={handleFilterChange}
-            jobPrefs={jobPrefs}
-            setJobPrefs={setJobPrefs}
-            prefsSaving={prefsSaving}
-            onSavePrefs={handleSavePrefs}
-        /> */}
-
-        <section style={{ minWidth: 0 }}>
-            <JobDeckBanner onEnter={() => navigate("/candidate/swipe")} />
-            <JobSearchCard
-                search={search}
-                onSearchChange={handleSearchChange}
-                onSubmit={submitSearch}
-                stats={stats}
-            />
-            <JobResults
-                jobs={jobs}
-                loading={loading}
-                loadingMore={loadingMore}
-                hasNextPage={hasNextPage}
-                savedIds={savedIds}
-                appliedIds={appliedIds}
-                onSave={handleToggleSave}
-                onApply={handleApply}
-                onLoadMore={handleLoadMore}
-                onOpenDeck={() => navigate("/candidate/swipe")}
-            />
-        </section>
-    </div>
-</main>
+            <main className="tf-main">
+                <div className="tf-layout">
+                    <JobFilters
+                        filters={filters}
+                        onToggle={toggleFilter}
+                        onCurrencyChange={setCurrency}
+                        onMinSalaryChange={setMinSalary}
+                        onReset={resetFilters}
+                    />
+                    <section style={{ minWidth: 0 }}>
+                        <HomeBanners />
+                        <JobSearchCard
+                            search={search}
+                            onSearchChange={handleSearchChange}
+                            onSubmit={submitSearch}
+                            stats={stats}
+                            savedCount={savedIds.size}
+                        />
+                        <JobResults
+                            jobs={jobs}
+                            loading={loading}
+                            loadingMore={loadingMore}
+                            hasNextPage={hasNextPage}
+                            savedIds={savedIds}
+                            appliedIds={appliedIds}
+                            onSave={handleToggleSave}
+                            onApply={handleApply}
+                            onLoadMore={handleLoadMore}
+                            onOpenDeck={() => navigate("/candidate/swipe")}
+                        />
+                    </section>
+                </div>
+            </main>
 
             {/* ══ Apply Resume Modal ══ */}
-{applyModalJob && profile && (
-    <ApplyModal
-        job={applyModalJob}
-        profile={profile}
-        resumeType={resumeType}
-        onResumeTypeChange={setResumeType}
-        canSubmit={canSubmit}
-        applying={applying}
-        onClose={() => setApplyModalJob(null)}
-        onConfirm={confirmApply}
-    />
-)}
-        {/* Toast */}
-            {toast && (
-                <div
-                    role="status"
-                    aria-live="polite"
-                    style={{
-                        position: "fixed", bottom: 28, left: "50%", transform: "translateX(-50%)",
-                        background: toastType === "error" ? "#D62B2B" : "#0D1B3E",
-                        color: "#fff", fontSize: 13, padding: "10px 22px", borderRadius: 30,
-                        zIndex: 999, boxShadow: "0 8px 32px rgba(13,27,62,0.25)",
-                        maxWidth: "90vw", textAlign: "center", fontFamily: "inherit",
-                        borderLeft: `4px solid ${toastType === "error" ? "#fff" : "#D62B2B"}`,
-                    }}
-                >
-                 {toast}
-                </div>
+            {applyModalJob && profile && (
+                <ApplyModal
+                    job={applyModalJob}
+                    profile={profile}
+                    resumeType={resumeType}
+                    onResumeTypeChange={setResumeType}
+                    canSubmit={canSubmit}
+                    applying={applying}
+                    onClose={() => setApplyModalJob(null)}
+                    onConfirm={confirmApply}
+                />
             )}
+            {/* Toast */}
+                {toast && (
+                    <div
+                        role="status"
+                        aria-live="polite"
+                        style={{
+                            position: "fixed", bottom: 28, left: "50%", transform: "translateX(-50%)",
+                            background: toastType === "error" ? "#D62B2B" : "#0D1B3E",
+                            color: "#fff", fontSize: 13, padding: "10px 22px", borderRadius: 30,
+                            zIndex: 999, boxShadow: "0 8px 32px rgba(13,27,62,0.25)",
+                            maxWidth: "90vw", textAlign: "center", fontFamily: "inherit",
+                            borderLeft: `4px solid ${toastType === "error" ? "#fff" : "#D62B2B"}`,
+                        }}
+                    >
+                    {toast}
+                </div>
+                )}
         
-        </div>
-    );
-}
+            </div>
+        );
+    }

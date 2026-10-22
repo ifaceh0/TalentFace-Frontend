@@ -86,3 +86,31 @@
   .apply-left { border-right: none; border-bottom: 1.5px solid var(--border); overflow: visible; }
   .apply-right { overflow: visible; }
 }
+
+.tf-saved-btn {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    height: 42px;
+    padding: 0 18px;
+    border-radius: 6px;
+    background: #F3F5FF;
+    border: 1px solid #C7D2F8;
+    color: #1C3FA8;
+    font-size: 14px;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s, transform 0.15s, box-shadow 0.15s;
+}
+.tf-saved-btn:hover {
+    background: #E8EDFF;
+    border-color: #1C3FA8;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(28, 63, 168, 0.15);
+}
+.tf-saved-btn:active {
+    transform: translateY(0);
+    box-shadow: none;
+}

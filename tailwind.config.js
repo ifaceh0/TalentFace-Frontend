@@ -1,5 +1,6 @@
 /** @type {import('tailwindcss').Config} */
 export default {
+  darkMode: "class",
   content: [
     "./index.html",
     "./src/**/*.{js,ts,jsx,tsx}",
@@ -29,12 +30,13 @@ export default {
           "sans-serif",
         ],
       },
-    },
-    borderRadius: {
+      borderRadius: {
       DEFAULT: "6px",
       md: "8px",
       lg: "10px",
     },
+    },
+    
   },
   plugins: [],
 };
