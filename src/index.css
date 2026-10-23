@@ -5,8 +5,25 @@
 * {
   box-sizing: border-box;
 }
-
 html {
+  font-family: 'Plus Jakarta Sans', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+}
+
+body {
+  margin: 0;
+  background: #F7F7F4;
+  color: #202124;
+  font-family: inherit;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+:focus-visible {
+  outline: 2px solid #465EBA;
+  outline-offset: 2px;
+}
+/* html {
   font-family: 'Times New Roman', Times, serif;
 }
 
@@ -15,7 +32,7 @@ body {
   font-family: 'Times New Roman', Times, serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-}
+} */
 
 button,
 input,
@@ -67,9 +84,9 @@ textarea {
   font-size: 14px;
   transition: all 0.2s;
 }
-.phone-input-wrapper:focus-within {
-  border-color: #DC2626;
-  box-shadow: 0 0 0 3px rgba(220,38,38,0.08);
+.phone-input-wrapper:focus-within{
+  border-color: #465EBA;
+box-shadow: 0 0 0 3px rgba(70,94,186,0.12);
 }
 .phone-input-wrapper input {
   border: none;
@@ -89,3 +106,40 @@ textarea {
   cursor: pointer;
   color: #374151;
 }
+/* ── TalentFace: job card ── */
+/* .job-card.tf-card is more specific than the page-level .job-card:hover rules */
+.job-card.tf-card { transition: border-color 0.15s, box-shadow 0.15s; }
+.job-card.tf-card:hover {
+  border-color: #C7CCDA !important;
+  transform: none !important;
+  box-shadow: 0 1px 3px rgba(32, 42, 68, 0.08) !important;
+}
+
+.tf-save {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 32px; height: 32px; flex-shrink: 0;
+  background: transparent; border: none; border-radius: 6px;
+  cursor: pointer; transition: background 0.15s;
+}
+.tf-save:hover { background: #F3F4F6; }
+
+.tf-apply {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 34px;
+  padding: 8px 18px !important;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.2;
+  color: #FFFFFF;
+  background: #D62B2B;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.tf-apply:hover:not(:disabled) { background: #B82424; }
+.tf-apply:disabled { background: #F3F4F6; color: #6B7280; cursor: default; }

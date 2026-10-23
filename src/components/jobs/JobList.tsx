@@ -1,24 +1,72 @@
 import { useState, useEffect } from 'react';
+import type { JSONContent } from '@tiptap/react';
 import { useStore } from '../../store/useStore';
 import type { Job } from '../../store/useStore';
-import { Plus, Trash2, Users, Loader, AlertCircle, DollarSign, Edit2, Globe, ChevronDown } from 'lucide-react';
+import { Plus, Trash2, Users, Loader, AlertCircle, DollarSign, Edit2, Globe, Heart, Trophy } from 'lucide-react';
 import LocationSelect from '../ui/LocationSelect';
 import JobDetailModal from '../dashboard/JobDetailModal';
+import type { JobDetailTab } from '../dashboard/JobDetailModal';
+import RichTextEditor from '../ui/RichTextEditor';
+
+const jobTypes = ['Full-time', 'Part-time', 'Contract', 'Internship']; // 'Freelance' removed: backend rejects it
+const workModes = [
+  { value: 'onsite', label: 'On-site' },
+  { value: 'hybrid', label: 'Hybrid' },
+  { value: 'remote', label: 'Remote' },
+] as const;
+const currencies = ['INR', 'USD', 'EUR', 'GBP'] as const;
+const salaryPeriods = [
+  { value: 'annually', label: 'per year' },
+  { value: 'monthly', label: 'per month' },
+  { value: 'hourly', label: 'per hour' },
+] as const;
+
+type JobForm = {
+  title: string;
+  company: string;
+  department: string;
+  location: string;
+  description: JSONContent | string;
+  salaryMin: string;
+  salaryMax: string;
+  salaryCurrency: (typeof currencies)[number];
+  salaryPeriod: (typeof salaryPeriods)[number]['value'];
+  workMode: (typeof workModes)[number]['value'];
+  maxApplicants: string;
+  jobType: string;
+};
+
+const emptyForm: JobForm = {
+  title: '', company: '', department: '', location: '', description: '',
+  salaryMin: '', salaryMax: '',
+  salaryCurrency: 'INR', salaryPeriod: 'annually',
+  workMode: 'onsite', maxApplicants: '', jobType: 'Full-time',
+};
+// const jobTypes = ['Full-time', 'Part-time', 'Contract', 'Internship', 'Freelance'];
+// const salaryTypes = ['LPA', 'USD/year', 'Custom'];
+
+// // Valid currency codes
+// const VALID_CURRENCIES = [
+//   'USD', 'EUR', 'GBP', 'JPY', 'AUD', 'CAD', 'CHF', 'CNY', 'INR', 
+//   'MXN', 'SGD', 'HKD', 'NZD', 'ZAR', 'BRL', 'RUB', 'SEK', 'NOK',
+//   'DKK', 'NZD', 'AED', 'SAR', 'KWD', 'QAR', 'BHD', 'OMR', 'JOD'
+// ];
+
+interface JobListProps {
+  onJobClick?: (jobId: string) => void;
+  onReviewCandidates?: (jobId: string) => void;
+  scrollable?: boolean;
+}
 
 
-
-const jobTypes = ['Full-time', 'Part-time', 'Contract', 'Internship', 'Freelance'];
-const salaryTypes = ['LPA', 'USD/year', 'Custom'];
-
-// Valid currency codes
-const VALID_CURRENCIES = [
-  'USD', 'EUR', 'GBP', 'JPY', 'AUD', 'CAD', 'CHF', 'CNY', 'INR', 
-  'MXN', 'SGD', 'HKD', 'NZD', 'ZAR', 'BRL', 'RUB', 'SEK', 'NOK',
-  'DKK', 'NZD', 'AED', 'SAR', 'KWD', 'QAR', 'BHD', 'OMR', 'JOD'
-];
-
-export default function JobList() {
-  const { jobs, loading, error, fetchJobs, createJob, deleteJob, setSelectedJobId } = useStore();
+export default function JobList({
+  onJobClick,
+  onReviewCandidates,
+  scrollable = false,
+}: JobListProps) {
+  const { jobs, loading, error, fetchJobs, createJob, updateJob, deleteJob, setSelectedJobId } = useStore();
+// export default function JobList({ onJobClick }: JobListProps) {
+//   const { jobs, loading, error, fetchJobs, createJob, updateJob, deleteJob, setSelectedJobId } = useStore();
   const [showForm, setShowForm] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editingJobId, setEditingJobId] = useState<string | null>(null);
@@ -27,21 +75,37 @@ export default function JobList() {
   const [formError, setFormError] = useState<string | null>(null);
   const [selectedJobId, setSelectedJobIdLocal] = useState<string | null>(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
-  const [showCurrencyChecklist, setShowCurrencyChecklist] = useState(false);
-  const [form, setForm] = useState({
-    title: '',
-    company: '',
-    department: '',
-    location: '',
-    description: '',
-    salaryMin: '',
-    salaryMax: '',
-    salaryCurrency: 'LPA' as 'LPA' | 'USD/year' | 'Custom',
-    customCurrency: '',
-    maxApplicants: '',
-    jobType: 'Full-time',
-    isRemote: false,
-  });
+  // const [showCurrencyChecklist, setShowCurrencyChecklist] = useState(false);
+  // const [form, setForm] = useState<{
+  //   title: string;
+  //   company: string;
+  //   department: string;
+  //   location: string;
+  //   description: JSONContent | string;
+  //   salaryMin: string;
+  //   salaryMax: string;
+  //   salaryCurrency: 'LPA' | 'USD/year' | 'Custom';
+  //   customCurrency: string;
+  //   maxApplicants: string;
+  //   jobType: string;
+  //   isRemote: boolean;
+  // }>({
+  //   title: '',
+  //   company: '',
+  //   department: '',
+  //   location: '',
+  //   description: '',
+  //   salaryMin: '',
+  //   salaryMax: '',
+  //   salaryCurrency: 'LPA',
+  //   customCurrency: '',
+  //   maxApplicants: '',
+  //   jobType: 'Full-time',
+  //   isRemote: false,
+  // });
+  const [modalTab, setModalTab] = useState<JobDetailTab>('ranked');
+  //const [showCurrencyChecklist, setShowCurrencyChecklist] = useState(false);
+  const [form, setForm] = useState<JobForm>(emptyForm);
 
   useEffect(() => {
     fetchJobs();
@@ -83,25 +147,31 @@ export default function JobList() {
     setIsEditing(true);
     setEditingJobId(job.id);
     setForm({
-      title: job.title,
-      company: job.department || '',
-      department: job.department || '',
-      location: job.location === 'Remote' ? '' : job.location,
-      description: job.description,
-      salaryMin: job.salaryMin?.toString() || '',
-      salaryMax: job.salaryMax?.toString() || '',
-      salaryCurrency: job.salaryCurrency || 'LPA',
-      customCurrency: job.salaryCurrency === 'Custom' ? job.salaryCurrency : '',
-      maxApplicants: job.maxApplicants?.toString() || '',
-      jobType: job.jobType || 'Full-time',
-      isRemote: job.isRemote || false,
-    });
+  title: job.title,
+  company: job.company,
+  department: job.department,
+  location: job.location === 'Remote' ? '' : job.location,
+  description: job.description ?? '',
+  salaryMin: job.salaryMin?.toString() || '',
+  salaryMax: job.salaryMax?.toString() || '',
+  salaryCurrency: (job.salaryCurrency as JobForm['salaryCurrency']) ?? 'INR',
+  salaryPeriod: job.salaryPeriod ?? 'annually',
+  workMode: job.workMode ?? (job.isRemote ? 'remote' : 'onsite'),
+  maxApplicants: job.maxApplicants?.toString() || '',
+  jobType: job.jobType || 'Full-time',
+});
     setShowForm(true);
   };
 
-  const handleJobClick = (jobId: string) => {
+  const handleJobClick = (jobId: string, initialTab: JobDetailTab = 'ranked') => {
+    if (onJobClick) {
+      onJobClick(jobId);
+      return;
+    }
+
     setSelectedJobIdLocal(jobId);
     setSelectedJobId(jobId);
+    setModalTab(initialTab);
     setShowDetailModal(true);
   };
 
@@ -112,30 +182,37 @@ export default function JobList() {
   };
 
   const resetForm = () => {
-    setForm({
-      title: '',
-      company: '',
-      department: '',
-      location: '',
-      description: '',
-      salaryMin: '',
-      salaryMax: '',
-      salaryCurrency: 'LPA',
-      customCurrency: '',
-      maxApplicants: '',
-      jobType: 'Full-time',
-      isRemote: false,
-    });
-    setIsEditing(false);
-    setEditingJobId(null);
-    setFormError(null);
-    setShowCurrencyChecklist(false);
-  };
+  setForm(emptyForm);
+  setIsEditing(false);
+  setEditingJobId(null);
+  setFormError(null);
+};
 
-  const validateCustomCurrency = (currency: string): boolean => {
-    const upperCurrency = currency.toUpperCase().trim();
-    return /^[A-Z]{3}$/.test(upperCurrency) && VALID_CURRENCIES.includes(upperCurrency);
-  };
+  // const resetForm = () => {
+  //   setForm({
+  //     title: '',
+  //     company: '',
+  //     department: '',
+  //     location: '',
+  //     description: '',
+  //     salaryMin: '',
+  //     salaryMax: '',
+  //     salaryCurrency: 'LPA',
+  //     customCurrency: '',
+  //     maxApplicants: '',
+  //     jobType: 'Full-time',
+  //     isRemote: false,
+  //   });
+  //   setIsEditing(false);
+  //   setEditingJobId(null);
+  //   setFormError(null);
+  //   setShowCurrencyChecklist(false);
+  // };
+
+  // const validateCustomCurrency = (currency: string): boolean => {
+  //   const upperCurrency = currency.toUpperCase().trim();
+  //   return /^[A-Z]{3}$/.test(upperCurrency) && VALID_CURRENCIES.includes(upperCurrency);
+  // };
 
   const handleAdd = async () => {
     setFormError(null);
@@ -148,39 +225,56 @@ export default function JobList() {
       setFormError('Company/Organization is required');
       return;
     }
-    if (!form.isRemote && !form.location.trim()) {
+    // if (!form.isRemote && !form.location.trim()) {
+    if (form.workMode !== 'remote' && !form.location.trim()) {
       setFormError('Location is required (or select Remote)');
       return;
     }
 
-    if (form.salaryMin || form.salaryMax) {
-      const min = form.salaryMin ? parseInt(form.salaryMin) : 0;
-      const max = form.salaryMax ? parseInt(form.salaryMax) : 0;
+    const min = form.salaryMin ? Number(form.salaryMin) : 0;
+const max = form.salaryMax ? Number(form.salaryMax) : 0;
 
-      if (form.salaryMin && isNaN(min)) {
-        setFormError('Minimum salary must be a valid number');
-        return;
-      }
-      if (form.salaryMax && isNaN(max)) {
-        setFormError('Maximum salary must be a valid number');
-        return;
-      }
-      if (form.salaryMin && form.salaryMax && min > max) {
-        setFormError('Minimum salary cannot be greater than maximum salary');
-        return;
-      }
-    }
+if (!Number.isFinite(min) || !Number.isFinite(max) || min < 0 || max < 0) {
+  setFormError('Salary must be a valid positive number');
+  return;
+}
+if (min && !max) {
+  setFormError('Maximum salary is required when minimum is set');
+  return;
+}
+if (max && min > max) {
+  setFormError('Minimum salary cannot be greater than maximum salary');
+  return;
+}
 
-    if (form.salaryCurrency === 'Custom') {
-      if (!form.customCurrency.trim()) {
-        setFormError('Please enter a valid currency code (e.g., USD, EUR, GBP)');
-        return;
-      }
-      if (!validateCustomCurrency(form.customCurrency)) {
-        setFormError('Invalid currency code. Must be a 3-letter code (e.g., USD, EUR, GBP)');
-        return;
-      }
-    }
+    // if (form.salaryMin || form.salaryMax) {
+    //   const min = form.salaryMin ? parseInt(form.salaryMin) : 0;
+    //   const max = form.salaryMax ? parseInt(form.salaryMax) : 0;
+
+    //   if (form.salaryMin && isNaN(min)) {
+    //     setFormError('Minimum salary must be a valid number');
+    //     return;
+    //   }
+    //   if (form.salaryMax && isNaN(max)) {
+    //     setFormError('Maximum salary must be a valid number');
+    //     return;
+    //   }
+    //   if (form.salaryMin && form.salaryMax && min > max) {
+    //     setFormError('Minimum salary cannot be greater than maximum salary');
+    //     return;
+    //   }
+    // }
+
+    // if (form.salaryCurrency === 'Custom') {
+    //   if (!form.customCurrency.trim()) {
+    //     setFormError('Please enter a valid currency code (e.g., USD, EUR, GBP)');
+    //     return;
+    //   }
+    //   if (!validateCustomCurrency(form.customCurrency)) {
+    //     setFormError('Invalid currency code. Must be a 3-letter code (e.g., USD, EUR, GBP)');
+    //     return;
+    //   }
+    // }
 
     if (form.maxApplicants) {
       const max = parseInt(form.maxApplicants);
@@ -192,30 +286,45 @@ export default function JobList() {
 
     try {
       setSubmitting(true);
-
       const jobData = {
-        title: form.title.trim(),
-        company: form.company.trim(),
-        department: form.department.trim(),
-        location: form.isRemote ? 'Remote' : form.location.trim(),
-        description: form.description.trim(),
-        status: 'Active' as const,
-        salaryMin: form.salaryMin ? parseInt(form.salaryMin) : undefined,
-        salaryMax: form.salaryMax ? parseInt(form.salaryMax) : undefined,
-        salaryCurrency:
-          form.salaryCurrency === 'Custom'
-            ? (form.customCurrency.toUpperCase() as 'LPA' | 'USD/year' | 'Custom')
-            : form.salaryCurrency as 'LPA' | 'USD/year' | 'Custom',
+  title: form.title.trim(),
+  company: form.company.trim(),
+  department: form.department.trim(),
+  location: form.workMode === 'remote' ? 'Remote' : form.location.trim(),
+  description: form.description,
+  status: 'Active' as const,
+  salaryMin: form.salaryMin ? Number(form.salaryMin) : 0,
+  salaryMax: form.salaryMax ? Number(form.salaryMax) : 0,
+  salaryCurrency: form.salaryCurrency,
+  salaryPeriod: form.salaryPeriod,
+  maxApplicants: form.maxApplicants ? parseInt(form.maxApplicants) : undefined,
+  jobType: form.jobType,
+  workMode: form.workMode,
+  isRemote: form.workMode === 'remote',
+};
+      // const jobData = {
+      //   title: form.title.trim(),
+      //   company: form.company.trim(),
+      //   department: form.department.trim(),
+      //   location: form.isRemote ? 'Remote' : form.location.trim(),
+      //   description: form.description,
+      //   status: 'Active' as const,
+      //   salaryMin: form.salaryMin ? parseInt(form.salaryMin) : undefined,
+      //   salaryMax: form.salaryMax ? parseInt(form.salaryMax) : undefined,
+      //   salaryCurrency:
+      //     form.salaryCurrency === 'Custom'
+      //       ? (form.customCurrency.toUpperCase() as 'LPA' | 'USD/year' | 'Custom')
+      //       : form.salaryCurrency as 'LPA' | 'USD/year' | 'Custom',
 
-        maxApplicants: form.maxApplicants ? parseInt(form.maxApplicants) : undefined,
-        jobType: form.jobType,
-        isRemote: form.isRemote,
-      };
+      //   maxApplicants: form.maxApplicants ? parseInt(form.maxApplicants) : undefined,
+      //   jobType: form.jobType,
+      //   isRemote: form.isRemote,
+      // };
 
       console.log(isEditing ? '📝 Updating job:' : '📤 Creating job:', jobData);
 
       if (isEditing && editingJobId) {
-        await createJob(jobData);
+        await updateJob(editingJobId, jobData);
       } else {
         await createJob(jobData);
       }
@@ -234,18 +343,53 @@ export default function JobList() {
     }
   };
 
-  const formatSalary = (job: Job) => {
-    if (!job.salaryMin || !job.salaryMax) return null;
+  // const formatSalary = (job: Job) => {
+  //   if (!job.salaryMin || !job.salaryMax) return null;
 
-    switch (job.salaryCurrency) {
-      case 'LPA':
-        return `₹${job.salaryMin}–${job.salaryMax} LPA`;
-      case 'USD/year':
-        return `$${job.salaryMin.toLocaleString()}–${job.salaryMax.toLocaleString()} USD/year`;
-      default:
-        return `${job.salaryMin}–${job.salaryMax} ${job.salaryCurrency}`;
-    }
-  };
+  //   switch (job.salaryCurrency) {
+  //     case 'LPA':
+  //       return `₹${job.salaryMin}–${job.salaryMax} LPA`;
+  //     case 'USD/year':
+  //       return `$${job.salaryMin.toLocaleString()}–${job.salaryMax.toLocaleString()} USD/year`;
+  //     default:
+  //       return `${job.salaryMin}–${job.salaryMax} ${job.salaryCurrency}`;
+  //   }
+  // };
+  const PERIOD_SUFFIX = { hourly: '/hr', monthly: '/mo', annually: '/yr' } as const;
+
+const formatSalary = (job: Job) => {
+  if (!job.salaryMax) return null;
+  try {
+    const nf = new Intl.NumberFormat(job.salaryCurrency === 'INR' ? 'en-IN' : 'en-US', {
+      style: 'currency',
+      currency: job.salaryCurrency,
+      notation: 'compact',
+      maximumFractionDigits: 1,
+    });
+    return `${nf.format(job.salaryMin ?? 0)}–${nf.format(job.salaryMax)} ${PERIOD_SUFFIX[job.salaryPeriod ?? 'annually']}`;
+  } catch {
+    return null; // old rows with a non-ISO currency like "LPA"
+  }
+};
+
+  if (showDetailModal && selectedJobId) {
+    return (
+      <JobDetailModal
+        isOpen
+        onClose={handleCloseModal}
+        jobId={selectedJobId}
+        displayMode="inline-fullscreen"
+        initialTab={modalTab}
+        onEdit={(jobId) => {
+          const job = jobs.find((j) => j.id === jobId);
+          if (job) {
+            handleCloseModal();
+            handleEditClick(job);
+          }
+        }}
+      />
+    );
+  }
 
   return (
     <>
@@ -342,7 +486,32 @@ export default function JobList() {
               />
             </div>
 
-            <div className="space-y-2">
+            <div>
+  <label className="block text-xs font-medium text-gray-700 mb-1">Work Mode *</label>
+  <select
+    value={form.workMode}
+    onChange={(e) => setForm({ ...form, workMode: e.target.value as JobForm['workMode'] })}
+    disabled={submitting}
+    className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-indigo-300 disabled:bg-gray-100 disabled:cursor-not-allowed"
+  >
+    {workModes.map((m) => (
+      <option key={m.value} value={m.value}>{m.label}</option>
+    ))}
+  </select>
+</div>
+
+{form.workMode !== 'remote' && (
+  <div>
+    <label className="block text-xs font-medium text-gray-700 mb-1">Location *</label>
+    <LocationSelect
+      value={form.location}
+      onChange={(location) => setForm({ ...form, location })}
+      placeholder="Select location"
+    />
+  </div>
+)}
+
+            {/*<div className="space-y-2">
               <label className="block text-xs font-medium text-gray-700">
                 Location *
               </label>
@@ -366,7 +535,7 @@ export default function JobList() {
                   <span className="text-xs font-medium text-gray-700">Remote</span>
                 </label>
               </div>
-            </div>
+            </div>*/}
 
             <div>
               <label className="block text-xs font-medium text-gray-700 mb-1">
@@ -387,6 +556,62 @@ export default function JobList() {
             </div>
 
             <div className="space-y-2">
+  <label className="block text-xs font-medium text-gray-700">Salary (full amount, not LPA)</label>
+  <div className="grid grid-cols-2 gap-3">
+    <div>
+      <label className="block text-xs text-gray-600 mb-1">Min</label>
+      <input
+        type="number"
+        min={0}
+        placeholder="e.g., 1000000"
+        value={form.salaryMin}
+        onChange={(e) => setForm({ ...form, salaryMin: e.target.value })}
+        disabled={submitting}
+        className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-indigo-300 disabled:bg-gray-100 disabled:cursor-not-allowed"
+      />
+    </div>
+    <div>
+      <label className="block text-xs text-gray-600 mb-1">Max</label>
+      <input
+        type="number"
+        min={0}
+        placeholder="e.g., 1800000"
+        value={form.salaryMax}
+        onChange={(e) => setForm({ ...form, salaryMax: e.target.value })}
+        disabled={submitting}
+        className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-indigo-300 disabled:bg-gray-100 disabled:cursor-not-allowed"
+      />
+    </div>
+    <div>
+      <label className="block text-xs text-gray-600 mb-1">Currency</label>
+      <select
+        value={form.salaryCurrency}
+        onChange={(e) => setForm({ ...form, salaryCurrency: e.target.value as JobForm['salaryCurrency'] })}
+        disabled={submitting}
+        className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-indigo-300 disabled:bg-gray-100 disabled:cursor-not-allowed"
+      >
+        {currencies.map((c) => (
+          <option key={c} value={c}>{c}</option>
+        ))}
+      </select>
+    </div>
+    <div>
+      <label className="block text-xs text-gray-600 mb-1">Period</label>
+      <select
+        value={form.salaryPeriod}
+        onChange={(e) => setForm({ ...form, salaryPeriod: e.target.value as JobForm['salaryPeriod'] })}
+        disabled={submitting}
+        className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-indigo-300 disabled:bg-gray-100 disabled:cursor-not-allowed"
+      >
+        {salaryPeriods.map((p) => (
+          <option key={p.value} value={p.value}>{p.label}</option>
+        ))}
+      </select>
+    </div>
+  </div>
+</div>
+
+            {/*<div className="space-y-2">
               <label className="block text-xs font-medium text-gray-700">Salary</label>
               <div className="grid grid-cols-3 gap-3">
                 <div>
@@ -485,7 +710,7 @@ export default function JobList() {
                   )}
                 </div>
               )}
-            </div>
+            </div>*/}
 
             <div>
               <label className="block text-xs font-medium text-gray-700 mb-1">
@@ -505,13 +730,11 @@ export default function JobList() {
               <label className="block text-xs font-medium text-gray-700 mb-1">
                 Description
               </label>
-              <textarea
-                placeholder="Job description, responsibilities, requirements..."
-                value={form.description}
-                onChange={(e) => setForm({ ...form, description: e.target.value })}
-                disabled={submitting}
-                className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-indigo-300 resize-none disabled:bg-gray-100 disabled:cursor-not-allowed"
-                rows={3}
+              <RichTextEditor
+                content={form.description}
+                onChange={(json) => setForm({ ...form, description: json })}
+                maxChars={1000}
+                minHeight={100}
               />
             </div>
 
@@ -551,7 +774,11 @@ export default function JobList() {
           </div>
         )}
 
-        <div className="divide-y divide-gray-50">
+        <div
+          className={`divide-y divide-gray-50 ${
+            scrollable ? 'max-h-[350px] overflow-y-auto' : ''
+          }`}
+        >
           {!loading && jobs.length === 0 ? (
             <div className="text-center py-12 text-gray-400">
               <p className="text-sm">No jobs posted yet.</p>
@@ -564,21 +791,49 @@ export default function JobList() {
               const hoursDiff = (currentTime.getTime() - createdTime.getTime()) / (1000 * 60 * 60);
               const canEdit = hoursDiff <= 24;
               const salaryDisplay = formatSalary(job);
+              const departmentText = typeof job.department === 'string' ? job.department : '';
+              const locationText = typeof job.location === 'string' ? job.location : '';
 
               return (
                 <div
                   key={job.id}
-                  onClick={() => handleJobClick(job.id)}
+                  onClick={() => handleJobClick(job.id, 'ranked')}
                   className="p-4 hover:bg-indigo-50 transition cursor-pointer border-l-4 border-transparent hover:border-indigo-600"
                 >
                   <div className="flex items-start justify-between mb-2">
                     <div className="flex-1">
                       <p className="text-sm font-semibold text-gray-800">{job.title}</p>
                       <p className="text-xs text-gray-400 mt-1">
-                        {job.department} · {job.location}{job.isRemote ? ' (Remote)' : ''}
+                        {departmentText}{departmentText && locationText ? ' · ' : ''}{locationText}{job.isRemote ? ' (Remote)' : ''}
                       </p>
                     </div>
-                    <div className="flex gap-2">
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleJobClick(job.id, 'ranked');
+                        }}
+                        className="flex items-center gap-1 text-[11px] font-semibold px-2 py-1 rounded bg-indigo-50 text-indigo-700 hover:bg-indigo-100 border border-indigo-200 transition"
+                        title="View ATS Ranked Applicants"
+                      >
+                        <Trophy size={13} className="text-indigo-600" />
+                        Ranked
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedJobId(job.id);
+                          onReviewCandidates?.(job.id);
+                        }}
+                        className="text-gray-400 hover:text-red-500 transition"
+                        title="Review candidates for this job"
+                      >
+                        <Heart size={15} />
+                      </button>
+
                       {canEdit && (
                         <button
                           type="button"
@@ -586,19 +841,20 @@ export default function JobList() {
                             e.stopPropagation();
                             handleEditClick(job);
                           }}
-                          className="text-gray-400 hover:text-blue-500 transition"
+                          className="text-gray-400 hover:text-blue-500 transition p-1"
                           title="Edit job (24-hour window)"
                         >
                           <Edit2 size={15} />
                         </button>
                       )}
+
                       <button
                         type="button"
                         onClick={(e) => {
                           e.stopPropagation();
                           handleDelete(job.id);
                         }}
-                        className="text-gray-300 hover:text-red-500 transition"
+                        className="text-gray-300 hover:text-red-500 transition p-1"
                         disabled={deletingJobId === job.id}
                       >
                         <Trash2 size={15} />
@@ -655,14 +911,6 @@ export default function JobList() {
           )}
         </div>
       </div>
-
-      {selectedJobId && (
-        <JobDetailModal
-          isOpen={showDetailModal}
-          onClose={handleCloseModal}
-          jobId={selectedJobId}
-        />
-      )}
     </>
   );
 }
