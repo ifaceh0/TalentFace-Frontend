@@ -129,14 +129,10 @@ export const useStore = create<RecruiterStore>()((set) => ({
   },
 
   async fetchCandidates() {
-    console.log('FETCH CANDIDATES CALLED');
-
     set({ loading: true, error: null });
 
     try {
       const candidates = await recruiterService.getRecruiterCandidates();
-
-      console.log('FETCH RESULT', candidates);
 
       set({
         candidates,
