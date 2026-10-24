@@ -36,6 +36,7 @@ import SavedJobs from "./components/candidate/SavedJob";
 
 import Setting from "./pages/candidate/Setting";
 import CandidateApplications from "./pages/candidate/candidateApplications";
+import CandidateNotifications from "./components/candidate/CandidateNotifications";
 
 // ── NEW: Import Recruiter Profile Pages ────────────────────────────────────
 import Profile from "./pages/recruiter/Profile";
@@ -214,9 +215,8 @@ export default function App() {
             <Route path="/candidate/saved" element={<SavedJobs />} />
             <Route path="/candidate/setting" element={<Setting />} /> 
             <Route path="/candidate/applications" element={<CandidateLayout><CandidateApplications /></CandidateLayout>} />
+            <Route path="/candidate/notifications" element={<CandidateNotifications />} />
           </Route>
-
-
 
 
           {/* Catch-all */}

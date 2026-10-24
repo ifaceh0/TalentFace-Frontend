@@ -6,7 +6,9 @@ import type {
   Project,
   SocialProfile,
   Address,
-  ResumeAnalysis
+  ResumeAnalysis,
+  AppNotification,
+  SuggestedJob,
 } from '../types/candidate.types';
 import type { JSONContent } from '@tiptap/react';
 
@@ -369,4 +371,34 @@ export const checkJobFit = async (
     { resumeType }
   );
   return data.data.fitCheck;
+};
+
+// ─── Notifications ────────────────────────────────────────────────────────────
+
+export const getNotifications = async (
+  page = 1,
+  limit = 20
+): Promise<{ notifications: AppNotification[]; hasMore: boolean }> => {
+  const { data } = await api.get<ApiEnvelope<{ notifications: AppNotification[]; hasMore: boolean }>>(
+    `/notifications?page=${page}&limit=${limit}`
+  );
+  return data.data;
+};
+
+export const getUnreadCount = async (): Promise<number> => {
+  const { data } = await api.get<ApiEnvelope<{ count: number }>>('/notifications/unread-count');
+  return data.data.count;
+};
+
+export const markNotificationRead = async (id: string): Promise<void> => {
+  await api.patch(`/notifications/${id}/read`);
+};
+
+export const markAllNotificationsRead = async (): Promise<void> => {
+  await api.patch('/notifications/read-all');
+};
+
+export const getSuggestedJobs = async (): Promise<SuggestedJob[]> => {
+  const { data } = await api.get<ApiEnvelope<{ jobs: SuggestedJob[] }>>('/notifications/suggested-jobs');
+  return data.data.jobs;
 };
