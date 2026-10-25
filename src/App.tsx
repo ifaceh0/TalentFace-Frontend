@@ -24,7 +24,7 @@ import CandidateSignup from "./pages/auth/CandidateSignup";
 
 
 import AdminDashboard from "./pages/admin/AdminDashboard";
-import Home from "./pages/Home";
+import Home from "./guest/Home";
 import BrowseJobs    from "./pages/candidate/BrowseJobs";   //
 import CandidateHomepage from "./components/candidate/Candidatehomepage";
 import CandidateDashboard from "./pages/candidate/CandidateDashboard";
