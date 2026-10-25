@@ -33,7 +33,7 @@ export default function Header({ activePage }: HeaderProps) {
   };
 
   return (
-    <header className="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-6 fixed top-0 left-64 right-0 z-10">
+    <header className="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-6 fixed top-0 left-64 right-0 z-30">
       {/* Page Title */}
       <div>
         <h2 className="text-xl font-semibold text-blue-900">
@@ -56,7 +56,7 @@ export default function Header({ activePage }: HeaderProps) {
         <div className="relative">
           <button
             onClick={() => setIsProfileOpen(!isProfileOpen)}
-            className="w-9 h-9 rounded-full bg-red-500 flex items-center justify-center text-white text-sm font-bold hover:bg-red-600 transition cursor-pointer"
+            className="w-9 h-9 rounded-full bg-blue-600 flex items-center justify-center text-white text-sm font-bold hover:bg-blue-700 transition cursor-pointer"
           >
             {initials}
           </button>
@@ -73,7 +73,7 @@ export default function Header({ activePage }: HeaderProps) {
               {/* Dropdown */}
               <div className="absolute right-0 mt-2 w-72 bg-white rounded-3xl shadow-2xl border border-blue-100 z-50 overflow-hidden ring-1 ring-black/5">
                 {/* Profile Header */}
-                <div className="bg-gradient-to-r from-blue-900 via-blue-700 to-red-600 p-4 text-white">
+                <div className="bg-gradient-to-r from-blue-900 via-blue-800 to-blue-600 p-4 text-white">
                   <div className="flex items-center gap-3">
                     <div className="w-12 h-12 rounded-full bg-white flex items-center justify-center text-blue-900 text-lg font-bold">
                       {initials}
@@ -197,7 +197,7 @@ export default function Header({ activePage }: HeaderProps) {
 //         <div className="relative">
 //           <button
 //             onClick={() => setIsProfileOpen(!isProfileOpen)}
-//             className="w-9 h-9 rounded-full bg-red-500 flex items-center justify-center text-white text-sm font-bold hover:bg-red-600 transition cursor-pointer"
+//             className="w-9 h-9 rounded-full bg-blue-600 flex items-center justify-center text-white text-sm font-bold hover:bg-blue-700 transition cursor-pointer"
 //           >
 //             {initials}
 //           </button>
@@ -214,7 +214,7 @@ export default function Header({ activePage }: HeaderProps) {
 //               {/* Dropdown */}
 //               <div className="absolute right-0 mt-2 w-72 bg-white rounded-3xl shadow-2xl border border-blue-100 z-50 overflow-hidden ring-1 ring-black/5">
 //                 {/* Profile Header */}
-//                 <div className="bg-gradient-to-r from-blue-900 via-blue-700 to-red-600 p-4 text-white">
+//                 <div className="bg-gradient-to-r from-blue-900 via-blue-800 to-blue-600 p-4 text-white">
 //                   <div className="flex items-center gap-3">
 //                     <div className="w-12 h-12 rounded-full bg-white flex items-center justify-center text-blue-900 text-lg font-bold">
 //                       {initials}

@@ -1,5 +1,5 @@
 import { memo, useState, useEffect, useRef } from 'react';
-import { Trash2, Loader, Edit2, Globe, UserCheck, Trophy, Building2, MapPin, Briefcase, Banknote, MoreVertical } from 'lucide-react';
+import { Trash2, Loader, Edit2, Globe, UserCheck, Trophy, Building2, MapPin, Briefcase, Banknote, MoreVertical, Lock } from 'lucide-react';
 import type { Job } from '../../store/useStore';
 import type { JobDetailTab } from '../dashboard/JobDetailModal';
 import { formatSalary, getEditState } from './jobUtils';
@@ -11,9 +11,10 @@ interface JobRowProps {
   onReview: (jobId: string) => void;
   onEdit: (job: Job) => void;
   onDelete: (jobId: string) => void;
+  onClose?: (jobId: string) => void;
 }
 
-function JobRow({ job, deleting, onOpen, onReview, onEdit, onDelete }: JobRowProps) {
+function JobRow({ job, deleting, onOpen, onReview, onEdit, onDelete, onClose }: JobRowProps) {
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -27,11 +28,12 @@ function JobRow({ job, deleting, onOpen, onReview, onEdit, onDelete }: JobRowPro
   }, [menuOpen]);
 
   const { canEdit, hoursLeft } = getEditState(job);
+  const canClose = job.status === 'Active' && !!onClose;
   const initial = (job.company || job.title || '?').trim().charAt(0).toUpperCase();
   const pct = job.maxApplicants ? Math.min(100, Math.round((job.applicants / job.maxApplicants) * 100)) : 0;
   const dot = job.status === 'Active' ? 'bg-green-500' : job.status === 'Draft' ? 'bg-gray-400' : 'bg-red-500';
   const salaryDisplay = formatSalary(job);
-  const departmentText = typeof job.department === 'string' ? job.department : '';
+  const departmentText = typeof job.department === 'string' && job.department !== job.company ? job.department : '';
   const locationText = !job.isRemote && typeof job.location === 'string' ? job.location : '';
 
   return (
@@ -40,7 +42,7 @@ function JobRow({ job, deleting, onOpen, onReview, onEdit, onDelete }: JobRowPro
       tabIndex={0}
       onClick={() => onOpen(job.id, 'ranked')}
       onKeyDown={(e) => { if (e.key === 'Enter') onOpen(job.id, 'ranked'); }}
-      className="group flex gap-3 p-4 hover:bg-gray-50 transition cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-indigo-300"
+      className="group relative flex gap-3 p-4 hover:bg-gray-50 transition cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-indigo-300"
     >
       {/* Avatar tile */}
       <div className="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 ring-1 ring-inset ring-indigo-100 flex items-center justify-center text-sm font-bold flex-shrink-0">
@@ -73,7 +75,7 @@ function JobRow({ job, deleting, onOpen, onReview, onEdit, onDelete }: JobRowPro
 
           <div className="flex items-center gap-1 flex-shrink-0">
             {/* Hover-revealed icon actions (always visible on mobile) */}
-            <div className="hidden md:flex items-center md:opacity-0 md:group-hover:opacity-100 md:focus-within:opacity-100 transition">
+             <div className="hidden md:flex items-center md:absolute md:right-14 md:top-3 md:rounded-lg md:bg-white md:ring-1 md:ring-gray-200 md:shadow-sm md:opacity-0 md:pointer-events-none md:group-hover:opacity-100 md:group-hover:pointer-events-auto md:focus-within:opacity-100 md:focus-within:pointer-events-auto transition">
               <button
                 type="button"
                 aria-label="Review candidates"
@@ -93,6 +95,18 @@ function JobRow({ job, deleting, onOpen, onReview, onEdit, onDelete }: JobRowPro
                   className="p-1.5 rounded-lg text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition"
                 >
                   <Edit2 size={15} />
+                </button>
+              )}
+
+               {canClose && (
+                <button
+                  type="button"
+                  aria-label="Close job"
+                  title="Close job (stop new applications)"
+                  onClick={(e) => { e.stopPropagation(); onClose?.(job.id); }}
+                  className="p-1.5 rounded-lg text-gray-400 hover:text-amber-600 hover:bg-amber-50 transition"
+                >
+                  <Lock size={15} />
                 </button>
               )}
 
@@ -143,6 +157,17 @@ function JobRow({ job, deleting, onOpen, onReview, onEdit, onDelete }: JobRowPro
                     </button>
                   )}
 
+                  {canClose && (
+                    <button
+                      type="button"
+                      role="menuitem"
+                      onClick={(e) => { e.stopPropagation(); setMenuOpen(false); onClose?.(job.id); }}
+                      className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                    >
+                      <Lock size={14} /> Close job
+                    </button>
+                  )}
+
                   <button
                     type="button"
                     role="menuitem"
@@ -161,10 +186,11 @@ function JobRow({ job, deleting, onOpen, onReview, onEdit, onDelete }: JobRowPro
               type="button"
               onClick={(e) => { e.stopPropagation(); onOpen(job.id, 'ranked'); }}
               aria-label="View applicants"
+              title="View applicants"
               className="ml-1 flex items-center gap-1 text-xs font-semibold px-2.5 py-1.5 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 transition"
             >
               <Trophy size={13} />
-              <span className="hidden sm:inline">View applicants</span>
+              {/* <span className="hidden sm:inline">View applicants</span> */}
             </button>
           </div>
         </div>
@@ -192,9 +218,7 @@ function JobRow({ job, deleting, onOpen, onReview, onEdit, onDelete }: JobRowPro
             </span>
           )}
 
-          <span className="text-[11px] px-2 py-0.5 rounded-full font-medium bg-gray-50 text-gray-700 ring-1 ring-inset ring-gray-200">
-            {job.jobType || 'Full-time'}
-          </span>
+          <span className="text-xs text-gray-500">{job.jobType || 'Full-time'}</span>
 
           <span className="flex items-center gap-1.5 text-xs text-gray-600">
             <span className={`w-1.5 h-1.5 rounded-full ${dot}`} />

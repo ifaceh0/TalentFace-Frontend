@@ -79,7 +79,7 @@ function Dashboard({ role }: { role: string }) {
       <div className="flex-1 ml-64 min-h-screen overflow-y-auto">
         <Header activePage={activePage} />
 
-        <main className="mt-16 p-6">
+        <main className="mt-16 p-6 pb-24">
           {renderPage()}
         </main>
 

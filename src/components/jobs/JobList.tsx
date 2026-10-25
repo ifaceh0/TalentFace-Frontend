@@ -37,13 +37,14 @@ export default function JobList({
   scrollable = false,
 }: JobListProps) {
   // const { jobs, loading, error, fetchJobs, deleteJob, setSelectedJobId } = useStore();
-  const { jobs, loading, error, fetchJobs, deleteJob, setSelectedJobId } = useStore(
+  const { jobs, loading, error, fetchJobs, deleteJob, closeJob, setSelectedJobId } = useStore(
     useShallow((s) => ({
       jobs: s.jobs,
       loading: s.loading,
       error: s.error,
       fetchJobs: s.fetchJobs,
       deleteJob: s.deleteJob,
+      closeJob: s.closeJob,
       setSelectedJobId: s.setSelectedJobId,
     }))
   );
@@ -53,6 +54,8 @@ export default function JobList({
   const [editingJob, setEditingJob] = useState<Job | null>(null);
   const [deletingJobId, setDeletingJobId] = useState<string | null>(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [confirmCloseId, setConfirmCloseId] = useState<string | null>(null);
+  const [closingJobId, setClosingJobId] = useState<string | null>(null);
   const [selectedJobId, setSelectedJobIdLocal] = useState<string | null>(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [modalTab, setModalTab] = useState<JobDetailTab>('ranked');
@@ -119,6 +122,24 @@ export default function JobList({
   //     setDeletingJobId(null);
   //   }
   // };
+
+    // ---- Close ----
+  const handleClose = useCallback((id: string) => setConfirmCloseId(id), []);
+
+  const confirmClose = async () => {
+    if (!confirmCloseId) return;
+    const id = confirmCloseId;
+    setClosingJobId(id);
+    try {
+      await closeJob(id);
+      toast.success('Job closed');
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Unable to close job.');
+    } finally {
+      setClosingJobId(null);
+      setConfirmCloseId(null);
+    }
+  };
 
   // ---- Edit ----
   const handleEditClick = useCallback((job: Job) => {
@@ -351,6 +372,7 @@ export default function JobList({
                 onReview={handleReview}
                 onEdit={handleEditClick}
                 onDelete={handleDelete}
+                onClose={handleClose}
               />
             ))
           )}
@@ -384,6 +406,18 @@ export default function JobList({
           loading={deletingJobId === confirmDeleteId}
           onConfirm={confirmDelete}
           onCancel={() => setConfirmDeleteId(null)}
+        />
+      )}
+
+      {confirmCloseId && (
+        <ConfirmDialog
+          title="Close this job?"
+          confirmLabel="Close job"
+          variant="warning"
+          message="New applications will stop immediately. This can't be undone from the dashboard."
+          loading={closingJobId === confirmCloseId}
+          onConfirm={confirmClose}
+          onCancel={() => setConfirmCloseId(null)}
         />
       )}
 
