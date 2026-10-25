@@ -5,6 +5,8 @@ import StarterKit from '@tiptap/starter-kit';
 import { useStore } from '../../store/useStore';
 import PipelineBoardFiltered from './PipelineBoardFiltered';
 import RankedApplicantsView from './RankedApplicantsView';
+import { formatDate } from '../../utils/formatDate';
+import { formatSalary } from '../jobs/jobUtils';
 
 export type JobDetailTab = 'ranked' | 'candidates' | 'details';
 
@@ -140,13 +142,13 @@ export default function JobDetailModal({
             </div>
           </div>
 
-          {job.salaryMin && job.salaryMax && (
+          {formatSalary(job) && (
             <div className="flex items-center gap-3">
               <DollarSign size={18} className="text-gray-400" />
               <div>
                 <p className="text-xs text-gray-500">Salary</p>
                 <p className="text-sm font-medium text-gray-900">
-                  ₹{job.salaryMin}–{job.salaryMax} LPA
+                  {formatSalary(job)}
                 </p>
               </div>
             </div>
@@ -167,7 +169,7 @@ export default function JobDetailModal({
             <Clock size={18} className="text-gray-400" />
             <div>
               <p className="text-xs text-gray-500">Posted</p>
-              <p className="text-sm font-medium text-gray-900">{job.postedDate}</p>
+              <p className="text-sm font-medium text-gray-900">{formatDate(job.postedDate)}</p>
             </div>
           </div>
         </div>

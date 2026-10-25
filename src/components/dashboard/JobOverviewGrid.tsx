@@ -1,7 +1,8 @@
 import { useEffect } from 'react';
-import { Briefcase, MapPin, Users, Loader } from 'lucide-react';
-import { useStore } from '../../store/useStore';
+import { Briefcase, MapPin, Users, Loader, ArrowRight } from 'lucide-react';
+import { useStore, OVERVIEW_JOBS_LIMIT } from '../../store/useStore';
 import type { Job } from '../../store/useStore';
+import { formatDate } from '../../utils/formatDate';
 
 const statusColors: Record<Job['status'], string> = {
   Active: 'bg-green-100 text-green-700',
@@ -14,17 +15,20 @@ interface JobOverviewGridProps {
 }
 
 export default function JobOverviewGrid({ setActivePage }: JobOverviewGridProps) {
-  const { jobs, loading, fetchJobs } = useStore();
+  const { overviewJobs, overviewTotal, overviewLoading, fetchOverviewJobs } = useStore();
 
   useEffect(() => {
-    fetchJobs();
-  }, [fetchJobs]);
+    // fetchJobs();
+    fetchOverviewJobs();
+  }, [fetchOverviewJobs]);
+
+
 
   const handleJobClick = (_job: Job) => {
     setActivePage('jobs');
   };
 
-  if (loading) {
+  if (overviewLoading) {
     return (
       <div className="flex justify-center items-center py-12">
         <Loader className="animate-spin text-blue-600" size={32} />
@@ -34,8 +38,18 @@ export default function JobOverviewGrid({ setActivePage }: JobOverviewGridProps)
 
   return (
     <>
+      {overviewTotal > OVERVIEW_JOBS_LIMIT && (
+        <div className="flex justify-end mb-3">
+        <button
+          onClick={() => setActivePage('jobs')}
+          className="flex items-center gap-1 text-sm font-medium text-blue-600 hover:text-blue-700"
+        >
+           View all ({overviewTotal}) <ArrowRight size={16} />
+        </button>
+        </div>
+      )}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-        {jobs.map((job) => (
+        {overviewJobs.map((job) => (
           <div
             key={job.id}
             onClick={() => handleJobClick(job)}
@@ -69,7 +83,7 @@ export default function JobOverviewGrid({ setActivePage }: JobOverviewGridProps)
                 {job.status}
               </span>
               <span className="text-xs text-gray-500">
-                {new Date(job.postedDate).toLocaleDateString()}
+                {formatDate(job.postedDate)}
               </span>
             </div>
           </div>
@@ -77,7 +91,7 @@ export default function JobOverviewGrid({ setActivePage }: JobOverviewGridProps)
       </div>
 
       {/* Empty State */}
-      {jobs.length === 0 && (
+       {overviewJobs.length === 0 && (
         <div className="flex flex-col items-center justify-center py-12 text-center">
           <Briefcase size={48} className="text-gray-300 mb-3" />
           <p className="text-gray-500 font-medium">No job postings yet</p>

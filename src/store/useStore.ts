@@ -3,6 +3,7 @@ import { recruiterService } from '../services/recruiter.service';
 import type { JSONContent } from '@tiptap/react';
 
 const APP_STATE_KEY = 'tf_autosave_state';
+export const OVERVIEW_JOBS_LIMIT = 8;
 
 const getStorageKey = (userId?: string) =>
   userId ? `${APP_STATE_KEY}_${userId}` : APP_STATE_KEY;
@@ -96,23 +97,31 @@ interface RecruiterStore {
   candidates: Candidate[];
   jobCandidates: Candidate[];
   jobs: Job[];
+  overviewJobs: Job[];
+  overviewTotal: number;
+  overviewLoading: boolean;
   loading: boolean;
   error: string | null;
   selectedJobId: string | null;
   fetchJobs: () => Promise<void>;
+  fetchOverviewJobs: (limit?: number) => Promise<void>;
   fetchCandidates: () => Promise<void>;
   fetchJobCandidates: (jobId: string) => Promise<void>;
   updateCandidateStatus: (id: string, status: CandidateStatus) => Promise<void>;
   createJob: (job: Omit<Job, 'id' | 'applicants' | 'postedDate'>) => Promise<void>;
   updateJob: (jobId: string, job: Partial<Omit<Job, 'id' | 'applicants' | 'postedDate'>>) => Promise<void>;
   deleteJob: (id: string) => Promise<void>;
+  closeJob: (id: string) => Promise<void>;
   setSelectedJobId: (jobId: string | null) => void;
 }
 
-export const useStore = create<RecruiterStore>()((set) => ({
+export const useStore = create<RecruiterStore>()((set, get) => ({
   candidates: [],
   jobCandidates: [],
   jobs: [],
+  overviewJobs: [],
+  overviewTotal: 0,
+  overviewLoading: false,
   loading: false,
   error: null,
   selectedJobId: null,
@@ -125,6 +134,18 @@ export const useStore = create<RecruiterStore>()((set) => ({
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to fetch jobs';
       set({ error: message, loading: false });
+    }
+  },
+
+    async fetchOverviewJobs(limit = OVERVIEW_JOBS_LIMIT) {
+    // Spinner only on first load; later refreshes happen silently
+    set((state) => ({ overviewLoading: state.overviewJobs.length === 0 }));
+    try {
+      const { jobs, total } = await recruiterService.getOverviewJobs(limit);
+      set({ overviewJobs: jobs, overviewTotal: total, overviewLoading: false });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to fetch jobs';
+      set({ error: message, overviewLoading: false });
     }
   },
 
@@ -184,6 +205,7 @@ export const useStore = create<RecruiterStore>()((set) => ({
 
         return { jobs };
       });
+      get().fetchOverviewJobs();
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to create job';
       set({ error: message });
@@ -199,8 +221,26 @@ export const useStore = create<RecruiterStore>()((set) => ({
 
         return { jobs };
       });
+      get().fetchOverviewJobs();
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to update job';
+      set({ error: message });
+      throw err;
+    }
+  },
+
+    async closeJob(id) {
+    try {
+      const closed = await recruiterService.closeJob(id);
+      set((state) => ({
+        // keep the existing applicants count, since the close response doesn't include it
+        jobs: state.jobs.map((j) =>
+          j.id === id ? { ...closed, applicants: j.applicants } : j
+        ),
+      }));
+      get().fetchOverviewJobs();
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to close job';
       set({ error: message });
       throw err;
     }
@@ -213,6 +253,7 @@ export const useStore = create<RecruiterStore>()((set) => ({
         const jobs = state.jobs.filter((j) => j.id !== id);
 
         return { jobs };
+        get().fetchOverviewJobs();
       });
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to delete job';
