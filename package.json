@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
+    "test": "node --experimental-strip-types --test src/utils/ranking.test.ts",
     "lint": "eslint .",
     "preview": "vite preview"
   },
@@ -26,6 +27,7 @@
     "react-phone-number-input": "^3.4.17",
     "react-router-dom": "^7.15.0",
     "recharts": "^3.8.1",
+    "sonner": "^2.0.8",
     "zustand": "^5.0.13"
   },
   "devDependencies": {

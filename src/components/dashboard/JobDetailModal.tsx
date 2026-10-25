@@ -1,9 +1,14 @@
 import { useState, useEffect } from 'react';
-import { X, MapPin, DollarSign, Users, Clock, Edit2, ArrowLeft } from 'lucide-react';
+import { X, MapPin, DollarSign, Users, Clock, Edit2, ArrowLeft, Trophy, Columns3, FileText } from 'lucide-react';
 import { generateHTML } from '@tiptap/html';
 import StarterKit from '@tiptap/starter-kit';
 import { useStore } from '../../store/useStore';
 import PipelineBoardFiltered from './PipelineBoardFiltered';
+import RankedApplicantsView from './RankedApplicantsView';
+import { formatDate } from '../../utils/formatDate';
+import { formatSalary } from '../jobs/jobUtils';
+
+export type JobDetailTab = 'ranked' | 'candidates' | 'details';
 
 interface JobDetailModalProps {
   isOpen: boolean;
@@ -11,6 +16,7 @@ interface JobDetailModalProps {
   jobId: string;
   onEdit?: (jobId: string) => void;
   displayMode?: 'modal' | 'inline-fullscreen';
+  initialTab?: JobDetailTab;
 }
 
 export default function JobDetailModal({
@@ -19,9 +25,10 @@ export default function JobDetailModal({
   jobId,
   onEdit,
   displayMode = 'modal',
+  initialTab = 'ranked',
 }: JobDetailModalProps) {
   const { jobs, jobCandidates, loading, fetchJobCandidates } = useStore();
-  const [activeTab, setActiveTab] = useState<'details' | 'candidates'>('candidates');
+  const [activeTab, setActiveTab] = useState<JobDetailTab>(initialTab);
   const isInlineFullscreen = displayMode === 'inline-fullscreen';
 
   const job = jobs.find((j) => j.id === jobId);
@@ -29,8 +36,16 @@ export default function JobDetailModal({
   useEffect(() => {
     if (isOpen && jobId) {
       fetchJobCandidates(jobId);
-      }
-  }, [isOpen, jobId, job, fetchJobCandidates]);
+    }
+  }, [isOpen, jobId, fetchJobCandidates]);
+
+  // Sync initial tab when changed
+  useEffect(() => {
+    if (initialTab) {
+      setActiveTab(initialTab);
+    }
+  }, [initialTab]);
+
   // The edit window is evaluated when the modal renders.
   // eslint-disable-next-line react-hooks/purity
   const canEdit = Boolean(job && (Date.now() - new Date(job.postedDate).getTime()) / (1000 * 60 * 60) <= 24);
@@ -63,215 +78,261 @@ export default function JobDetailModal({
 
   const modalContent = (
     <>
-        <div className="border-b border-gray-200 p-6 flex items-start justify-between gap-4">
-          <div className="flex-1">
+      <div className="border-b border-gray-200 p-6 flex items-start justify-between gap-4">
+        <div className="flex-1">
+          <div className="flex items-center gap-2.5">
             <h2 className="text-2xl font-bold text-gray-900">{job?.title}</h2>
-            <p className="text-sm text-gray-500 mt-1">
-              {typeof job?.department === 'string' ? job.department : ''}
-            </p>
-          </div>
-          <div className="flex gap-2 items-center">
-            {isInlineFullscreen && (
-              <button
-                type="button"
-                onClick={onClose}
-                className="flex items-center gap-1 text-sm text-gray-600 border border-gray-200 px-3 py-2 rounded-lg hover:bg-gray-50 transition"
+            {job?.status && (
+              <span
+                className={`text-xs px-2.5 py-0.5 rounded-full font-medium ${
+                  job.status === 'Active'
+                    ? 'bg-green-100 text-green-700'
+                    : job.status === 'Draft'
+                    ? 'bg-gray-100 text-gray-700'
+                    : 'bg-red-100 text-red-700'
+                }`}
               >
-                <ArrowLeft size={14} />
-                Back to jobs
-              </button>
-            )}
-            {canEdit && (
-              <button
-                onClick={handleEditClick}
-                className="flex items-center gap-1 text-sm bg-blue-600 text-white px-3 py-2 rounded-lg hover:bg-blue-700 transition"
-                title="Edit job (24-hour window)"
-              >
-                <Edit2 size={14} />
-                Edit
-              </button>
-            )}
-            {!isInlineFullscreen && (
-              <button
-                onClick={onClose}
-                className="text-gray-400 hover:text-gray-600 transition"
-              >
-                <X size={24} />
-              </button>
+                {job.status}
+              </span>
             )}
           </div>
+          <p className="text-sm text-gray-500 mt-1">
+            {typeof job?.department === 'string' ? job.department : ''}
+          </p>
         </div>
+        <div className="flex gap-2 items-center">
+          {isInlineFullscreen && (
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex items-center gap-1 text-sm text-gray-600 border border-gray-200 px-3 py-2 rounded-lg hover:bg-gray-50 transition"
+            >
+              <ArrowLeft size={14} />
+              Back to jobs
+            </button>
+          )}
+          {canEdit && (
+            <button
+              onClick={handleEditClick}
+              className="flex items-center gap-1 text-sm bg-blue-600 text-white px-3 py-2 rounded-lg hover:bg-blue-700 transition"
+              title="Edit job (24-hour window)"
+            >
+              <Edit2 size={14} />
+              Edit
+            </button>
+          )}
+          {!isInlineFullscreen && (
+            <button
+              onClick={onClose}
+              className="text-gray-400 hover:text-gray-600 transition"
+            >
+              <X size={24} />
+            </button>
+          )}
+        </div>
+      </div>
 
-        {job && (
-          <div className="border-b border-gray-200 p-6 grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div className="flex items-center gap-3">
-              <MapPin size={18} className="text-gray-400" />
-              <div>
-                <p className="text-xs text-gray-500">Location</p>
-                <p className="text-sm font-medium text-gray-900">{job.location}</p>
-              </div>
+      {job && (
+        <div className="border-b border-gray-200 p-6 grid grid-cols-2 md:grid-cols-4 gap-4 bg-gray-50/50">
+          <div className="flex items-center gap-3">
+            <MapPin size={18} className="text-gray-400" />
+            <div>
+              <p className="text-xs text-gray-500">Location</p>
+              <p className="text-sm font-medium text-gray-900">{job.location}</p>
             </div>
+          </div>
 
-            {job.salaryMin && job.salaryMax && (
-              <div className="flex items-center gap-3">
-                <DollarSign size={18} className="text-gray-400" />
-                <div>
-                  <p className="text-xs text-gray-500">Salary</p>
-                  <p className="text-sm font-medium text-gray-900">
-                    ₹{job.salaryMin}–{job.salaryMax} LPA
-                  </p>
-                </div>
-              </div>
-            )}
-
+          {formatSalary(job) && (
             <div className="flex items-center gap-3">
-              <Users size={18} className="text-gray-400" />
+              <DollarSign size={18} className="text-gray-400" />
               <div>
-                <p className="text-xs text-gray-500">Applicants</p>
+                <p className="text-xs text-gray-500">Salary</p>
                 <p className="text-sm font-medium text-gray-900">
-                  {jobCandidates.length}
-                  {job.maxApplicants && ` / ${job.maxApplicants}`}
+                  {formatSalary(job)}
                 </p>
               </div>
             </div>
+          )}
 
-            <div className="flex items-center gap-3">
-              <Clock size={18} className="text-gray-400" />
-              <div>
-                <p className="text-xs text-gray-500">Posted</p>
-                <p className="text-sm font-medium text-gray-900">{job.postedDate}</p>
-              </div>
+          <div className="flex items-center gap-3">
+            <Users size={18} className="text-gray-400" />
+            <div>
+              <p className="text-xs text-gray-500">Applicants</p>
+              <p className="text-sm font-medium text-gray-900">
+                {jobCandidates.length}
+                {job.maxApplicants && ` / ${job.maxApplicants}`}
+              </p>
             </div>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <Clock size={18} className="text-gray-400" />
+            <div>
+              <p className="text-xs text-gray-500">Posted</p>
+              <p className="text-sm font-medium text-gray-900">{formatDate(job.postedDate)}</p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Navigation Tabs ── */}
+      <div className="border-b border-gray-200 flex bg-white px-2">
+        <button
+          onClick={() => setActiveTab('ranked')}
+          className={`flex items-center justify-center gap-2 flex-1 px-6 py-3 text-sm font-semibold transition ${
+            activeTab === 'ranked'
+              ? 'text-indigo-600 border-b-2 border-indigo-600 bg-indigo-50/40'
+              : 'text-gray-500 hover:text-gray-700'
+          }`}
+        >
+          <Trophy size={16} className={activeTab === 'ranked' ? 'text-indigo-600' : 'text-gray-400'} />
+          Ranked Applicants ({jobCandidates.length})
+        </button>
+
+        <button
+          onClick={() => setActiveTab('candidates')}
+          className={`flex items-center justify-center gap-2 flex-1 px-6 py-3 text-sm font-semibold transition ${
+            activeTab === 'candidates'
+              ? 'text-indigo-600 border-b-2 border-indigo-600 bg-indigo-50/40'
+              : 'text-gray-500 hover:text-gray-700'
+          }`}
+        >
+          <Columns3 size={16} className={activeTab === 'candidates' ? 'text-indigo-600' : 'text-gray-400'} />
+          Candidate Pipeline ({jobCandidates.length})
+        </button>
+
+        <button
+          onClick={() => setActiveTab('details')}
+          className={`flex items-center justify-center gap-2 flex-1 px-6 py-3 text-sm font-semibold transition ${
+            activeTab === 'details'
+              ? 'text-indigo-600 border-b-2 border-indigo-600 bg-indigo-50/40'
+              : 'text-gray-500 hover:text-gray-700'
+          }`}
+        >
+          <FileText size={16} className={activeTab === 'details' ? 'text-indigo-600' : 'text-gray-400'} />
+          Job Details
+        </button>
+      </div>
+
+      <div className="flex-1 overflow-y-auto">
+        {/* ── Ranked Applicants Tab ── */}
+        {activeTab === 'ranked' && (
+          <div className="p-6">
+            {loading ? (
+              <div className="text-center py-12">
+                <p className="text-gray-500">Loading applicants...</p>
+              </div>
+            ) : (
+              <RankedApplicantsView jobId={jobId} candidates={jobCandidates} />
+            )}
           </div>
         )}
 
-        <div className="border-b border-gray-200 flex">
-          <button
-            onClick={() => setActiveTab('details')}
-            className={`flex-1 px-6 py-3 text-sm font-medium transition ${
-              activeTab === 'details'
-                ? 'text-indigo-600 border-b-2 border-indigo-600'
-                : 'text-gray-500 hover:text-gray-700'
-            }`}
-          >
-            Job Details
-          </button>
-          <button
-            onClick={() => setActiveTab('candidates')}
-            className={`flex-1 px-6 py-3 text-sm font-medium transition ${
-              activeTab === 'candidates'
-                ? 'text-indigo-600 border-b-2 border-indigo-600'
-                : 'text-gray-500 hover:text-gray-700'
-            }`}
-          >
-            Candidate Pipeline ({jobCandidates.length})
-          </button>
-        </div>
+        {/* ── Kanban Pipeline Board Tab ── */}
+        {activeTab === 'candidates' && (
+          <div className="p-6">
+            {loading ? (
+              <div className="text-center py-12">
+                <p className="text-gray-500">Loading candidates...</p>
+              </div>
+            ) : jobCandidates.length === 0 ? (
+              <div className="text-center py-12 text-gray-400">
+                <Users size={48} className="mx-auto mb-3 opacity-50" />
+                <p className="text-sm">No applications yet</p>
+              </div>
+            ) : (
+              <>
+                <PipelineBoardFiltered
+                  candidates={jobCandidates.filter((candidate) => candidate.status !== 'Rejected')}
+                  showReject
+                />
+                {jobCandidates.some((candidate) => candidate.status === 'Rejected') && (
+                  <section className="mt-8 border-t border-red-200 pt-5">
+                    <h3 className="text-base font-semibold text-red-700 mb-3">
+                      Rejected Candidates ({jobCandidates.filter((candidate) => candidate.status === 'Rejected').length})
+                    </h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                      {jobCandidates
+                        .filter((candidate) => candidate.status === 'Rejected')
+                        .map((candidate) => (
+                          <div key={candidate.id} className="rounded-lg border border-red-100 bg-red-50 p-3 text-sm text-gray-700">
+                            <p className="font-semibold">{candidate.name}</p>
+                            <p className="text-xs text-gray-500">{candidate.email}</p>
+                          </div>
+                        ))}
+                    </div>
+                  </section>
+                )}
+              </>
+            )}
+          </div>
+        )}
 
-        <div className="flex-1 overflow-y-auto">
-          {activeTab === 'details' && job && (
-            <div className="p-6 space-y-6">
-              <div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">Job Type</h3>
-                <span className="inline-block px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-700">
-                  {job.jobType || 'Full-time'}
+        {/* ── Job Details Tab ── */}
+        {activeTab === 'details' && job && (
+          <div className="p-6 space-y-6">
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">Job Type</h3>
+              <span className="inline-block px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-700">
+                {job.jobType || 'Full-time'}
+              </span>
+            </div>
+
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">Company</h3>
+              <p className="text-gray-600">
+                {typeof job.department === 'string'
+                  ? job.department
+                  : JSON.stringify(job.department)}
+              </p>
+            </div>
+
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">Description</h3>
+              <div
+                className="text-gray-600 prose prose-sm max-w-none [&_strong]:font-semibold [&_em]:italic [&_u]:underline [&_s]:line-through [&_ul]:list-disc [&_ul]:pl-5 [&_blockquote]:border-l-2 [&_blockquote]:border-gray-300 [&_blockquote]:pl-3 [&_blockquote]:italic [&_a]:text-blue-600 [&_a]:underline"
+                dangerouslySetInnerHTML={{ __html: descriptionHTML(job.description) }}
+              />
+            </div>
+
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">Status</h3>
+              <div className="inline-block">
+                <span
+                  className={`px-3 py-1 rounded-full text-sm font-medium ${
+                    job.status === 'Active'
+                      ? 'bg-green-100 text-green-700'
+                      : job.status === 'Draft'
+                      ? 'bg-gray-100 text-gray-700'
+                      : 'bg-red-100 text-red-700'
+                  }`}
+                >
+                  {job.status}
                 </span>
               </div>
+            </div>
 
+            {job.maxApplicants && (
               <div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">Company</h3>
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                  Application Limit
+                </h3>
                 <p className="text-gray-600">
-                  {typeof job.department === 'string'
-                    ? job.department
-                    : JSON.stringify(job.department)}
+                  Maximum {job.maxApplicants} applicants ({jobCandidates.length} applied so far)
                 </p>
               </div>
+            )}
 
-              <div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">Description</h3>
-                <div
-                  className="text-gray-600 prose prose-sm max-w-none [&_strong]:font-semibold [&_em]:italic [&_u]:underline [&_s]:line-through [&_ul]:list-disc [&_ul]:pl-5 [&_blockquote]:border-l-2 [&_blockquote]:border-gray-300 [&_blockquote]:pl-3 [&_blockquote]:italic [&_a]:text-blue-600 [&_a]:underline"
-                  dangerouslySetInnerHTML={{ __html: descriptionHTML(job.description) }}
-                />
+            {!canEdit && (
+              <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                <p className="text-sm text-yellow-800">
+                  ✓ Edit window has closed. This job cannot be modified further.
+                </p>
               </div>
-
-              <div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">Status</h3>
-                <div className="inline-block">
-                  <span
-                    className={`px-3 py-1 rounded-full text-sm font-medium ${
-                      job.status === 'Active'
-                        ? 'bg-green-100 text-green-700'
-                        : job.status === 'Draft'
-                        ? 'bg-gray-100 text-gray-700'
-                        : 'bg-red-100 text-red-700'
-                    }`}
-                  >
-                    {job.status}
-                  </span>
-                </div>
-              </div>
-
-              {job.maxApplicants && (
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                    Application Limit
-                  </h3>
-                  <p className="text-gray-600">
-                    Maximum {job.maxApplicants} applicants ({jobCandidates.length} applied so far)
-                  </p>
-                </div>
-              )}
-
-              {!canEdit && (
-                <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-                  <p className="text-sm text-yellow-800">
-                    ✓ Edit window has closed. This job cannot be modified further.
-                  </p>
-                </div>
-              )}
-            </div>
-          )}
-
-          {activeTab === 'candidates' && (
-            <div className="p-6">
-              {loading ? (
-                <div className="text-center py-12">
-                  <p className="text-gray-500">Loading candidates...</p>
-                </div>
-              ) : jobCandidates.length === 0 ? (
-                <div className="text-center py-12 text-gray-400">
-                  <Users size={48} className="mx-auto mb-3 opacity-50" />
-                  <p className="text-sm">No applications yet</p>
-                </div>
-              ) : (
-                <>
-                  <PipelineBoardFiltered
-                    candidates={jobCandidates.filter((candidate) => candidate.status !== 'Rejected')}
-                    showReject
-                  />
-                  {jobCandidates.some((candidate) => candidate.status === 'Rejected') && (
-                    <section className="mt-8 border-t border-red-200 pt-5">
-                      <h3 className="text-base font-semibold text-red-700 mb-3">
-                        Rejected Candidates ({jobCandidates.filter((candidate) => candidate.status === 'Rejected').length})
-                      </h3>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                        {jobCandidates
-                          .filter((candidate) => candidate.status === 'Rejected')
-                          .map((candidate) => (
-                            <div key={candidate.id} className="rounded-lg border border-red-100 bg-red-50 p-3 text-sm text-gray-700">
-                              <p className="font-semibold">{candidate.name}</p>
-                              <p className="text-xs text-gray-500">{candidate.email}</p>
-                            </div>
-                          ))}
-                      </div>
-                    </section>
-                  )}
-                </>
-              )}
-            </div>
-          )}
-        </div>
+            )}
+          </div>
+        )}
+      </div>
     </>
   );
 
@@ -291,797 +352,3 @@ export default function JobDetailModal({
     </div>
   );
 }
-
-// import { useState, useEffect } from 'react';
-// import { X, MapPin, DollarSign, Users, Clock, Edit2, ArrowLeft } from 'lucide-react';
-// import { useStore } from '../../store/useStore';
-// import PipelineBoardFiltered from './PipelineBoardFiltered';
-
-// interface JobDetailModalProps {
-//   isOpen: boolean;
-//   onClose: () => void;
-//   jobId: string;
-//   onEdit?: (jobId: string) => void;
-//   displayMode?: 'modal' | 'inline-fullscreen';
-// }
-
-// export default function JobDetailModal({
-//   isOpen,
-//   onClose,
-//   jobId,
-//   onEdit,
-//   displayMode = 'modal',
-// }: JobDetailModalProps) {
-//   const { jobs, jobCandidates, loading, fetchJobCandidates } = useStore();
-//   const [activeTab, setActiveTab] = useState<'details' | 'candidates'>('candidates');
-//   const [canEdit, setCanEdit] = useState(false);
-//   const isInlineFullscreen = displayMode === 'inline-fullscreen';
-
-//   const job = jobs.find((j) => j.id === jobId);
-
-//   useEffect(() => {
-//     if (isOpen && jobId) {
-//       fetchJobCandidates(jobId);
-
-//       // Check if within 24 hours
-//       if (job) {
-//         const createdTime = new Date(job.postedDate);
-//         const hoursDiff = (Date.now() - createdTime.getTime()) / (1000 * 60 * 60);
-//         setCanEdit(hoursDiff <= 24);
-//       }
-//     }
-//   }, [isOpen, jobId, job, fetchJobCandidates]);
-
-//   const handleEditClick = () => {
-//     if (!canEdit) {
-//       alert('Sorry but the edit option is available for the first 24 hours of job posting.');
-//       return;
-//     }
-
-//     alert('⚠️ Note: Job can be edited only once and within 24 hours of posting. After that, it cannot be modified.');
-
-//     if (onEdit) {
-//       onEdit(jobId);
-//     }
-//   };
-
-//   if (!isOpen) return null;
-
-//   const modalContent = (
-//     <>
-//         {/* Header */}
-//         <div className="border-b border-gray-200 p-6 flex items-start justify-between gap-4">
-//           <div className="flex-1">
-//             <h2 className="text-2xl font-bold text-gray-900">{job?.title}</h2>
-//             <p className="text-sm text-gray-500 mt-1">{job?.department}</p>
-//           </div>
-//           <div className="flex gap-2 items-center">
-//             {isInlineFullscreen && (
-//               <button
-//                 type="button"
-//                 onClick={onClose}
-//                 className="flex items-center gap-1 text-sm text-gray-600 border border-gray-200 px-3 py-2 rounded-lg hover:bg-gray-50 transition"
-//               >
-//                 <ArrowLeft size={14} />
-//                 Back to jobs
-//               </button>
-//             )}
-//             {canEdit && (
-//               <button
-//                 onClick={handleEditClick}
-//                 className="flex items-center gap-1 text-sm bg-blue-600 text-white px-3 py-2 rounded-lg hover:bg-blue-700 transition"
-//                 title="Edit job (24-hour window)"
-//               >
-//                 <Edit2 size={14} />
-//                 Edit
-//               </button>
-//             )}
-//             {!isInlineFullscreen && (
-//               <button
-//                 onClick={onClose}
-//                 className="text-gray-400 hover:text-gray-600 transition"
-//               >
-//                 <X size={24} />
-//               </button>
-//             )}
-//           </div>
-//         </div>
-
-//         {/* Job Info Cards */}
-//         {job && (
-//           <div className="border-b border-gray-200 p-6 grid grid-cols-2 md:grid-cols-4 gap-4">
-//             <div className="flex items-center gap-3">
-//               <MapPin size={18} className="text-gray-400" />
-//               <div>
-//                 <p className="text-xs text-gray-500">Location</p>
-//                 <p className="text-sm font-medium text-gray-900">{job.location}</p>
-//               </div>
-//             </div>
-
-//             {job.salaryMin && job.salaryMax && (
-//               <div className="flex items-center gap-3">
-//                 <DollarSign size={18} className="text-gray-400" />
-//                 <div>
-//                   <p className="text-xs text-gray-500">Salary</p>
-//                   <p className="text-sm font-medium text-gray-900">
-//                     ₹{job.salaryMin}–{job.salaryMax} LPA
-//                   </p>
-//                 </div>
-//               </div>
-//             )}
-
-//             <div className="flex items-center gap-3">
-//               <Users size={18} className="text-gray-400" />
-//               <div>
-//                 <p className="text-xs text-gray-500">Applicants</p>
-//                 <p className="text-sm font-medium text-gray-900">
-//                   {jobCandidates.length}
-//                   {job.maxApplicants && ` / ${job.maxApplicants}`}
-//                 </p>
-//               </div>
-//             </div>
-
-//             <div className="flex items-center gap-3">
-//               <Clock size={18} className="text-gray-400" />
-//               <div>
-//                 <p className="text-xs text-gray-500">Posted</p>
-//                 <p className="text-sm font-medium text-gray-900">{job.postedDate}</p>
-//               </div>
-//             </div>
-//           </div>
-//         )}
-
-//         {/* Tabs */}
-//         <div className="border-b border-gray-200 flex">
-//           <button
-//             onClick={() => setActiveTab('details')}
-//             className={`flex-1 px-6 py-3 text-sm font-medium transition ${
-//               activeTab === 'details'
-//                 ? 'text-indigo-600 border-b-2 border-indigo-600'
-//                 : 'text-gray-500 hover:text-gray-700'
-//             }`}
-//           >
-//             Job Details
-//           </button>
-//           <button
-//             onClick={() => setActiveTab('candidates')}
-//             className={`flex-1 px-6 py-3 text-sm font-medium transition ${
-//               activeTab === 'candidates'
-//                 ? 'text-indigo-600 border-b-2 border-indigo-600'
-//                 : 'text-gray-500 hover:text-gray-700'
-//             }`}
-//           >
-//             Candidate Pipeline ({jobCandidates.length})
-//           </button>
-//         </div>
-
-//         {/* Content */}
-//         <div className="flex-1 overflow-y-auto">
-//           {activeTab === 'details' && job && (
-//             <div className="p-6 space-y-6">
-//               <div>
-//                 <h3 className="text-lg font-semibold text-gray-900 mb-2">Job Type</h3>
-//                 <span className="inline-block px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-700">
-//                   {job.jobType || 'Full-time'}
-//                 </span>
-//               </div>
-
-//               <div>
-//                 <h3 className="text-lg font-semibold text-gray-900 mb-2">Company</h3>
-//                 <p className="text-gray-600">{job.department}</p>
-//               </div>
-
-//               <div>
-//                 <h3 className="text-lg font-semibold text-gray-900 mb-2">Description</h3>
-//                 <p className="text-gray-600 whitespace-pre-wrap">{job.description}</p>
-//               </div>
-
-//               <div>
-//                 <h3 className="text-lg font-semibold text-gray-900 mb-2">Status</h3>
-//                 <div className="inline-block">
-//                   <span
-//                     className={`px-3 py-1 rounded-full text-sm font-medium ${
-//                       job.status === 'Active'
-//                         ? 'bg-green-100 text-green-700'
-//                         : job.status === 'Draft'
-//                         ? 'bg-gray-100 text-gray-700'
-//                         : 'bg-red-100 text-red-700'
-//                     }`}
-//                   >
-//                     {job.status}
-//                   </span>
-//                 </div>
-//               </div>
-
-//               {job.maxApplicants && (
-//                 <div>
-//                   <h3 className="text-lg font-semibold text-gray-900 mb-2">
-//                     Application Limit
-//                   </h3>
-//                   <p className="text-gray-600">
-//                     Maximum {job.maxApplicants} applicants ({jobCandidates.length} applied so far)
-//                   </p>
-//                 </div>
-//               )}
-
-//               {!canEdit && (
-//                 <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-//                   <p className="text-sm text-yellow-800">
-//                     ✓ Edit window has closed. This job cannot be modified further.
-//                   </p>
-//                 </div>
-//               )}
-//             </div>
-//           )}
-
-//           {activeTab === 'candidates' && (
-//             <div className="p-6">
-//               {loading ? (
-//                 <div className="text-center py-12">
-//                   <p className="text-gray-500">Loading candidates...</p>
-//                 </div>
-//               ) : jobCandidates.length === 0 ? (
-//                 <div className="text-center py-12 text-gray-400">
-//                   <Users size={48} className="mx-auto mb-3 opacity-50" />
-//                   <p className="text-sm">No applications yet</p>
-//                 </div>
-//               ) : (
-//                 <PipelineBoardFiltered candidates={jobCandidates} />
-//               )}
-//             </div>
-//           )}
-//         </div>
-//     </>
-//   );
-
-//   if (isInlineFullscreen) {
-//     return (
-//       <div className="w-full min-h-[calc(100vh-8.5rem)] bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden flex flex-col">
-//         {modalContent}
-//       </div>
-//     );
-//   }
-
-//   return (
-//     <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-//       <div className="bg-white rounded-2xl shadow-xl max-w-5xl w-full max-h-[90vh] overflow-hidden flex flex-col">
-//         {modalContent}
-//       </div>
-//     </div>
-//   );
-// }
-
-// import { useState, useEffect } from 'react';
-// import { X, MapPin, DollarSign, Users, Clock, Edit2, ArrowLeft } from 'lucide-react';
-// import { generateHTML } from '@tiptap/html';
-// import StarterKit from '@tiptap/starter-kit';
-// import { useStore } from '../../store/useStore';
-// import PipelineBoardFiltered from './PipelineBoardFiltered';
-
-// interface JobDetailModalProps {
-//   isOpen: boolean;
-//   onClose: () => void;
-//   jobId: string;
-//   onEdit?: (jobId: string) => void;
-//   displayMode?: 'modal' | 'inline-fullscreen';
-// }
-
-// export default function JobDetailModal({
-//   isOpen,
-//   onClose,
-//   jobId,
-//   onEdit,
-//   displayMode = 'modal',
-// }: JobDetailModalProps) {
-//   const { jobs, jobCandidates, loading, fetchJobCandidates } = useStore();
-//   const [activeTab, setActiveTab] = useState<'details' | 'candidates'>('candidates');
-//   const [canEdit, setCanEdit] = useState(false);
-//   const isInlineFullscreen = displayMode === 'inline-fullscreen';
-
-//   const job = jobs.find((j) => j.id === jobId);
-
-//   useEffect(() => {
-//     if (isOpen && jobId) {
-//       fetchJobCandidates(jobId);
-
-//       if (job) {
-//         const createdTime = new Date(job.postedDate);
-//         const hoursDiff = (Date.now() - createdTime.getTime()) / (1000 * 60 * 60);
-//         setCanEdit(hoursDiff <= 24);
-//       }
-//     }
-//   }, [isOpen, jobId, job, fetchJobCandidates]);
-
-//   const handleEditClick = () => {
-//     if (!canEdit) {
-//       alert('Sorry but the edit option is available for the first 24 hours of job posting.');
-//       return;
-//     }
-
-//     alert('⚠️ Note: Job can be edited only once and within 24 hours of posting. After that, it cannot be modified.');
-
-//     if (onEdit) {
-//       onEdit(jobId);
-//     }
-//   };
-
-//   if (!isOpen) return null;
-
-//   // description may be a Tiptap JSON doc (new jobs) or a plain string (legacy jobs)
-//   const descriptionHTML = (value: unknown): string => {
-//     if (!value) return '';
-//     if (typeof value === 'string') return value;
-//     try {
-//       return generateHTML(value as Parameters<typeof generateHTML>[0], [StarterKit]);
-//     } catch {
-//       return '';
-//     }
-//   };
-
-//   const modalContent = (
-//     <>
-//         <div className="border-b border-gray-200 p-6 flex items-start justify-between gap-4">
-//           <div className="flex-1">
-//             <h2 className="text-2xl font-bold text-gray-900">{job?.title}</h2>
-//             <p className="text-sm text-gray-500 mt-1">
-//               {typeof job?.department === 'string' ? job.department : ''}
-//             </p>
-//           </div>
-//           <div className="flex gap-2 items-center">
-//             {isInlineFullscreen && (
-//               <button
-//                 type="button"
-//                 onClick={onClose}
-//                 className="flex items-center gap-1 text-sm text-gray-600 border border-gray-200 px-3 py-2 rounded-lg hover:bg-gray-50 transition"
-//               >
-//                 <ArrowLeft size={14} />
-//                 Back to jobs
-//               </button>
-//             )}
-//             {canEdit && (
-//               <button
-//                 onClick={handleEditClick}
-//                 className="flex items-center gap-1 text-sm bg-blue-600 text-white px-3 py-2 rounded-lg hover:bg-blue-700 transition"
-//                 title="Edit job (24-hour window)"
-//               >
-//                 <Edit2 size={14} />
-//                 Edit
-//               </button>
-//             )}
-//             {!isInlineFullscreen && (
-//               <button
-//                 onClick={onClose}
-//                 className="text-gray-400 hover:text-gray-600 transition"
-//               >
-//                 <X size={24} />
-//               </button>
-//             )}
-//           </div>
-//         </div>
-
-//         {job && (
-//           <div className="border-b border-gray-200 p-6 grid grid-cols-2 md:grid-cols-4 gap-4">
-//             <div className="flex items-center gap-3">
-//               <MapPin size={18} className="text-gray-400" />
-//               <div>
-//                 <p className="text-xs text-gray-500">Location</p>
-//                 <p className="text-sm font-medium text-gray-900">{job.location}</p>
-//               </div>
-//             </div>
-
-//             {job.salaryMin && job.salaryMax && (
-//               <div className="flex items-center gap-3">
-//                 <DollarSign size={18} className="text-gray-400" />
-//                 <div>
-//                   <p className="text-xs text-gray-500">Salary</p>
-//                   <p className="text-sm font-medium text-gray-900">
-//                     ₹{job.salaryMin}–{job.salaryMax} LPA
-//                   </p>
-//                 </div>
-//               </div>
-//             )}
-
-//             <div className="flex items-center gap-3">
-//               <Users size={18} className="text-gray-400" />
-//               <div>
-//                 <p className="text-xs text-gray-500">Applicants</p>
-//                 <p className="text-sm font-medium text-gray-900">
-//                   {jobCandidates.length}
-//                   {job.maxApplicants && ` / ${job.maxApplicants}`}
-//                 </p>
-//               </div>
-//             </div>
-
-//             <div className="flex items-center gap-3">
-//               <Clock size={18} className="text-gray-400" />
-//               <div>
-//                 <p className="text-xs text-gray-500">Posted</p>
-//                 <p className="text-sm font-medium text-gray-900">{job.postedDate}</p>
-//               </div>
-//             </div>
-//           </div>
-//         )}
-
-//         <div className="border-b border-gray-200 flex">
-//           <button
-//             onClick={() => setActiveTab('details')}
-//             className={`flex-1 px-6 py-3 text-sm font-medium transition ${
-//               activeTab === 'details'
-//                 ? 'text-indigo-600 border-b-2 border-indigo-600'
-//                 : 'text-gray-500 hover:text-gray-700'
-//             }`}
-//           >
-//             Job Details
-//           </button>
-//           <button
-//             onClick={() => setActiveTab('candidates')}
-//             className={`flex-1 px-6 py-3 text-sm font-medium transition ${
-//               activeTab === 'candidates'
-//                 ? 'text-indigo-600 border-b-2 border-indigo-600'
-//                 : 'text-gray-500 hover:text-gray-700'
-//             }`}
-//           >
-//             Candidate Pipeline ({jobCandidates.length})
-//           </button>
-//         </div>
-
-//         <div className="flex-1 overflow-y-auto">
-//           {activeTab === 'details' && job && (
-//             <div className="p-6 space-y-6">
-//               <div>
-//                 <h3 className="text-lg font-semibold text-gray-900 mb-2">Job Type</h3>
-//                 <span className="inline-block px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-700">
-//                   {job.jobType || 'Full-time'}
-//                 </span>
-//               </div>
-
-//               <div>
-//                 <h3 className="text-lg font-semibold text-gray-900 mb-2">Company</h3>
-//                 <p className="text-gray-600">
-//                   {typeof job.department === 'string'
-//                     ? job.department
-//                     : JSON.stringify(job.department)}
-//                 </p>
-//               </div>
-
-//               <div>
-//                 <h3 className="text-lg font-semibold text-gray-900 mb-2">Description</h3>
-//                 <div
-//                   className="text-gray-600 prose prose-sm max-w-none [&_strong]:font-semibold [&_em]:italic [&_u]:underline [&_s]:line-through [&_ul]:list-disc [&_ul]:pl-5 [&_blockquote]:border-l-2 [&_blockquote]:border-gray-300 [&_blockquote]:pl-3 [&_blockquote]:italic [&_a]:text-blue-600 [&_a]:underline"
-//                   dangerouslySetInnerHTML={{ __html: descriptionHTML(job.description) }}
-//                 />
-//               </div>
-
-//               <div>
-//                 <h3 className="text-lg font-semibold text-gray-900 mb-2">Status</h3>
-//                 <div className="inline-block">
-//                   <span
-//                     className={`px-3 py-1 rounded-full text-sm font-medium ${
-//                       job.status === 'Active'
-//                         ? 'bg-green-100 text-green-700'
-//                         : job.status === 'Draft'
-//                         ? 'bg-gray-100 text-gray-700'
-//                         : 'bg-red-100 text-red-700'
-//                     }`}
-//                   >
-//                     {job.status}
-//                   </span>
-//                 </div>
-//               </div>
-
-//               {job.maxApplicants && (
-//                 <div>
-//                   <h3 className="text-lg font-semibold text-gray-900 mb-2">
-//                     Application Limit
-//                   </h3>
-//                   <p className="text-gray-600">
-//                     Maximum {job.maxApplicants} applicants ({jobCandidates.length} applied so far)
-//                   </p>
-//                 </div>
-//               )}
-
-//               {!canEdit && (
-//                 <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-//                   <p className="text-sm text-yellow-800">
-//                     ✓ Edit window has closed. This job cannot be modified further.
-//                   </p>
-//                 </div>
-//               )}
-//             </div>
-//           )}
-
-//           {activeTab === 'candidates' && (
-//             <div className="p-6">
-//               {loading ? (
-//                 <div className="text-center py-12">
-//                   <p className="text-gray-500">Loading candidates...</p>
-//                 </div>
-//               ) : jobCandidates.length === 0 ? (
-//                 <div className="text-center py-12 text-gray-400">
-//                   <Users size={48} className="mx-auto mb-3 opacity-50" />
-//                   <p className="text-sm">No applications yet</p>
-//                 </div>
-//               ) : (
-//                 <PipelineBoardFiltered candidates={jobCandidates} />
-//               )}
-//             </div>
-//           )}
-//         </div>
-//     </>
-//   );
-
-//   if (isInlineFullscreen) {
-//     return (
-//       <div className="w-full min-h-[calc(100vh-8.5rem)] bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden flex flex-col">
-//         {modalContent}
-//       </div>
-//     );
-//   }
-
-//   return (
-//     <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-//       <div className="bg-white rounded-2xl shadow-xl max-w-5xl w-full max-h-[90vh] overflow-hidden flex flex-col">
-//         {modalContent}
-//       </div>
-//     </div>
-//   );
-// }
-
-// // import { useState, useEffect } from 'react';
-// // import { X, MapPin, DollarSign, Users, Clock, Edit2, ArrowLeft } from 'lucide-react';
-// // import { useStore } from '../../store/useStore';
-// // import PipelineBoardFiltered from './PipelineBoardFiltered';
-
-// // interface JobDetailModalProps {
-// //   isOpen: boolean;
-// //   onClose: () => void;
-// //   jobId: string;
-// //   onEdit?: (jobId: string) => void;
-// //   displayMode?: 'modal' | 'inline-fullscreen';
-// // }
-
-// // export default function JobDetailModal({
-// //   isOpen,
-// //   onClose,
-// //   jobId,
-// //   onEdit,
-// //   displayMode = 'modal',
-// // }: JobDetailModalProps) {
-// //   const { jobs, jobCandidates, loading, fetchJobCandidates } = useStore();
-// //   const [activeTab, setActiveTab] = useState<'details' | 'candidates'>('candidates');
-// //   const [canEdit, setCanEdit] = useState(false);
-// //   const isInlineFullscreen = displayMode === 'inline-fullscreen';
-
-// //   const job = jobs.find((j) => j.id === jobId);
-
-// //   useEffect(() => {
-// //     if (isOpen && jobId) {
-// //       fetchJobCandidates(jobId);
-
-// //       // Check if within 24 hours
-// //       if (job) {
-// //         const createdTime = new Date(job.postedDate);
-// //         const hoursDiff = (Date.now() - createdTime.getTime()) / (1000 * 60 * 60);
-// //         setCanEdit(hoursDiff <= 24);
-// //       }
-// //     }
-// //   }, [isOpen, jobId, job, fetchJobCandidates]);
-
-// //   const handleEditClick = () => {
-// //     if (!canEdit) {
-// //       alert('Sorry but the edit option is available for the first 24 hours of job posting.');
-// //       return;
-// //     }
-
-// //     alert('⚠️ Note: Job can be edited only once and within 24 hours of posting. After that, it cannot be modified.');
-
-// //     if (onEdit) {
-// //       onEdit(jobId);
-// //     }
-// //   };
-
-// //   if (!isOpen) return null;
-
-// //   const modalContent = (
-// //     <>
-// //         {/* Header */}
-// //         <div className="border-b border-gray-200 p-6 flex items-start justify-between gap-4">
-// //           <div className="flex-1">
-// //             <h2 className="text-2xl font-bold text-gray-900">{job?.title}</h2>
-// //             <p className="text-sm text-gray-500 mt-1">{job?.department}</p>
-// //           </div>
-// //           <div className="flex gap-2 items-center">
-// //             {isInlineFullscreen && (
-// //               <button
-// //                 type="button"
-// //                 onClick={onClose}
-// //                 className="flex items-center gap-1 text-sm text-gray-600 border border-gray-200 px-3 py-2 rounded-lg hover:bg-gray-50 transition"
-// //               >
-// //                 <ArrowLeft size={14} />
-// //                 Back to jobs
-// //               </button>
-// //             )}
-// //             {canEdit && (
-// //               <button
-// //                 onClick={handleEditClick}
-// //                 className="flex items-center gap-1 text-sm bg-blue-600 text-white px-3 py-2 rounded-lg hover:bg-blue-700 transition"
-// //                 title="Edit job (24-hour window)"
-// //               >
-// //                 <Edit2 size={14} />
-// //                 Edit
-// //               </button>
-// //             )}
-// //             {!isInlineFullscreen && (
-// //               <button
-// //                 onClick={onClose}
-// //                 className="text-gray-400 hover:text-gray-600 transition"
-// //               >
-// //                 <X size={24} />
-// //               </button>
-// //             )}
-// //           </div>
-// //         </div>
-
-// //         {/* Job Info Cards */}
-// //         {job && (
-// //           <div className="border-b border-gray-200 p-6 grid grid-cols-2 md:grid-cols-4 gap-4">
-// //             <div className="flex items-center gap-3">
-// //               <MapPin size={18} className="text-gray-400" />
-// //               <div>
-// //                 <p className="text-xs text-gray-500">Location</p>
-// //                 <p className="text-sm font-medium text-gray-900">{job.location}</p>
-// //               </div>
-// //             </div>
-
-// //             {job.salaryMin && job.salaryMax && (
-// //               <div className="flex items-center gap-3">
-// //                 <DollarSign size={18} className="text-gray-400" />
-// //                 <div>
-// //                   <p className="text-xs text-gray-500">Salary</p>
-// //                   <p className="text-sm font-medium text-gray-900">
-// //                     ₹{job.salaryMin}–{job.salaryMax} LPA
-// //                   </p>
-// //                 </div>
-// //               </div>
-// //             )}
-
-// //             <div className="flex items-center gap-3">
-// //               <Users size={18} className="text-gray-400" />
-// //               <div>
-// //                 <p className="text-xs text-gray-500">Applicants</p>
-// //                 <p className="text-sm font-medium text-gray-900">
-// //                   {jobCandidates.length}
-// //                   {job.maxApplicants && ` / ${job.maxApplicants}`}
-// //                 </p>
-// //               </div>
-// //             </div>
-
-// //             <div className="flex items-center gap-3">
-// //               <Clock size={18} className="text-gray-400" />
-// //               <div>
-// //                 <p className="text-xs text-gray-500">Posted</p>
-// //                 <p className="text-sm font-medium text-gray-900">{job.postedDate}</p>
-// //               </div>
-// //             </div>
-// //           </div>
-// //         )}
-
-// //         {/* Tabs */}
-// //         <div className="border-b border-gray-200 flex">
-// //           <button
-// //             onClick={() => setActiveTab('details')}
-// //             className={`flex-1 px-6 py-3 text-sm font-medium transition ${
-// //               activeTab === 'details'
-// //                 ? 'text-indigo-600 border-b-2 border-indigo-600'
-// //                 : 'text-gray-500 hover:text-gray-700'
-// //             }`}
-// //           >
-// //             Job Details
-// //           </button>
-// //           <button
-// //             onClick={() => setActiveTab('candidates')}
-// //             className={`flex-1 px-6 py-3 text-sm font-medium transition ${
-// //               activeTab === 'candidates'
-// //                 ? 'text-indigo-600 border-b-2 border-indigo-600'
-// //                 : 'text-gray-500 hover:text-gray-700'
-// //             }`}
-// //           >
-// //             Candidate Pipeline ({jobCandidates.length})
-// //           </button>
-// //         </div>
-
-// //         {/* Content */}
-// //         <div className="flex-1 overflow-y-auto">
-// //           {activeTab === 'details' && job && (
-// //             <div className="p-6 space-y-6">
-// //               <div>
-// //                 <h3 className="text-lg font-semibold text-gray-900 mb-2">Job Type</h3>
-// //                 <span className="inline-block px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-700">
-// //                   {job.jobType || 'Full-time'}
-// //                 </span>
-// //               </div>
-
-// //               <div>
-// //                 <h3 className="text-lg font-semibold text-gray-900 mb-2">Company</h3>
-// //                 <p className="text-gray-600">{job.department}</p>
-// //               </div>
-
-// //               <div>
-// //                 <h3 className="text-lg font-semibold text-gray-900 mb-2">Description</h3>
-// //                 <p className="text-gray-600 whitespace-pre-wrap">{job.description}</p>
-// //               </div>
-
-// //               <div>
-// //                 <h3 className="text-lg font-semibold text-gray-900 mb-2">Status</h3>
-// //                 <div className="inline-block">
-// //                   <span
-// //                     className={`px-3 py-1 rounded-full text-sm font-medium ${
-// //                       job.status === 'Active'
-// //                         ? 'bg-green-100 text-green-700'
-// //                         : job.status === 'Draft'
-// //                         ? 'bg-gray-100 text-gray-700'
-// //                         : 'bg-red-100 text-red-700'
-// //                     }`}
-// //                   >
-// //                     {job.status}
-// //                   </span>
-// //                 </div>
-// //               </div>
-
-// //               {job.maxApplicants && (
-// //                 <div>
-// //                   <h3 className="text-lg font-semibold text-gray-900 mb-2">
-// //                     Application Limit
-// //                   </h3>
-// //                   <p className="text-gray-600">
-// //                     Maximum {job.maxApplicants} applicants ({jobCandidates.length} applied so far)
-// //                   </p>
-// //                 </div>
-// //               )}
-
-// //               {!canEdit && (
-// //                 <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-// //                   <p className="text-sm text-yellow-800">
-// //                     ✓ Edit window has closed. This job cannot be modified further.
-// //                   </p>
-// //                 </div>
-// //               )}
-// //             </div>
-// //           )}
-
-// //           {activeTab === 'candidates' && (
-// //             <div className="p-6">
-// //               {loading ? (
-// //                 <div className="text-center py-12">
-// //                   <p className="text-gray-500">Loading candidates...</p>
-// //                 </div>
-// //               ) : jobCandidates.length === 0 ? (
-// //                 <div className="text-center py-12 text-gray-400">
-// //                   <Users size={48} className="mx-auto mb-3 opacity-50" />
-// //                   <p className="text-sm">No applications yet</p>
-// //                 </div>
-// //               ) : (
-// //                 <PipelineBoardFiltered candidates={jobCandidates} />
-// //               )}
-// //             </div>
-// //           )}
-// //         </div>
-// //     </>
-// //   );
-
-// //   if (isInlineFullscreen) {
-// //     return (
-// //       <div className="w-full min-h-[calc(100vh-8.5rem)] bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden flex flex-col">
-// //         {modalContent}
-// //       </div>
-// //     );
-// //   }
-
-// //   return (
-// //     <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-// //       <div className="bg-white rounded-2xl shadow-xl max-w-5xl w-full max-h-[90vh] overflow-hidden flex flex-col">
-// //         {modalContent}
-// //       </div>
-// //     </div>
-// //   );
-// // }

@@ -36,8 +36,8 @@ export default function Sidebar({ activePage, setActivePage }: SidebarProps) {
   return (
 <div className="min-h-screen w-64 bg-blue-900 text-white flex flex-col fixed left-0 top-0 bottom-0 z-10 overflow-y-auto">      {/* Logo */}
       <div className="p-6 border-b border-blue-700">
-        <h1 className="text-2xl font-bold text-red-400">TalentFace</h1>
-        <p className="text-blue-300 text-sm mt-1">Recruiter Portal</p>
+        <h1 className="text-2xl font-bold text-blue-100">TalentFace</h1>
+        <p className="text-red-300 text-sm mt-1">Recruiter Portal</p>
       </div>
 
       {/* Nav Items */}
@@ -51,7 +51,7 @@ export default function Sidebar({ activePage, setActivePage }: SidebarProps) {
               onClick={() => setActivePage(item.id)}
               className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 ${
                 isActive
-                  ? 'bg-red-600 text-white'
+                  ? 'bg-white/10 text-white shadow-[inset_3px_0_0_0_#ffffff]'
                   : 'text-blue-200 hover:bg-blue-800 hover:text-white'
               }`}
             >
@@ -65,7 +65,7 @@ export default function Sidebar({ activePage, setActivePage }: SidebarProps) {
       {/* Bottom Section */}
       <div className="p-4 border-t border-blue-700">
         <div className="flex items-center gap-3 px-4 py-3 mb-2">
-          <div className="w-9 h-9 rounded-full bg-red-500 flex items-center justify-center text-sm font-bold">
+          <div className="w-9 h-9 rounded-full bg-blue-500 flex items-center justify-center text-sm font-bold">
             {initials}
           </div>
           <div>
@@ -151,7 +151,7 @@ export default function Sidebar({ activePage, setActivePage }: SidebarProps) {
 //       {/* Bottom Section */}
 //       <div className="p-4 border-t border-blue-700">
 //         <div className="flex items-center gap-3 px-4 py-3 mb-2">
-//           <div className="w-9 h-9 rounded-full bg-red-500 flex items-center justify-center text-sm font-bold">
+//           <div className="w-9 h-9 rounded-full bg-blue-500 flex items-center justify-center text-sm font-bold">
 //             {initials}
 //           </div>
 //           <div>
