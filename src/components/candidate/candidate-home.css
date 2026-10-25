@@ -114,3 +114,49 @@
     transform: translateY(0);
     box-shadow: none;
 }
+/* ───── Notification bell ───── */
+.candidate-home .tf-bell {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  padding: 0;
+  border-radius: 50%;
+  background: var(--surface-alt);
+  border: 1px solid var(--border);
+  font-size: 17px;
+  line-height: 1;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, transform 0.15s, box-shadow 0.15s;
+}
+.candidate-home .tf-bell:hover {
+  background: #FFF5F5;
+  border-color: var(--brand-red);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(214, 43, 43, 0.15);
+}
+.candidate-home .tf-bell:active { transform: translateY(0); box-shadow: none; }
+.candidate-home .tf-bell:focus-visible { outline: 2px solid var(--brand-red); outline-offset: 2px; }
+
+.candidate-home .tf-bell-badge {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 9px;
+  background: var(--brand-red);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid #fff;
+  box-sizing: content-box;
+}
+
+.tf-nav-actions { display: flex; align-items: center; gap: 14px; }

@@ -36,6 +36,7 @@ export default function CandidateHomepage() {
                 completion={completion}
                 appliedCount={appliedIds.size}
                 savedCount={savedIds.size}
+               
             />
             {/* ══ MAIN ══ */}
             <main className="tf-main">

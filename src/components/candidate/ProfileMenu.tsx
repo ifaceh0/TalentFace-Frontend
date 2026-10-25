@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/useAuth";
 import { DASHBOARD_LINKS } from "../../constants/candidateHome.constants";
 import type { CandidateProfile } from "../../types/candidate.types";
+import { resetUnreadCount } from "../../hooks/useUnreadNotifications";
 
 interface Props {
     profile: CandidateProfile | null;
@@ -35,8 +36,10 @@ export default function ProfileMenu({ profile, completion, appliedCount, savedCo
     }, [open]);
 
     const handleLogout = async () => {
+       
         await logout();
         navigate("/login", { replace: true });
+        resetUnreadCount();
     };
 
     return (
