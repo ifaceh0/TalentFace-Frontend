@@ -13,6 +13,7 @@ import JobFilters from "./JobFilters";
 import JobSearchCard from "./JobSearchCard";
 import JobResults from "./JobResults";
 
+
 export default function CandidateHomepage() {
     const navigate = useNavigate();
     const { toast, toastType, showToast } = useToast();
@@ -20,7 +21,7 @@ export default function CandidateHomepage() {
     const stats = useJobStats();
     const { jobs, loading, loadingMore, hasNextPage, search, filters,
             handleSearchChange, submitSearch,
-            toggleFilter, setCurrency, setMinSalary, resetFilters,
+            toggleFilter, setCurrency, setMinSalary, setLocation, resetFilters,
             handleLoadMore } = useJobs(showToast);
     const { savedIds, appliedIds, applyModalJob, setApplyModalJob, applying,
             resumeType, setResumeType, canSubmit,
@@ -46,6 +47,7 @@ export default function CandidateHomepage() {
                         onToggle={toggleFilter}
                         onCurrencyChange={setCurrency}
                         onMinSalaryChange={setMinSalary}
+                        onLocationChange={setLocation}
                         onReset={resetFilters}
                     />
                     <section style={{ minWidth: 0 }}>

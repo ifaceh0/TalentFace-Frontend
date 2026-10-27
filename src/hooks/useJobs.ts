@@ -10,11 +10,13 @@ export interface JobFilterState {
     workMode: string[];
     experienceLevel: string[];
     currency: string | null;
-    minSalary: number | null; // full annual amount in `currency`
+    minSalary: number | null; 
+    location: string;
+  
 }
 
 export const EMPTY_FILTERS: JobFilterState = {
-    type: [], workMode: [], experienceLevel: [], currency: null, minSalary: null,
+    type: [], workMode: [], experienceLevel: [], currency: null, minSalary: null, location: "",
 };
 
 const DEFAULT_CURRENCY = "INR";
@@ -54,6 +56,7 @@ export function useJobs(showToast: ShowToast) {
             });
             if (f.currency) params.currency = f.currency;
             if (f.minSalary) params.minSalary = String(f.minSalary);
+            if (f.location.trim()) params.location = f.location.trim();
 
             const data = await getJobs(params);
             if (id !== requestId.current) return; // a newer request replaced this one
@@ -121,6 +124,12 @@ export function useJobs(showToast: ShowToast) {
         });
     };
 
+    const setLocation = (location: string) => {
+    // read from the ref, not `filters`: the debounced call in JobFilters can hold a stale copy
+    if (location === filtersRef.current.location) return;   // skips the extra fetch on mount and after Reset
+    applyFilters({ ...filtersRef.current, location });
+};
+
     const resetFilters = () => applyFilters(EMPTY_FILTERS);
 
     const handleLoadMore = () => fetchJobs(page + 1, filtersRef.current, search, true);
@@ -129,7 +138,7 @@ export function useJobs(showToast: ShowToast) {
         jobs, loading, loadingMore, hasNextPage,
         search, filters,
         handleSearchChange, submitSearch,
-        toggleFilter, setCurrency, setMinSalary, resetFilters,
+        toggleFilter, setCurrency, setMinSalary,setLocation, resetFilters,
         handleLoadMore,
     };
 }

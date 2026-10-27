@@ -3,12 +3,14 @@ import {
     TYPE_OPTIONS, WORK_MODE_OPTIONS, EXPERIENCE_OPTIONS, SALARY_CURRENCIES, SALARY_PRESETS,
 } from "../../constants/candidateHome.constants";
 import { formatAmount } from "../../constants/candidateHome.utils";
+import { useState, useEffect } from "react";
 
 interface Props {
     filters: JobFilterState;
     onToggle: (key: MultiKey, value: string) => void;
     onCurrencyChange: (currency: string | null) => void;
     onMinSalaryChange: (min: number | null) => void;
+    onLocationChange: (location: string) => void;
     onReset: () => void;
 }
 
@@ -50,14 +52,27 @@ function CheckGroup({ title, options, selected, onToggle, first }: GroupProps) {
 }
 
 export default function JobFilters({
-    filters, onToggle, onCurrencyChange, onMinSalaryChange, onReset,
+    filters, onToggle, onCurrencyChange, onMinSalaryChange, onReset, onLocationChange
 }: Props) {
     const active =
         filters.type.length > 0 || filters.workMode.length > 0 || filters.experienceLevel.length > 0 ||
-        filters.currency !== null || filters.minSalary !== null;
+        filters.currency !== null || filters.minSalary !== null || 
+        filters.location.trim() !== "";
 
     const presetCurrency = filters.currency ?? "INR";
     const presets = SALARY_PRESETS[presetCurrency] ?? [];
+    const [locationInput, setLocationInput] = useState(filters.location ?? "");
+
+// debounce: push to parent after 400ms of no typing
+useEffect(() => {
+    const t = setTimeout(() => onLocationChange(locationInput), 400);
+    return () => clearTimeout(t);
+}, [locationInput]);
+
+// clear the box when Reset is pressed
+useEffect(() => {
+    if (filters.location === "") setLocationInput("");
+}, [filters.location]);
 
     return (
         <aside className="tf-filters" style={{ background: "#FFFFFF", border: "1px solid #E5E7EB", borderRadius: 8, padding: 20 }}>
@@ -120,6 +135,19 @@ export default function JobFilters({
                     ))}
                 </select>
             </div>
+
+            {/* Location */}
+<div style={divider}>
+    <div style={groupTitle}>Location</div>
+    <input
+        type="text"
+        value={locationInput}
+        onChange={(e) => setLocationInput(e.target.value)}
+        placeholder="City or state"
+        aria-label="Location"
+        style={{ ...selectStyle, padding: "0 10px", marginBottom: 0 }}
+    />
+</div>
         </aside>
     );
 }
