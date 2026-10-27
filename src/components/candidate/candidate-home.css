@@ -1,0 +1,162 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=Sora:wght@600;700&display=swap');
+
+/* ───── Design tokens ───── */
+.candidate-home {
+  --brand-red: #D62B2B;
+  --brand-red-dark: #B82424;
+  --brand-blue: #1C3FA8;
+  --navy: #0D1B3E;
+  --text: #111827;
+  --text-strong: #202124;
+  --text-body: #374151;
+  --muted: #6B7280;
+  --border: #E5E7EB;
+  --border-strong: #D1D5DB;
+  --surface: #FFFFFF;
+  --surface-alt: #F8FAFC;
+  --brand-gradient: linear-gradient(135deg, var(--brand-red), var(--brand-blue));
+
+  font-family: 'DM Sans', sans-serif;
+  color: var(--text);
+}
+
+/* ───── Reset ───── */
+.candidate-home * { box-sizing: border-box; margin: 0; padding: 0; }
+.candidate-home input::placeholder { color: #A0AABF; }
+
+/* ───── Interactions ───── */
+.candidate-home .job-card { transition: border-color 0.2s, transform 0.2s, box-shadow 0.2s; }
+.candidate-home .job-card:hover { border-color: var(--brand-red) !important; transform: translateY(-3px); box-shadow: 0 12px 32px rgba(214,43,43,0.08) !important; }
+.candidate-home .apply-btn:hover { opacity: 0.88; }
+.candidate-home .apply-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.candidate-home .nav-link:hover { color: var(--brand-red) !important; }
+.candidate-home .menu-item:hover { background: rgba(214,43,43,0.06) !important; }
+
+/* ───── Layout ───── */
+.tf-main { max-width: 1240px; margin: 0 auto; padding: 24px 32px 60px; }
+.tf-layout { display: grid; grid-template-columns: 232px minmax(0, 1fr); gap: 24px; align-items: start; }
+.tf-filters { position: sticky; top: 78px; }
+.tf-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
+.tf-radios { display: flex; flex-direction: column; gap: 2px; }
+.tf-radio { display: flex; align-items: center; gap: 10px; padding: 6px 0; font-size: 13px; color: var(--text-body); cursor: pointer; }
+.tf-radio:hover { color: var(--brand-red); }
+.tf-search:focus-within { border-color: var(--brand-red) !important; box-shadow: 0 0 0 3px rgba(214,43,43,0.10); }
+
+/* ───── Buttons ───── */
+.tf-primary { height: 42px; padding: 0 24px; font-family: inherit; font-size: 14px; font-weight: 600; color: #fff; background: var(--brand-red); border: none; border-radius: 6px; cursor: pointer; transition: background 0.15s; }
+.tf-primary:hover { background: var(--brand-red-dark); }
+.tf-secondary { padding: 9px 24px; font-family: inherit; font-size: 13px; font-weight: 500; color: var(--text-body); background: var(--surface); border: 1px solid var(--border-strong); border-radius: 6px; cursor: pointer; transition: border-color 0.15s, color 0.15s; }
+.tf-secondary:hover:not(:disabled) { border-color: var(--brand-red); color: var(--brand-red); }
+.tf-secondary:disabled { color: #9CA3AF; cursor: default; }
+
+/* ───── Responsive ───── */
+@media (max-width: 860px) {
+  .tf-layout { grid-template-columns: 1fr; }
+  .tf-filters { position: static; }
+  .tf-radios { flex-direction: row; flex-wrap: wrap; gap: 2px 18px; }
+}
+@media (max-width: 600px) { .tf-main { padding: 16px 16px 40px; } }
+
+/* ───── Skeleton ───── */
+@keyframes skeleton-pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
+.skeleton { animation: skeleton-pulse 1.4s ease-in-out infinite; background: var(--border); border-radius: 8px; }
+
+/* ───── Shared pieces ───── */
+.avatar { display: flex; align-items: center; justify-content: center; border-radius: 50%; background: var(--brand-gradient); color: #fff; font-weight: 700; flex-shrink: 0; }
+
+.section-label { font-size: 10px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 8px; }
+
+.deck-cta { display: block; background: #fff; border: none; border-radius: 6px; padding: 10px 24px; font-size: 13px; font-weight: 700; color: var(--navy); cursor: pointer; font-family: inherit; box-shadow: 0 4px 16px rgba(0,0,0,0.2); transition: transform 0.15s, box-shadow 0.15s; }
+.deck-cta:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.25); }
+
+.logout-btn { display: flex; align-items: center; gap: 9px; width: 100%; background: none; border: none; padding: 7px 10px; border-radius: 8px; cursor: pointer; color: var(--brand-red); font-size: 12px; font-family: inherit; }
+.logout-btn:hover { background: rgba(214,43,43,0.08); }
+
+/* ───── Apply modal ───── */
+.apply-body { display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: minmax(0, 1fr); flex: 1; min-height: 0; overflow: hidden; }
+.apply-left { border-right: 1.5px solid var(--border); padding: 22px; overflow-y: auto; min-height: 0; }
+.apply-right { padding: 22px; display: flex; flex-direction: column; gap: 14px; overflow-y: auto; min-height: 0; }
+
+.resume-option { display: flex; align-items: center; gap: 10px; padding: 14px 16px; cursor: pointer; background: var(--surface); border: 1.5px solid var(--border); border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.04); transition: all .2s ease; }
+.resume-option.is-selected { border-color: #2563EB; background: #EFF6FF; box-shadow: 0 0 0 1px #2563EB, 0 2px 8px rgba(37,99,235,0.12); }
+.resume-option:focus-within { outline: 2px solid var(--brand-red); outline-offset: 2px; }
+
+@media (max-width: 760px) {
+  .apply-body { grid-template-columns: 1fr; grid-template-rows: none; overflow-y: auto; }
+  .apply-left { border-right: none; border-bottom: 1.5px solid var(--border); overflow: visible; }
+  .apply-right { overflow: visible; }
+}
+
+.tf-saved-btn {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    height: 42px;
+    padding: 0 18px;
+    border-radius: 6px;
+    background: #F3F5FF;
+    border: 1px solid #C7D2F8;
+    color: #1C3FA8;
+    font-size: 14px;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s, transform 0.15s, box-shadow 0.15s;
+}
+.tf-saved-btn:hover {
+    background: #E8EDFF;
+    border-color: #1C3FA8;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(28, 63, 168, 0.15);
+}
+.tf-saved-btn:active {
+    transform: translateY(0);
+    box-shadow: none;
+}
+/* ───── Notification bell ───── */
+.candidate-home .tf-bell {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  padding: 0;
+  border-radius: 50%;
+  background: var(--surface-alt);
+  border: 1px solid var(--border);
+  font-size: 17px;
+  line-height: 1;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, transform 0.15s, box-shadow 0.15s;
+}
+.candidate-home .tf-bell:hover {
+  background: #FFF5F5;
+  border-color: var(--brand-red);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(214, 43, 43, 0.15);
+}
+.candidate-home .tf-bell:active { transform: translateY(0); box-shadow: none; }
+.candidate-home .tf-bell:focus-visible { outline: 2px solid var(--brand-red); outline-offset: 2px; }
+
+.candidate-home .tf-bell-badge {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 9px;
+  background: var(--brand-red);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid #fff;
+  box-sizing: content-box;
+}
+
+.tf-nav-actions { display: flex; align-items: center; gap: 14px; }

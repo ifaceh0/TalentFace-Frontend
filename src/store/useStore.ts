@@ -1,12 +1,29 @@
 import { create } from 'zustand';
 import { recruiterService } from '../services/recruiter.service';
+import type { JSONContent } from '@tiptap/react';
 
 const APP_STATE_KEY = 'tf_autosave_state';
+export const OVERVIEW_JOBS_LIMIT = 8;
 
 const getStorageKey = (userId?: string) =>
   userId ? `${APP_STATE_KEY}_${userId}` : APP_STATE_KEY;
 
-export type CandidateStatus = 'Applied' | 'Shortlisted' | 'Interview' | 'Offer' | 'Hired';
+export type CandidateStatus = 'Applied' | 'Shortlisted' | 'Interview' | 'Offer' | 'Hired' | 'Rejected';
+
+export type CandidateTier = 'Strong' | 'Moderate' | 'Weak' | 'Unscored';
+
+export const formatExperience = (value: number | null | undefined): string => {
+  const yearsValue = Number(value);
+  if (!Number.isFinite(yearsValue) || yearsValue <= 0) return '0 yrs';
+
+  const totalMonths = Math.max(0, Math.round(yearsValue * 12));
+  const years = Math.floor(totalMonths / 12);
+  const months = totalMonths % 12;
+  const parts: string[] = [];
+  if (years > 0) parts.push(`${years} ${years === 1 ? 'yr' : 'yrs'}`);
+  if (months > 0) parts.push(`${months} ${months === 1 ? 'mo' : 'mos'}`);
+  return parts.join(' ') || '0 yrs';
+};
 
 export interface CandidateWorkExperience {
   company: string;
@@ -21,6 +38,7 @@ export interface Candidate {
   id: string;
   applicationId?: string;
   jobId?: string;
+  uniqueId?: string;
 
   name: string;
   role: string;
@@ -36,6 +54,8 @@ export interface Candidate {
   status: CandidateStatus;
 
   email: string;
+  phone?: string;
+  resumeUrl?: string;
 
   appliedDate: string;
 
@@ -43,21 +63,30 @@ export interface Candidate {
 
   appliedJob?: string;
   jobTitle?: string;
-}
 
+  // ── ATS Score & Ranking Extensions (derived from JobFitCheck) ──
+  atsScore?: number | null;
+  rank?: number | null;
+  percentile?: number | null;
+  tier?: CandidateTier;
+}
 
 export interface Job {
   id: string;
   title: string;
+  company: string;
   department: string;
   location: string;
   applicants: number;
   status: 'Active' | 'Closed' | 'Draft';
   postedDate: string;
-  description: string;
+  description: JSONContent | string;
   salaryMin?: number;
   salaryMax?: number;
-  salaryCurrency?: 'LPA' | 'USD/year' | 'Custom';
+  // salaryCurrency?: 'LPA' | 'USD/year' | 'Custom';
+  salaryCurrency?: 'INR' | 'USD' | 'EUR' | 'GBP';
+  salaryPeriod?: 'hourly' | 'monthly' | 'annually';
+  workMode?: 'onsite' | 'remote' | 'hybrid';
   maxApplicants?: number | null;
   jobType?: string;
   isRemote?: boolean;
@@ -68,23 +97,31 @@ interface RecruiterStore {
   candidates: Candidate[];
   jobCandidates: Candidate[];
   jobs: Job[];
+  overviewJobs: Job[];
+  overviewTotal: number;
+  overviewLoading: boolean;
   loading: boolean;
   error: string | null;
   selectedJobId: string | null;
   fetchJobs: () => Promise<void>;
+  fetchOverviewJobs: (limit?: number) => Promise<void>;
   fetchCandidates: () => Promise<void>;
   fetchJobCandidates: (jobId: string) => Promise<void>;
   updateCandidateStatus: (id: string, status: CandidateStatus) => Promise<void>;
   createJob: (job: Omit<Job, 'id' | 'applicants' | 'postedDate'>) => Promise<void>;
   updateJob: (jobId: string, job: Partial<Omit<Job, 'id' | 'applicants' | 'postedDate'>>) => Promise<void>;
   deleteJob: (id: string) => Promise<void>;
+  closeJob: (id: string) => Promise<void>;
   setSelectedJobId: (jobId: string | null) => void;
 }
 
-export const useStore = create<RecruiterStore>()((set) => ({
+export const useStore = create<RecruiterStore>()((set, get) => ({
   candidates: [],
   jobCandidates: [],
   jobs: [],
+  overviewJobs: [],
+  overviewTotal: 0,
+  overviewLoading: false,
   loading: false,
   error: null,
   selectedJobId: null,
@@ -100,15 +137,23 @@ export const useStore = create<RecruiterStore>()((set) => ({
     }
   },
 
-  async fetchCandidates() {
-    console.log('FETCH CANDIDATES CALLED');
+    async fetchOverviewJobs(limit = OVERVIEW_JOBS_LIMIT) {
+    // Spinner only on first load; later refreshes happen silently
+    set((state) => ({ overviewLoading: state.overviewJobs.length === 0 }));
+    try {
+      const { jobs, total } = await recruiterService.getOverviewJobs(limit);
+      set({ overviewJobs: jobs, overviewTotal: total, overviewLoading: false });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to fetch jobs';
+      set({ error: message, overviewLoading: false });
+    }
+  },
 
+  async fetchCandidates() {
     set({ loading: true, error: null });
 
     try {
       const candidates = await recruiterService.getRecruiterCandidates();
-
-      console.log('FETCH RESULT', candidates);
 
       set({
         candidates,
@@ -116,6 +161,8 @@ export const useStore = create<RecruiterStore>()((set) => ({
       });
     } catch (err) {
       console.error(err);
+      const message = err instanceof Error ? err.message : 'Failed to fetch candidates';
+      set({ error: message, loading: false });
     }
   },
 
@@ -133,7 +180,7 @@ export const useStore = create<RecruiterStore>()((set) => ({
   async updateCandidateStatus(id, status) {
     try {
       await recruiterService.updateCandidateStatus(id, status);
-      // Optimistic update: update both candidates lists
+      // Optimistic update: update both candidates lists preserving atsScore, rank, tier, etc.
       set((state) => {
         const updatedCandidates = state.candidates.map((c) =>
           c.id === id ? { ...c, status } : c
@@ -158,9 +205,11 @@ export const useStore = create<RecruiterStore>()((set) => ({
 
         return { jobs };
       });
+      get().fetchOverviewJobs();
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to create job';
       set({ error: message });
+      throw err;
     }
   },
 
@@ -172,8 +221,26 @@ export const useStore = create<RecruiterStore>()((set) => ({
 
         return { jobs };
       });
+      get().fetchOverviewJobs();
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to update job';
+      set({ error: message });
+      throw err;
+    }
+  },
+
+    async closeJob(id) {
+    try {
+      const closed = await recruiterService.closeJob(id);
+      set((state) => ({
+        // keep the existing applicants count, since the close response doesn't include it
+        jobs: state.jobs.map((j) =>
+          j.id === id ? { ...closed, applicants: j.applicants } : j
+        ),
+      }));
+      get().fetchOverviewJobs();
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to close job';
       set({ error: message });
       throw err;
     }
@@ -186,6 +253,7 @@ export const useStore = create<RecruiterStore>()((set) => ({
         const jobs = state.jobs.filter((j) => j.id !== id);
 
         return { jobs };
+        get().fetchOverviewJobs();
       });
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to delete job';
@@ -216,20 +284,8 @@ export function restoreAppState(userId?: string) {
   if (typeof window === 'undefined') return;
 
   try {
-    const raw = localStorage.getItem(getStorageKey(userId));
-    if (!raw) return;
-
-    const parsed = JSON.parse(raw);
-    if (
-      parsed &&
-      Array.isArray(parsed.jobs) &&
-      Array.isArray(parsed.candidates)
-    ) {
-      useStore.setState({
-        jobs: parsed.jobs,
-        candidates: parsed.candidates,
-      });
-    }
+    const key = getStorageKey(userId);
+    localStorage.removeItem(key);
   } catch {
     // Silently ignore invalid saved state.
   }

@@ -41,7 +41,7 @@ export default function RecruiterSitemap() {
                 const IconComponent = link.icon;
                 return (
                   <button
-                    key={link.path}
+                    key={`${link.label}-${link.path}`}
                     onClick={() => navigate(link.path)}
                     className="w-full flex items-start gap-4 p-4 bg-white rounded-xl border border-gray-200 hover:border-blue-400 hover:shadow-md transition group"
                   >
@@ -61,29 +61,6 @@ export default function RecruiterSitemap() {
             </div>
           </div>
         ))}
-      </div>
-
-      {/* Routes Reference */}
-      <div className="mt-8 pt-8 border-t border-blue-200">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Available Routes</h3>
-        <div className="grid md:grid-cols-2 gap-4 text-sm">
-          <div className="bg-white rounded-lg p-4 border border-gray-200">
-            <p className="font-mono text-blue-600">/recruiter/dashboard</p>
-            <p className="text-gray-600 text-xs mt-1">Main recruiter dashboard</p>
-          </div>
-          <div className="bg-white rounded-lg p-4 border border-gray-200">
-            <p className="font-mono text-blue-600">/recruiter/profile</p>
-            <p className="text-gray-600 text-xs mt-1">View & edit profile</p>
-          </div>
-          <div className="bg-white rounded-lg p-4 border border-gray-200">
-            <p className="font-mono text-blue-600">/recruiter/settings</p>
-            <p className="text-gray-600 text-xs mt-1">Account settings</p>
-          </div>
-          <div className="bg-white rounded-lg p-4 border border-gray-200">
-            <p className="font-mono text-blue-600">/recruiter/change-password</p>
-            <p className="text-gray-600 text-xs mt-1">Change account password</p>
-          </div>
-        </div>
       </div>
 
       {/* Help Section */}

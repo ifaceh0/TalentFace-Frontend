@@ -1,109 +1,185 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
+import { toast } from 'sonner';
 import { useStore } from '../../store/useStore';
 import type { Job } from '../../store/useStore';
-import { Plus, Trash2, Users, Loader, AlertCircle, DollarSign, Edit2, Globe, ChevronDown } from 'lucide-react';
-import LocationSelect from '../ui/LocationSelect';
+import { Plus, AlertCircle, Search, X, Briefcase } from 'lucide-react';
+import JobRow from './JobRow';
 import JobDetailModal from '../dashboard/JobDetailModal';
+import type { JobDetailTab } from '../dashboard/JobDetailModal';
+import { getEditState } from './jobUtils';
+import JobFormPanel from './JobFormPanel';
+import ConfirmDialog from './ConfirmDialog';
+import { useShallow } from 'zustand/react/shallow';
 
+// ---- No longer used here (moved in Steps 1–4) ----
+// import type { JSONContent } from '@tiptap/react';
+// import { Plus, Trash2, Users, Loader, AlertCircle, DollarSign, Edit2, Globe, Heart, Trophy } from 'lucide-react';  // row icons -> JobRow.tsx
+// import LocationSelect from '../ui/LocationSelect';      // -> JobFormPanel.tsx
+// import RichTextEditor from '../ui/RichTextEditor';      // -> JobFormPanel.tsx
+// import { jobTypes, workModes, currencies, salaryPeriods, emptyForm, formatSalary, validateJobForm } from './jobUtils';
+// import type { JobForm } from './jobUtils';
+// (constants, JobForm type, emptyForm, formatSalary -> jobUtils.ts)
 
+const FILTERS = ['All', 'Active', 'Draft', 'Closed'] as const;
+type StatusFilter = (typeof FILTERS)[number];
+const statusOf = (job: Job): Exclude<StatusFilter, 'All'> =>
+  job.status === 'Active' ? 'Active' : job.status === 'Draft' ? 'Draft' : 'Closed';
 
-const jobTypes = ['Full-time', 'Part-time', 'Contract', 'Internship', 'Freelance'];
-const salaryTypes = ['LPA', 'USD/year', 'Custom'];
+interface JobListProps {
+  onJobClick?: (jobId: string) => void;
+  onReviewCandidates?: (jobId: string) => void;
+  scrollable?: boolean;
+}
 
-// Valid currency codes
-const VALID_CURRENCIES = [
-  'USD', 'EUR', 'GBP', 'JPY', 'AUD', 'CAD', 'CHF', 'CNY', 'INR', 
-  'MXN', 'SGD', 'HKD', 'NZD', 'ZAR', 'BRL', 'RUB', 'SEK', 'NOK',
-  'DKK', 'NZD', 'AED', 'SAR', 'KWD', 'QAR', 'BHD', 'OMR', 'JOD'
-];
+export default function JobList({
+  onJobClick,
+  onReviewCandidates,
+  scrollable = false,
+}: JobListProps) {
+  // const { jobs, loading, error, fetchJobs, deleteJob, setSelectedJobId } = useStore();
+  const { jobs, loading, error, fetchJobs, deleteJob, closeJob, setSelectedJobId } = useStore(
+    useShallow((s) => ({
+      jobs: s.jobs,
+      loading: s.loading,
+      error: s.error,
+      fetchJobs: s.fetchJobs,
+      deleteJob: s.deleteJob,
+      closeJob: s.closeJob,
+      setSelectedJobId: s.setSelectedJobId,
+    }))
+  );
+  // const { jobs, loading, error, fetchJobs, createJob, updateJob, deleteJob, setSelectedJobId } = useStore(); // createJob/updateJob -> JobFormPanel
 
-export default function JobList() {
-  const { jobs, loading, error, fetchJobs, createJob, deleteJob, setSelectedJobId } = useStore();
   const [showForm, setShowForm] = useState(false);
-  const [isEditing, setIsEditing] = useState(false);
-  const [editingJobId, setEditingJobId] = useState<string | null>(null);
+  const [editingJob, setEditingJob] = useState<Job | null>(null);
   const [deletingJobId, setDeletingJobId] = useState<string | null>(null);
-  const [submitting, setSubmitting] = useState(false);
-  const [formError, setFormError] = useState<string | null>(null);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [confirmCloseId, setConfirmCloseId] = useState<string | null>(null);
+  const [closingJobId, setClosingJobId] = useState<string | null>(null);
   const [selectedJobId, setSelectedJobIdLocal] = useState<string | null>(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
-  const [showCurrencyChecklist, setShowCurrencyChecklist] = useState(false);
-  const [form, setForm] = useState({
-    title: '',
-    company: '',
-    department: '',
-    location: '',
-    description: '',
-    salaryMin: '',
-    salaryMax: '',
-    salaryCurrency: 'LPA' as 'LPA' | 'USD/year' | 'Custom',
-    customCurrency: '',
-    maxApplicants: '',
-    jobType: 'Full-time',
-    isRemote: false,
-  });
+  const [modalTab, setModalTab] = useState<JobDetailTab>('ranked');
+  const [search, setSearch] = useState('');
+  const [filter, setFilter] = useState<StatusFilter>('All');
+
+  const counts = useMemo(() => {
+    const c = { All: jobs.length, Active: 0, Draft: 0, Closed: 0 };
+    jobs.forEach((j) => { c[statusOf(j)]++; });
+    return c;
+  }, [jobs]);
+
+  const filteredJobs = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    return jobs.filter((j) => {
+      if (filter !== 'All' && statusOf(j) !== filter) return false;
+      if (!q) return true;
+      return [j.title, j.company, j.department, j.location]
+        .some((v) => typeof v === 'string' && v.toLowerCase().includes(q));
+    });
+  }, [jobs, search, filter]);
+
+  // Form state moved to JobFormPanel.tsx:
+  // const [isEditing, setIsEditing] = useState(false);
+  // const [editingJobId, setEditingJobId] = useState<string | null>(null);
+  // const [submitting, setSubmitting] = useState(false);
+  // const [formError, setFormError] = useState<string | null>(null);
+  // const [form, setForm] = useState<JobForm>(emptyForm);
 
   useEffect(() => {
     fetchJobs();
   }, [fetchJobs]);
 
-  const handleDelete = async (id: string) => {
-    const confirmed = window.confirm('Delete this job posting? This will remove it from the database.');
-    if (!confirmed) return;
+  // ---- Delete (Step 4: confirm dialog + toast) ----
+  const handleDelete = useCallback((id: string) => setConfirmDeleteId(id), []);
 
+  const confirmDelete = async () => {
+    if (!confirmDeleteId) return;
+    const id = confirmDeleteId;
     setDeletingJobId(id);
     try {
       await deleteJob(id);
       await fetchJobs();
+      toast.success('Job deleted');
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Unable to delete job.';
-      window.alert(message);
+      toast.error(error instanceof Error ? error.message : 'Unable to delete job.');
     } finally {
       setDeletingJobId(null);
+      setConfirmDeleteId(null);
     }
   };
 
-  const handleEditClick = (job: Job) => {
-    const createdTime = new Date(job.postedDate);
-    const currentTime = new Date();
-    const hoursDiff = (currentTime.getTime() - createdTime.getTime()) / (1000 * 60 * 60);
+  // const handleDelete = async (id: string) => {
+  //   const confirmed = window.confirm('Delete this job posting? This will remove it from the database.');
+  //   if (!confirmed) return;
+  //   setDeletingJobId(id);
+  //   try {
+  //     await deleteJob(id);
+  //     await fetchJobs();
+  //   } catch (error) {
+  //     const message = error instanceof Error ? error.message : 'Unable to delete job.';
+  //     window.alert(message);
+  //   } finally {
+  //     setDeletingJobId(null);
+  //   }
+  // };
 
-    if (hoursDiff > 24) {
-      alert('Sorry but the edit option is available for the first 24 hours of job posting.');
+    // ---- Close ----
+  const handleClose = useCallback((id: string) => setConfirmCloseId(id), []);
+
+  const confirmClose = async () => {
+    if (!confirmCloseId) return;
+    const id = confirmCloseId;
+    setClosingJobId(id);
+    try {
+      await closeJob(id);
+      toast.success('Job closed');
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Unable to close job.');
+    } finally {
+      setClosingJobId(null);
+      setConfirmCloseId(null);
+    }
+  };
+
+  // ---- Edit ----
+  const handleEditClick = useCallback((job: Job) => {
+    const { canEdit, reason } = getEditState(job);
+    if (!canEdit) {
+      toast.error(
+        reason === 'edited'
+          ? 'Job can only be edited once within 24 hours of posting.'
+          : 'The edit option is only available for the first 24 hours after posting.'
+      );
       return;
     }
 
-    if (job.editedAt) {
-      alert('Job can only be edited once within 24 hours of posting.');
-      return;
-    }
+    // Covered by getEditState (reason === 'edited'):
+    // if (job.editedAt) {
+    //   alert('Job can only be edited once within 24 hours of posting.');
+    //   return;
+    // }
 
-    alert('⚠️ Note: Job can be edited only once and within 24 hours of posting. After that, it cannot be modified.');
+    // Drawer shows this notice inline now:
+    // alert('⚠️ Note: Job can be edited only once and within 24 hours of posting. After that, it cannot be modified.');
 
-    setIsEditing(true);
-    setEditingJobId(job.id);
-    setForm({
-      title: job.title,
-      company: job.department || '',
-      department: job.department || '',
-      location: job.location === 'Remote' ? '' : job.location,
-      description: job.description,
-      salaryMin: job.salaryMin?.toString() || '',
-      salaryMax: job.salaryMax?.toString() || '',
-      salaryCurrency: job.salaryCurrency || 'LPA',
-      customCurrency: job.salaryCurrency === 'Custom' ? job.salaryCurrency : '',
-      maxApplicants: job.maxApplicants?.toString() || '',
-      jobType: job.jobType || 'Full-time',
-      isRemote: job.isRemote || false,
-    });
+    setEditingJob(job);
     setShowForm(true);
-  };
+  }, []);
 
-  const handleJobClick = (jobId: string) => {
-    setSelectedJobIdLocal(jobId);
-    setSelectedJobId(jobId);
-    setShowDetailModal(true);
-  };
+  // ---- Open detail modal ----
+  const handleJobClick = useCallback(
+    (jobId: string, initialTab: JobDetailTab = 'ranked') => {
+      if (onJobClick) {
+        onJobClick(jobId);
+        return;
+      }
+      setSelectedJobIdLocal(jobId);
+      setSelectedJobId(jobId);
+      setModalTab(initialTab);
+      setShowDetailModal(true);
+    },
+    [onJobClick, setSelectedJobId]
+  );
 
   const handleCloseModal = () => {
     setShowDetailModal(false);
@@ -111,161 +187,106 @@ export default function JobList() {
     setSelectedJobId(null);
   };
 
-  const resetForm = () => {
-    setForm({
-      title: '',
-      company: '',
-      department: '',
-      location: '',
-      description: '',
-      salaryMin: '',
-      salaryMax: '',
-      salaryCurrency: 'LPA',
-      customCurrency: '',
-      maxApplicants: '',
-      jobType: 'Full-time',
-      isRemote: false,
-    });
-    setIsEditing(false);
-    setEditingJobId(null);
-    setFormError(null);
-    setShowCurrencyChecklist(false);
-  };
+  const handleReview = useCallback(
+    (jobId: string) => {
+      setSelectedJobId(jobId);
+      onReviewCandidates?.(jobId);
+    },
+    [setSelectedJobId, onReviewCandidates]
+  );
 
-  const validateCustomCurrency = (currency: string): boolean => {
-    const upperCurrency = currency.toUpperCase().trim();
-    return /^[A-Z]{3}$/.test(upperCurrency) && VALID_CURRENCIES.includes(upperCurrency);
-  };
+  // resetForm, validateCustomCurrency, handleAdd -> now in JobFormPanel.tsx (handleSubmit) + jobUtils.ts (validateJobForm)
 
-  const handleAdd = async () => {
-    setFormError(null);
-
-    if (!form.title.trim()) {
-      setFormError('Job title is required');
-      return;
-    }
-    if (!form.company.trim()) {
-      setFormError('Company/Organization is required');
-      return;
-    }
-    if (!form.isRemote && !form.location.trim()) {
-      setFormError('Location is required (or select Remote)');
-      return;
-    }
-
-    if (form.salaryMin || form.salaryMax) {
-      const min = form.salaryMin ? parseInt(form.salaryMin) : 0;
-      const max = form.salaryMax ? parseInt(form.salaryMax) : 0;
-
-      if (form.salaryMin && isNaN(min)) {
-        setFormError('Minimum salary must be a valid number');
-        return;
-      }
-      if (form.salaryMax && isNaN(max)) {
-        setFormError('Maximum salary must be a valid number');
-        return;
-      }
-      if (form.salaryMin && form.salaryMax && min > max) {
-        setFormError('Minimum salary cannot be greater than maximum salary');
-        return;
-      }
-    }
-
-    if (form.salaryCurrency === 'Custom') {
-      if (!form.customCurrency.trim()) {
-        setFormError('Please enter a valid currency code (e.g., USD, EUR, GBP)');
-        return;
-      }
-      if (!validateCustomCurrency(form.customCurrency)) {
-        setFormError('Invalid currency code. Must be a 3-letter code (e.g., USD, EUR, GBP)');
-        return;
-      }
-    }
-
-    if (form.maxApplicants) {
-      const max = parseInt(form.maxApplicants);
-      if (isNaN(max) || max < 1) {
-        setFormError('Maximum applicants must be at least 1');
-        return;
-      }
-    }
-
-    try {
-      setSubmitting(true);
-
-      const jobData = {
-        title: form.title.trim(),
-        company: form.company.trim(),
-        department: form.department.trim(),
-        location: form.isRemote ? 'Remote' : form.location.trim(),
-        description: form.description.trim(),
-        status: 'Active' as const,
-        salaryMin: form.salaryMin ? parseInt(form.salaryMin) : undefined,
-        salaryMax: form.salaryMax ? parseInt(form.salaryMax) : undefined,
-        salaryCurrency:
-          form.salaryCurrency === 'Custom'
-            ? (form.customCurrency.toUpperCase() as 'LPA' | 'USD/year' | 'Custom')
-            : form.salaryCurrency as 'LPA' | 'USD/year' | 'Custom',
-
-        maxApplicants: form.maxApplicants ? parseInt(form.maxApplicants) : undefined,
-        jobType: form.jobType,
-        isRemote: form.isRemote,
-      };
-
-      console.log(isEditing ? '📝 Updating job:' : '📤 Creating job:', jobData);
-
-      if (isEditing && editingJobId) {
-        await createJob(jobData);
-      } else {
-        await createJob(jobData);
-      }
-
-      console.log('✅ Job saved successfully');
-
-      resetForm();
-      setShowForm(false);
-      await fetchJobs();
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to save job';
-      console.error('❌ Error:', message);
-      setFormError(message);
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
-  const formatSalary = (job: Job) => {
-    if (!job.salaryMin || !job.salaryMax) return null;
-
-    switch (job.salaryCurrency) {
-      case 'LPA':
-        return `₹${job.salaryMin}–${job.salaryMax} LPA`;
-      case 'USD/year':
-        return `$${job.salaryMin.toLocaleString()}–${job.salaryMax.toLocaleString()} USD/year`;
-      default:
-        return `${job.salaryMin}–${job.salaryMax} ${job.salaryCurrency}`;
-    }
-  };
+  if (showDetailModal && selectedJobId) {
+    return (
+      <JobDetailModal
+        isOpen
+        onClose={handleCloseModal}
+        jobId={selectedJobId}
+        displayMode="inline-fullscreen"
+        initialTab={modalTab}
+        onEdit={(jobId) => {
+          const job = jobs.find((j) => j.id === jobId);
+          if (job) {
+            handleCloseModal();
+            handleEditClick(job);
+          }
+        }}
+      />
+    );
+  }
 
   return (
     <>
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100">
-        <div className="p-4 border-b border-gray-100 flex items-center justify-between">
-          <span className="text-sm font-semibold text-gray-700">
-            {jobs.length} Jobs
-          </span>
+      <div className={`bg-white rounded-2xl shadow-sm ring-1 ring-gray-200 ${scrollable ? 'max-h-[480px] overflow-y-auto' : ''}`}>
+        <div className={`bg-white border-b border-gray-100 ${scrollable ? 'sticky top-0 z-10' : ''}`}>
+          <div className="p-4 flex items-center justify-between gap-3">
+            <div className="relative flex-1 max-w-xs">
+              <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+              <input
+                type="text"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search jobs..."
+                aria-label="Search jobs"
+                className="w-full text-sm border border-gray-200 rounded-lg pl-9 pr-8 py-1.5 outline-none focus:ring-2 focus:ring-indigo-300"
+              />
+              {search && (
+                <button
+                  type="button"
+                  aria-label="Clear search"
+                  onClick={() => setSearch('')}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                >
+                  <X size={14} />
+                </button>
+              )}
+            </div>
+
+            <button
+              onClick={() => {
+                setEditingJob(null);
+                setShowForm(true);
+              }}
+              className="flex items-center gap-1 text-sm bg-indigo-600 text-white px-3 py-1.5 rounded-lg hover:bg-indigo-700 transition"
+            >
+              <Plus size={15} />
+              Add Job
+            </button>
+          </div>
+
+          <div className="flex gap-1 px-4 pb-2 overflow-x-auto">
+            {FILTERS.map((f) => (
+              <button
+                key={f}
+                type="button"
+                onClick={() => setFilter(f)}
+                className={`flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-full whitespace-nowrap transition ${
+                  filter === f ? 'bg-indigo-600 text-white' : 'text-gray-600 hover:bg-gray-100'
+                }`}
+              >
+                {f}
+                <span className={`text-[10px] px-1.5 rounded-full ${filter === f ? 'bg-white/20' : 'bg-gray-100 text-gray-500'}`}>
+                  {counts[f]}
+                </span>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* <div className="p-4 border-b border-gray-100 flex items-center justify-between">
+          <span className="text-sm font-semibold text-gray-700">{jobs.length} Jobs</span>
           <button
             onClick={() => {
-              resetForm();
-              setShowForm(!showForm);
+              setEditingJob(null);
+              setShowForm(true);
             }}
-            className="flex items-center gap-1 text-sm bg-indigo-600 text-white px-3 py-1.5 rounded-lg hover:bg-indigo-700 transition disabled:opacity-50"
-            disabled={submitting}
+            className="flex items-center gap-1 text-sm bg-indigo-600 text-white px-3 py-1.5 rounded-lg hover:bg-indigo-700 transition"
           >
             <Plus size={15} />
             Add Job
           </button>
-        </div>
+        </div> */}
 
         {error && (
           <div className="p-4 bg-red-50 border-b border-red-200 flex gap-3">
@@ -282,385 +303,128 @@ export default function JobList() {
           </div>
         )}
 
-        {showForm && (
-          <div className="p-4 border-b border-gray-100 bg-gray-50 space-y-3">
-            {formError && (
-              <div className="p-3 bg-red-50 border border-red-200 rounded-lg flex gap-2">
-                <AlertCircle size={16} className="text-red-600 flex-shrink-0 mt-0.5" />
-                <p className="text-sm text-red-700">{formError}</p>
-              </div>
-            )}
+        {/* Old inline form block (the big {showForm && (<div ...>)} with all inputs)
+            -> replaced by <JobFormPanel /> drawer rendered at the bottom of this component */}
 
-            {isEditing && (
-              <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg flex gap-2">
-                <AlertCircle size={16} className="text-yellow-600 flex-shrink-0 mt-0.5" />
-                <p className="text-sm text-yellow-700">
-                  ⚠️ This job can be edited only once within 24 hours of posting.
-                </p>
-              </div>
-            )}
-
-            <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1">
-                Job Title *
-              </label>
-              <input
-                type="text"
-                placeholder="e.g., Senior Software Engineer"
-                value={form.title}
-                onChange={(e) => setForm({ ...form, title: e.target.value })}
-                disabled={submitting}
-                className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-indigo-300 disabled:bg-gray-100 disabled:cursor-not-allowed"
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1">
-                Company/Organization *
-              </label>
-              <input
-                type="text"
-                placeholder="e.g., Acme Corp, Tech Startup"
-                value={form.company}
-                onChange={(e) => setForm({ ...form, company: e.target.value })}
-                disabled={submitting}
-                className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-indigo-300 disabled:bg-gray-100 disabled:cursor-not-allowed"
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1">
-                Department
-              </label>
-              <input
-                type="text"
-                placeholder="e.g., Engineering, Marketing"
-                value={form.department}
-                onChange={(e) => setForm({ ...form, department: e.target.value })}
-                disabled={submitting}
-                className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-indigo-300 disabled:bg-gray-100 disabled:cursor-not-allowed"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <label className="block text-xs font-medium text-gray-700">
-                Location *
-              </label>
-              <div className="flex gap-3">
-                <div className="flex-1">
-                  <LocationSelect
-                    value={form.location}
-                    onChange={(location) => setForm({ ...form, location })}
-                    placeholder="Select location"
-                  />
-                </div>
-                <label className="flex items-center gap-2 px-3 py-2 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 transition">
-                  <input
-                    type="checkbox"
-                    checked={form.isRemote}
-                    onChange={(e) => setForm({ ...form, isRemote: e.target.checked })}
-                    disabled={submitting}
-                    className="w-4 h-4 text-indigo-600"
-                  />
-                  <Globe size={14} className="text-gray-500" />
-                  <span className="text-xs font-medium text-gray-700">Remote</span>
-                </label>
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1">
-                Job Type *
-              </label>
-              <select
-                value={form.jobType}
-                onChange={(e) => setForm({ ...form, jobType: e.target.value })}
-                disabled={submitting}
-                className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-indigo-300 disabled:bg-gray-100 disabled:cursor-not-allowed"
-              >
-                {jobTypes.map((type) => (
-                  <option key={type} value={type}>
-                    {type}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="space-y-2">
-              <label className="block text-xs font-medium text-gray-700">Salary</label>
-              <div className="grid grid-cols-3 gap-3">
-                <div>
-                  <label className="block text-xs text-gray-600 mb-1">Min</label>
-                  <input
-                    type="number"
-                    placeholder="e.g., 12"
-                    value={form.salaryMin}
-                    onChange={(e) => setForm({ ...form, salaryMin: e.target.value })}
-                    disabled={submitting}
-                    className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-indigo-300 disabled:bg-gray-100 disabled:cursor-not-allowed"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs text-gray-600 mb-1">Max</label>
-                  <input
-                    type="number"
-                    placeholder="e.g., 18"
-                    value={form.salaryMax}
-                    onChange={(e) => setForm({ ...form, salaryMax: e.target.value })}
-                    disabled={submitting}
-                    className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-indigo-300 disabled:bg-gray-100 disabled:cursor-not-allowed"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs text-gray-600 mb-1">Currency</label>
-                  <select
-                    value={form.salaryCurrency}
-                    onChange={(e) => {
-                      setForm({ ...form, salaryCurrency: e.target.value as 'LPA' | 'USD/year' | 'Custom' });
-                      if (e.target.value === 'Custom') {
-                        setShowCurrencyChecklist(true);
-                      }
-                    }}
-                    disabled={submitting}
-                    className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-indigo-300 disabled:bg-gray-100 disabled:cursor-not-allowed"
-                  >
-                    {salaryTypes.map((type) => (
-                      <option key={type} value={type}>
-                        {type}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              {form.salaryCurrency === 'Custom' && (
-                <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                  <div className="flex items-start gap-3">
-                    <div className="flex-1">
-                      <label className="block text-xs font-medium text-gray-700 mb-2">
-                        Custom Currency Code
-                      </label>
-                      <input
-                        type="text"
-                        placeholder="e.g., USD, EUR, GBP, INR"
-                        value={form.customCurrency}
-                        onChange={(e) => setForm({ ...form, customCurrency: e.target.value.toUpperCase() })}
-                        disabled={submitting}
-                        className="w-full text-sm border border-blue-300 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-blue-300 disabled:bg-gray-100 disabled:cursor-not-allowed"
-                      />
-                      <p className="text-xs text-blue-600 mt-1">Must be a 3-letter currency code</p>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => setShowCurrencyChecklist(!showCurrencyChecklist)}
-                      className="mt-6 px-2 py-1 text-blue-600 hover:bg-blue-100 rounded transition"
-                    >
-                      <ChevronDown size={16} />
-                    </button>
-                  </div>
-
-                  {showCurrencyChecklist && (
-                    <div className="mt-3 pt-3 border-t border-blue-200">
-                      <p className="text-xs font-semibold text-gray-600 mb-2">Common Currencies:</p>
-                      <div className="grid grid-cols-3 gap-2">
-                        {['USD', 'EUR', 'GBP', 'JPY', 'INR', 'AUD', 'CAD', 'CHF', 'CNY', 'MXN', 'SGD', 'HKD'].map((curr) => (
-                          <button
-                            key={curr}
-                            type="button"
-                            onClick={() => setForm({ ...form, customCurrency: curr })}
-                            className={`text-xs px-2 py-1 rounded transition ${
-                              form.customCurrency === curr
-                                ? 'bg-blue-600 text-white'
-                                : 'bg-white border border-blue-200 text-blue-600 hover:bg-blue-50'
-                            }`}
-                          >
-                            {curr}
-                          </button>
-                        ))}
-                      </div>
-                      <p className="text-xs text-gray-500 mt-2">
-                        💡 Select a currency or type a custom 3-letter code (e.g., BRL, RUB, SEK)
-                      </p>
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-
-            <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1">
-                Max Applicants (Optional)
-              </label>
-              <input
-                type="number"
-                placeholder="Leave empty for unlimited applicants"
-                value={form.maxApplicants}
-                onChange={(e) => setForm({ ...form, maxApplicants: e.target.value })}
-                disabled={submitting}
-                className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-indigo-300 disabled:bg-gray-100 disabled:cursor-not-allowed"
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1">
-                Description
-              </label>
-              <textarea
-                placeholder="Job description, responsibilities, requirements..."
-                value={form.description}
-                onChange={(e) => setForm({ ...form, description: e.target.value })}
-                disabled={submitting}
-                className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-indigo-300 resize-none disabled:bg-gray-100 disabled:cursor-not-allowed"
-                rows={3}
-              />
-            </div>
-
-            <div className="flex gap-2 pt-2">
-              <button
-                onClick={handleAdd}
-                disabled={submitting}
-                className="flex-1 text-sm bg-indigo-600 text-white px-3 py-2 rounded-lg hover:bg-indigo-700 transition disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-              >
-                {submitting ? (
-                  <>
-                    <Loader size={14} className="animate-spin" />
-                    {isEditing ? 'Updating...' : 'Saving...'}
-                  </>
-                ) : (
-                  isEditing ? 'Update Job' : 'Save Job'
-                )}
-              </button>
-              <button
-                onClick={() => {
-                  resetForm();
-                  setShowForm(false);
-                }}
-                disabled={submitting}
-                className="flex-1 text-sm bg-gray-200 text-gray-700 px-3 py-2 rounded-lg hover:bg-gray-300 transition disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        )}
-
-        {loading && jobs.length === 0 && (
+        {/* {loading && jobs.length === 0 && (
           <div className="text-center py-12">
             <Loader size={24} className="animate-spin text-indigo-600 mx-auto mb-2" />
             <p className="text-sm text-gray-500">Loading jobs...</p>
           </div>
+        )} */}
+        {loading && jobs.length === 0 && (
+          <div className="divide-y divide-gray-50">
+            {[0, 1, 2, 3].map((i) => (
+              <div key={i} className="flex gap-3 p-4 animate-pulse">
+                <div className="w-10 h-10 rounded-xl bg-gray-100" />
+                <div className="flex-1 space-y-2">
+                  <div className="h-3 w-1/3 rounded bg-gray-100" />
+                  <div className="h-3 w-1/2 rounded bg-gray-100" />
+                  <div className="h-3 w-1/4 rounded bg-gray-100" />
+                </div>
+              </div>
+            ))}
+          </div>
         )}
 
-        <div className="divide-y divide-gray-50">
-          {!loading && jobs.length === 0 ? (
+        <div
+          className="divide-y divide-gray-50"
+          // className={`divide-y divide-gray-50 ${
+          //   scrollable ? 'max-h-[350px] overflow-y-auto' : ''
+          // }`}
+        >
+          {!loading && filteredJobs.length === 0 ? (
+            <div className="text-center py-14 px-4">
+              <div className="w-12 h-12 rounded-2xl bg-gray-50 ring-1 ring-gray-200 flex items-center justify-center mx-auto mb-3">
+                <Briefcase size={20} className="text-gray-400" />
+              </div>
+              {jobs.length === 0 ? (
+                <>
+                  <p className="text-sm font-medium text-gray-700">No jobs posted yet</p>
+                  <p className="text-xs text-gray-400 mt-1">Post your first job to start receiving applicants.</p>
+                  <button
+                    onClick={() => { setEditingJob(null); setShowForm(true); }}
+                    className="mt-4 inline-flex items-center gap-1 text-sm bg-indigo-600 text-white px-3 py-1.5 rounded-lg hover:bg-indigo-700 transition"
+                  >
+                    <Plus size={15} />
+                    Add Job
+                  </button>
+                </>
+              ) : (
+                <>
+                  <p className="text-sm font-medium text-gray-700">No matching jobs</p>
+                  <button
+                    onClick={() => { setSearch(''); setFilter('All'); }}
+                    className="mt-2 text-xs text-indigo-600 hover:underline"
+                  >
+                    Clear search and filters
+                  </button>
+                </>
+              )}
+            </div>
+          ) : (
+            filteredJobs.map((job) => (
+              <JobRow
+                key={job.id}
+                job={job}
+                deleting={deletingJobId === job.id}
+                onOpen={handleJobClick}
+                onReview={handleReview}
+                onEdit={handleEditClick}
+                onDelete={handleDelete}
+                onClose={handleClose}
+              />
+            ))
+          )}
+
+          {/* {!loading && jobs.length === 0 ? (
             <div className="text-center py-12 text-gray-400">
               <p className="text-sm">No jobs posted yet.</p>
               <p className="text-xs mt-1">Click "+ Add Job" to get started.</p>
             </div>
           ) : (
-            jobs.map((job) => {
-              const createdTime = new Date(job.postedDate);
-              const currentTime = new Date();
-              const hoursDiff = (currentTime.getTime() - createdTime.getTime()) / (1000 * 60 * 60);
-              const canEdit = hoursDiff <= 24;
-              const salaryDisplay = formatSalary(job);
-
-              return (
-                <div
-                  key={job.id}
-                  onClick={() => handleJobClick(job.id)}
-                  className="p-4 hover:bg-indigo-50 transition cursor-pointer border-l-4 border-transparent hover:border-indigo-600"
-                >
-                  <div className="flex items-start justify-between mb-2">
-                    <div className="flex-1">
-                      <p className="text-sm font-semibold text-gray-800">{job.title}</p>
-                      <p className="text-xs text-gray-400 mt-1">
-                        {job.department} · {job.location}{job.isRemote ? ' (Remote)' : ''}
-                      </p>
-                    </div>
-                    <div className="flex gap-2">
-                      {canEdit && (
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleEditClick(job);
-                          }}
-                          className="text-gray-400 hover:text-blue-500 transition"
-                          title="Edit job (24-hour window)"
-                        >
-                          <Edit2 size={15} />
-                        </button>
-                      )}
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleDelete(job.id);
-                        }}
-                        className="text-gray-300 hover:text-red-500 transition"
-                        disabled={deletingJobId === job.id}
-                      >
-                        <Trash2 size={15} />
-                      </button>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-3 flex-wrap mt-3">
-                    <div className="flex items-center gap-1 text-xs text-gray-500">
-                      <Users size={12} />
-                      <span>{job.applicants} applicants</span>
-                      {job.maxApplicants && (
-                        <span className="text-gray-400">/ {job.maxApplicants}</span>
-                      )}
-                    </div>
-
-                    {salaryDisplay && (
-                      <div className="flex items-center gap-1 text-xs text-gray-500">
-                        <DollarSign size={12} />
-                        <span>{salaryDisplay}</span>
-                      </div>
-                    )}
-
-                    <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-blue-100 text-blue-700">
-                      {job.jobType || 'Full-time'}
-                    </span>
-
-                    {job.isRemote && (
-                      <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-purple-100 text-purple-700 flex items-center gap-1">
-                        <Globe size={10} />
-                        Remote
-                      </span>
-                    )}
-
-                    <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
-                      job.status === 'Active'
-                        ? 'bg-green-100 text-green-700'
-                        : job.status === 'Draft'
-                        ? 'bg-gray-100 text-gray-700'
-                        : 'bg-red-100 text-red-700'
-                    }`}>
-                      {job.status}
-                    </span>
-
-                    {!canEdit && (
-                      <span className="text-xs text-gray-400 italic">
-                        Edit window closed
-                      </span>
-                    )}
-                  </div>
-                </div>
-              );
-            })
-          )}
+            jobs.map((job) => (
+              <JobRow
+                key={job.id}
+                job={job}
+                deleting={deletingJobId === job.id}
+                onOpen={handleJobClick}
+                onReview={handleReview}
+                onEdit={handleEditClick}
+                onDelete={handleDelete}
+              />
+            ))
+            // Old inline row markup (jobs.map((job) => { ... })) -> JobRow.tsx
+          )} */}
         </div>
       </div>
 
-      {selectedJobId && (
-        <JobDetailModal
-          isOpen={showDetailModal}
-          onClose={handleCloseModal}
-          jobId={selectedJobId}
+      {confirmDeleteId && (
+        <ConfirmDialog
+          title="Delete this job?"
+          message="This permanently removes the posting from the database."
+          loading={deletingJobId === confirmDeleteId}
+          onConfirm={confirmDelete}
+          onCancel={() => setConfirmDeleteId(null)}
+        />
+      )}
+
+      {confirmCloseId && (
+        <ConfirmDialog
+          title="Close this job?"
+          confirmLabel="Close job"
+          variant="warning"
+          message="New applications will stop immediately. This can't be undone from the dashboard."
+          loading={closingJobId === confirmCloseId}
+          onConfirm={confirmClose}
+          onCancel={() => setConfirmCloseId(null)}
+        />
+      )}
+
+      {showForm && (
+        <JobFormPanel
+          editingJob={editingJob}
+          onClose={() => setShowForm(false)}
         />
       )}
     </>
