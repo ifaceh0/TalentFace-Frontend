@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 type Job = {
   _id: string;
@@ -49,23 +49,23 @@ export default function GuestJobs() {
     navigate("/login", { state: { from: `/jobs?job=${job._id}` } });
 
   return (
-    <div className="min-h-screen bg-gray-50 text-gray-900">
-      {/* Navbar */}
-      <nav className="sticky top-0 z-40 bg-white/90 backdrop-blur border-b border-gray-100">
-        <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-          <Link to="/" className="font-bold text-lg tracking-tight">TalentFace</Link>
-          <div className="flex items-center gap-3">
-            <Link to="/login" className="text-sm font-semibold text-gray-700">Login</Link>
+     <div className="min-h-screen bg-gray-50 text-gray-900">
+      {/* Navbar*/}
+      {/* <nav className="sticky top-0 z-40 bg-white/90 backdrop-blur border-b border-gray-100"> */}
+        {/* <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+          {/* <Link to="/" className="font-bold text-lg tracking-tight">TalentFace</Link> */}
+          {/* <div className="flex items-center gap-3"> */}
+            {/* <Link to="/login" className="text-sm font-semibold text-gray-700">Login</Link>
             <Link
               to="/signup/candidate"
               className="px-4 py-2 rounded-xl text-sm font-semibold text-white"
               style={{ background: BLUE }}
             >
               Get Started
-            </Link>
-          </div>
-        </div>
-      </nav>
+            </Link> */}
+          {/* </div> */}
+      {/* </nav>  */}
+            
 
       <div className="max-w-7xl mx-auto px-6 py-8">
         <h1 className="text-3xl font-black tracking-tight">Top Jobs</h1>
@@ -113,7 +113,7 @@ export default function GuestJobs() {
           <div
             className={
               selected
-                ? "fixed inset-0 z-50 bg-white overflow-y-auto lg:static lg:inset-auto lg:z-auto lg:col-span-3 lg:rounded-3xl lg:border lg:border-gray-100 lg:sticky lg:top-24 lg:max-h-[calc(100vh-7rem)]"
+                ? "fixed inset-0 z-50 bg-white overflow-y-auto lg:inset-auto lg:z-auto lg:col-span-3 lg:rounded-3xl lg:border lg:border-gray-100 lg:sticky lg:top-24 lg:max-h-[calc(100vh-7rem)]"
                 : "hidden lg:flex lg:col-span-3 lg:rounded-3xl lg:border lg:border-dashed lg:border-gray-200 lg:h-64 items-center justify-center text-gray-400 text-sm"
             }
           >
