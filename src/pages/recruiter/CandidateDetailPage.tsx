@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { ArrowLeft, Download, ExternalLink, Mail, MapPin, Phone, X } from 'lucide-react';
 import { useParams } from 'react-router-dom';
 import { getCandidateProfile, type CandidateProfile } from '../../services/recruiter.service';
+import api from '../../lib/api';
 import { formatExperience } from '../../store/useStore';
 
 const summaryText = (value: unknown): string => {
@@ -33,6 +34,7 @@ export default function CandidateDetailPage() {
   const [error, setError] = useState<string | null>(null);
   const [resumePreviewFailed, setResumePreviewFailed] = useState(false);
   const [showResumePreview, setShowResumePreview] = useState(false);
+  const [resumeBlobUrl, setResumeBlobUrl] = useState<string | null>(null);
 
   useEffect(() => {
     if (!uniqueId) return;
@@ -53,7 +55,7 @@ export default function CandidateDetailPage() {
   );
   const transformedThumbnailUrl =
     candidate?.resumeUrl && !isCloudinaryRaw ? thumbnailUrl(candidate.resumeUrl) : '';
-  const resumePreviewUrl = `${import.meta.env.VITE_API_BASE_URL}/recruiter/candidates/${encodeURIComponent(candidate?.uniqueId || uniqueId || '')}/resume/preview`;
+  //const resumePreviewUrl = `${import.meta.env.VITE_API_BASE_URL}/recruiter/candidates/${encodeURIComponent(candidate?.uniqueId || uniqueId || '')}/resume/preview`;
 
   useEffect(() => {
     console.log('Candidate Resume URL:', candidate?.resumeUrl);
@@ -61,6 +63,40 @@ export default function CandidateDetailPage() {
       console.log('Candidate resume thumbnail URL:', transformedThumbnailUrl || 'raw PDF viewer fallback');
     }
   }, [candidate?.resumeUrl, transformedThumbnailUrl]);
+
+  useEffect(() => {
+  if (!isPdf) return;
+  let objectUrl: string | undefined;
+  api
+    .get(`/recruiter/candidates/${encodeURIComponent(candidate?.uniqueId || uniqueId || '')}/resume/preview`, {
+      responseType: 'blob',
+    })
+    .then((res) => {
+      objectUrl = URL.createObjectURL(new Blob([res.data], { type: 'application/pdf' }));
+      setResumeBlobUrl(objectUrl);
+    })
+    .catch((err) => console.error('Resume preview fetch failed:', err));
+  return () => {
+    if (objectUrl) URL.revokeObjectURL(objectUrl);
+  };
+}, [isPdf, candidate?.uniqueId, uniqueId]);
+
+  const handleDownload = async () => {
+  try {
+    const res = await api.get(
+      `/recruiter/candidates/${encodeURIComponent(candidate?.uniqueId || uniqueId || '')}/resume/download`,
+      { responseType: 'blob' },
+    );
+    const url = URL.createObjectURL(new Blob([res.data], { type: 'application/pdf' }));
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${candidate?.name || 'resume'}.pdf`;
+    a.click();
+    URL.revokeObjectURL(url);
+  } catch (err) {
+    console.error('Resume download failed:', err);
+  }
+};
 
   if (loading) return <div className="min-h-screen flex items-center justify-center text-gray-500">Loading candidate profile...</div>;
   if (error || !candidate) return <div className="min-h-screen flex flex-col items-center justify-center gap-4 text-gray-500"><p>{error || (uniqueId ? 'Candidate not found.' : 'Candidate identifier is missing.')}</p><button onClick={leaveDetailPage} className="text-indigo-600">Go back</button></div>;
@@ -98,8 +134,8 @@ export default function CandidateDetailPage() {
             </div>
             <div>
               <Section title="Resume">
-                {isPdf && !resumePreviewFailed ? <div className="relative rounded-lg overflow-hidden border border-gray-200">{isCloudinaryRaw ? <iframe src={`${resumePreviewUrl}#toolbar=0&page=1`} title="Resume Snapshot" className="w-full h-64" /> : <img src={transformedThumbnailUrl} alt="Resume Snapshot" onError={(event) => { console.error('Resume thumbnail failed to load:', event.currentTarget.src, 'Original PDF:', candidate.resumeUrl); setResumePreviewFailed(true); }} className="w-full h-auto rounded border object-cover" />}<div className="absolute inset-0 flex items-center justify-center bg-black/20"><button type="button" onClick={() => setShowResumePreview(true)} className="bg-white text-indigo-700 px-3 py-2 rounded-lg text-sm font-medium flex items-center gap-2"><ExternalLink size={15} /> View Resume</button></div></div> : <div className="h-40 rounded-lg bg-gray-100 flex flex-col items-center justify-center gap-2 text-sm text-gray-500"><span className="text-3xl">PDF</span><span>{isPdf ? 'Preview unavailable' : 'Resume not provided'}</span>{isPdf && <button type="button" onClick={() => setShowResumePreview(true)} className="text-indigo-600 underline">Open PDF viewer</button>}</div>}
-                {isPdf && <a href={`${import.meta.env.VITE_API_BASE_URL}/recruiter/candidates/${encodeURIComponent(candidate.uniqueId || uniqueId || '')}/resume/download`} className="mt-3 w-full justify-center flex items-center gap-2 px-3 py-2 rounded-lg bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-700"><Download size={15} /> Download PDF</a>}
+                {isPdf && !resumePreviewFailed ? <div className="relative rounded-lg overflow-hidden border border-gray-200">{isCloudinaryRaw ? <iframe src={resumeBlobUrl ? `${resumeBlobUrl}#toolbar=0&page=1` : undefined} title="Resume Snapshot" className="w-full h-64" /> : <img src={transformedThumbnailUrl} alt="Resume Snapshot" onError={(event) => { console.error('Resume thumbnail failed to load:', event.currentTarget.src, 'Original PDF:', candidate.resumeUrl); setResumePreviewFailed(true); }} className="w-full h-auto rounded border object-cover" />}<div className="absolute inset-0 flex items-center justify-center bg-black/20"><button type="button" onClick={() => setShowResumePreview(true)} className="bg-white text-indigo-700 px-3 py-2 rounded-lg text-sm font-medium flex items-center gap-2"><ExternalLink size={15} /> View Resume</button></div></div> : <div className="h-40 rounded-lg bg-gray-100 flex flex-col items-center justify-center gap-2 text-sm text-gray-500"><span className="text-3xl">PDF</span><span>{isPdf ? 'Preview unavailable' : 'Resume not provided'}</span>{isPdf && <button type="button" onClick={() => setShowResumePreview(true)} className="text-indigo-600 underline">Open PDF viewer</button>}</div>}
+                {isPdf && <button type="button" onClick={handleDownload} className="mt-3 w-full justify-center flex items-center gap-2 px-3 py-2 rounded-lg bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-700"><Download size={15} /> Download PDF</button>}
               </Section>
             </div>
           </div>
@@ -113,7 +149,7 @@ export default function CandidateDetailPage() {
               <button type="button" onClick={() => setShowResumePreview(false)} aria-label="Close resume preview" className="p-1 text-gray-500 hover:text-gray-900"><X size={20} /></button>
             </div>
             <iframe
-              src={`${resumePreviewUrl}#toolbar=0`}
+              src={resumeBlobUrl ? `${resumeBlobUrl}#toolbar=0` : undefined}
               title="Candidate resume"
               className="w-full flex-1"
               onError={() => console.error('Resume PDF viewer failed to load:', candidate.resumeUrl)}
