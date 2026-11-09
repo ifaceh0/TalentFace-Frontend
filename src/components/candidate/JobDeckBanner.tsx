@@ -1,10 +1,15 @@
+import { useNavigate } from "react-router-dom";
+import BannerCarousel from "../common/BannerCarousel";
+import PromoBanner from "../common/PromoBanner";
+import { DASHBOARD_LINKS } from "../../constants/candidateHome.constants";
+
 export default function JobDeckBanner({ onEnter }: { onEnter: () => void }) {
     return (
          <div style={{
                 background: "linear-gradient(120deg, #0D1B3E 0%, #1C3FA8 55%, #D62B2B 100%)",
                 borderRadius: 10,
                 padding: "16px 24px",
-                marginBottom: 20,
+                //marginBottom: 20,
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "space-between",
@@ -67,5 +72,61 @@ export default function JobDeckBanner({ onEnter }: { onEnter: () => void }) {
                     </p>
                 </div>
             </div>
+    );
+}
+// ── Extra slides: add a new entry here to add a new slide ──
+// `label` must match the label in DASHBOARD_LINKS (it's used to find the route)
+const PROMO_SLIDES = [
+    {
+        id: "dashboard", label: "My Dashboard",
+        icon: "🏠", badge: "Overview", title: "Your dashboard at a glance",
+        description: "Track your profile strength, applications and activity in one place.",
+        pills: ["📊 Activity overview", "✅ Profile progress", "📌 Quick actions"],
+        ctaText: "Open Dashboard →", hint: "See everything in one view",
+        gradient: "linear-gradient(120deg, #0D1B3E 0%, #1C3FA8 55%, #2E8BC0 100%)",
+    },
+    {
+        id: "resume", label: "My Resume",
+        icon: "📄", badge: "Resume", title: "Keep your resume sharp",
+        description: "A complete, up-to-date resume helps you rank higher and get noticed by recruiters.",
+        pills: ["✏️ Easy to edit", "📈 Better matches", "👀 Get noticed"],
+        ctaText: "Open My Resume →", hint: "Update anytime",
+        gradient: "linear-gradient(120deg, #0D1B3E 0%, #5B2A86 55%, #D62B2B 100%)",
+    },
+    {
+        id: "applications", label: "Applications",
+        icon: "📬", badge: "Applications", title: "Track your applications",
+        description: "See where each application stands and never lose track of a role you applied to.",
+        pills: ["🔎 Status tracking", "🗂️ All in one list", "⏱️ Stay on top"],
+        ctaText: "View Applications →", hint: "Check your latest status",
+        gradient: "linear-gradient(120deg, #0D1B3E 0%, #0F766E 55%, #1C3FA8 100%)",
+    },
+    {
+        id: "notifications", label: "Notifications",
+        icon: "🔔", badge: "Notifications", title: "Never miss an update",
+        description: "Get notified when a recruiter views, likes or responds to your application.",
+        pills: ["🤝 Recruiter matches", "📣 Instant alerts", "💬 Responses"],
+        ctaText: "Open Notifications →", hint: "Stay in the loop",
+        gradient: "linear-gradient(120deg, #0D1B3E 0%, #B45309 55%, #D62B2B 100%)",
+    },
+];
+
+export function HomeBanners() {
+    const navigate = useNavigate();
+    const goTo = (label: string) => {
+        const href = DASHBOARD_LINKS.find((l) => l.label === label)?.href;
+        if (href) navigate(href);
+    };
+
+    return (
+        <BannerCarousel
+            slides={[
+                { id: "jobdeck", content: <JobDeckBanner onEnter={() => navigate("/candidate/swipe")} /> },
+                ...PROMO_SLIDES.map(({ id, label, ...props }) => ({
+                    id,
+                    content: <PromoBanner {...props} onClick={() => goTo(label)} />,
+                })),
+            ]}
+        />
     );
 }

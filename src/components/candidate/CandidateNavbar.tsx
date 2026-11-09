@@ -2,16 +2,19 @@ import { useNavigate } from "react-router-dom";
 import ProfileMenu from "./ProfileMenu";
 import { NAV_LINKS } from "../../constants/candidateHome.constants";
 import type { CandidateProfile } from "../../types/candidate.types";
+import { useUnreadNotifications } from "../../hooks/useUnreadNotifications"
 
 interface Props {
     profile: CandidateProfile | null;
     completion: number;
     appliedCount: number;
     savedCount: number;
+     
 }
 
 export default function CandidateNavbar({ profile, completion, appliedCount, savedCount }: Props) {
     const navigate = useNavigate();
+    const unreadCount = useUnreadNotifications();
 
     return (
         <nav style={{
@@ -57,12 +60,26 @@ export default function CandidateNavbar({ profile, completion, appliedCount, sav
                 </button>
             </div>
 
-            <ProfileMenu
-                profile={profile}
-                completion={completion}
-                appliedCount={appliedCount}
-                savedCount={savedCount}
-            />
+            <div className="tf-nav-actions">
+                <button
+                    className="tf-bell"
+                    onClick={() => navigate("/candidate/notifications")}
+                    aria-label={`Notifications${unreadCount ? `, ${unreadCount} unread` : ""}`}
+                    title="Notifications"
+                >
+                    🔔
+                    {unreadCount > 0 && (
+                        <span className="tf-bell-badge">{unreadCount > 99 ? "99+" : unreadCount}</span>
+                    )}
+                </button>
+
+                <ProfileMenu
+                    profile={profile}
+                    completion={completion}
+                    appliedCount={appliedCount}
+                    savedCount={savedCount}
+                />
+            </div>
         </nav>
     );
 }

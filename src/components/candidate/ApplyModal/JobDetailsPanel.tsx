@@ -1,4 +1,4 @@
-import type { Job } from "../JobCard";
+import type { Job } from "../../../types/candidate.types";
 import { richTextToPlain } from "../../../constants/candidateHome.utils";
 
 export default function JobDetailsPanel({ job }: { job: Job }) {

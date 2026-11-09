@@ -1,14 +1,19 @@
 import type { FormEvent } from "react";
 import type { Stats } from "../../hooks/useJobStats";
+import { useNavigate } from "react-router-dom";
+import { NAV_LINKS } from "../../constants/candidateHome.constants";
 
 interface Props {
     search: string;
     onSearchChange: (v: string) => void;
     onSubmit: () => void;
     stats: Stats;
+    savedCount: number;
 }
 
-export default function JobSearchCard({ search, onSearchChange, onSubmit, stats }: Props) {
+export default function JobSearchCard({ search, onSearchChange, onSubmit, stats, savedCount }: Props) {
+    const navigate = useNavigate();
+    const savedHref = NAV_LINKS.find((l) => l.label === "Saved")?.href;
     const handleSubmit = (e: FormEvent) => {
         e.preventDefault();
         onSubmit();
@@ -40,6 +45,26 @@ export default function JobSearchCard({ search, onSearchChange, onSubmit, stats 
                     />
                 </div>
                 <button type="submit" className="tf-primary">Search</button>
+                                <button
+                    type="button"
+                    className="tf-saved-btn"
+                    onClick={() => savedHref && navigate(savedHref)}
+                >
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill={savedCount > 0 ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                        <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
+                    </svg>
+                    Saved Jobs
+                    {savedCount > 0 && (
+                        <span style={{
+                            position: "absolute", top: -7, right: -7, minWidth: 18, height: 18,
+                            padding: "0 5px", borderRadius: 9, background: "#D62B2B", color: "#fff",
+                            fontSize: 10, fontWeight: 700, display: "flex", alignItems: "center",
+                            justifyContent: "center", boxShadow: "0 0 0 2px #fff",
+                        }}>
+                            {savedCount > 99 ? "99+" : savedCount}
+                        </span>
+                    )}
+                </button>
             </form>
         </div>
     );

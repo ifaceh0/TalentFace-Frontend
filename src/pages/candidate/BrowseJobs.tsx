@@ -8,7 +8,8 @@ import {
     getSavedJobIds,
     getAppliedJobIds,
 } from "../../services/candidate.service";
-import JobCard, { type Job } from "../../components/candidate/JobCard";
+import type { Job } from "../../types/candidate.types";
+import JobCard from "../../components/candidate/JobCard";
 
 type FilterOption = "All" | "Full-time" | "Part-time" | "Contract" | "Remote";
 const FILTERS: FilterOption[] = ["All", "Full-time", "Part-time", "Contract", "Remote"];

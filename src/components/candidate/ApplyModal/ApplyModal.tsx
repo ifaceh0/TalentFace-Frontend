@@ -3,7 +3,7 @@ import JobFitCheck from "../JobFitCheck";
 import JobDetailsPanel from "./JobDetailsPanel";
 import ResumePicker from "./ResumePicker";
 import ResumePreview from "./ResumePreview";
-import type { Job } from "../JobCard";
+import type { Job } from "../../../types/candidate.types";
 import type { CandidateProfile } from "../../../types/candidate.types";
 import type { ResumeType } from "../../../hooks/useJobActions";
 

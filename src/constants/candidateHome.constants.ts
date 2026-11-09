@@ -6,7 +6,7 @@ export const NAV_LINKS = [
 export const DASHBOARD_LINKS = [
     { icon: "🏠", label: "My Dashboard",  href: "/candidate/dashboard" },
     { icon: "📄", label: "My Resume",     href: "/candidate/dashboard?section=resume" },
-    { icon: "📬", label: "Applications",  href: "/candidate/applications" },
+    { icon: "📬", label: "Applied Jobs",  href: "/candidate/applications" },
     { icon: "🔔", label: "Notifications", href: "/candidate/notifications" },
     { icon: "⚙️", label: "Settings",      href: "/candidate/setting" },
 ];

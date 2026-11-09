@@ -177,6 +177,24 @@ export const getMyJobs = async (): Promise<Job[]> => {
 };
 
 /**
+ * GET /api/recruiter/jobs?limit=N
+ * Capped list (open jobs first, newest first) plus total job count.
+ */
+export const getOverviewJobs = async (
+  limit: number
+): Promise<{ jobs: Job[]; total: number }> => {
+  const { data } = await api.get<ApiEnvelope<{ jobs: any[]; total: number }>>(
+    '/recruiter/jobs',
+    { params: { limit } }
+  );
+
+  return {
+    jobs: data.data.jobs.map(transformJob),
+    total: data.data.total ?? data.data.jobs.length,
+  };
+};
+
+/**
  * POST /api/recruiter/jobs
  */
 export const createJob = async (
@@ -206,6 +224,16 @@ export const updateJob = async (
       toApiJobPayload(payload)
       // payload
     );
+
+  return transformJob(data.data.job);
+};
+
+/**
+ * PATCH /api/recruiter/jobs/:id/close
+ */
+export const closeJob = async (jobId: string): Promise<Job> => {
+  const { data } =
+    await api.patch<ApiEnvelope<{ job: any }>>(`/recruiter/jobs/${jobId}/close`);
 
   return transformJob(data.data.job);
 };
@@ -338,8 +366,10 @@ export const updateCandidateStatus = async (
 
 export const recruiterService = {
   getMyJobs,
+  getOverviewJobs,
   createJob,
   updateJob,
+  closeJob,
   deleteJob,
   getRecruiterCandidates,
   getJobCandidates,
