@@ -93,7 +93,8 @@ export default function BrowseJobs() {
         const isSaved = savedIds.has(id);
         setSavedIds((prev) => {
             const next = new Set(prev);
-            isSaved ? next.delete(id) : next.add(id);
+            if (isSaved) next.delete(id);
+            else next.add(id);
             return next;
         });
         try {
@@ -102,7 +103,8 @@ export default function BrowseJobs() {
         } catch {
             setSavedIds((prev) => {
                 const next = new Set(prev);
-                isSaved ? next.add(id) : next.delete(id);
+                if (isSaved) next.add(id);
+                else next.delete(id);
                 return next;
             });
             showToast("Action failed. Please try again.", "error");

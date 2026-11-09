@@ -32,7 +32,7 @@ export default function EducationSection({ items, onChange }: EducationSectionPr
       const fresh = items.find((e) => e._id === editing._id);
       if (fresh) setEditing(fresh);
     }
-  }, [items]);
+  }, [items, editing?._id]);
 
   const openAdd  = () => { setEditing(null); setForm(empty()); setPendingDocs({}); setShowModal(true); };
  const openEdit = (item: Education) => {

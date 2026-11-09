@@ -28,7 +28,8 @@ export default function CandidateActions({ candidate }: { candidate: Candidate }
     await updateCandidateStatus(candidate.id, status);
     // the store swallows errors, so verify the change actually landed
     const ok = useStore.getState().candidates.find((c) => c.id === candidate.id)?.status === status;
-    ok ? toast.success(`${candidate.name} moved to ${status}`) : toast.error('Failed to update status');
+    if (ok) toast.success(`${candidate.name} moved to ${status}`);
+    else toast.error('Failed to update status');
   };
 
   return (

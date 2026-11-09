@@ -24,7 +24,7 @@ export default function JobOverviewGrid({ setActivePage }: JobOverviewGridProps)
 
 
 
-  const handleJobClick = (_job: Job) => {
+  const handleJobClick = () => {
     setActivePage('jobs');
   };
 
@@ -52,7 +52,7 @@ export default function JobOverviewGrid({ setActivePage }: JobOverviewGridProps)
         {overviewJobs.map((job) => (
           <div
             key={job.id}
-            onClick={() => handleJobClick(job)}
+            onClick={handleJobClick}
             className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 hover:shadow-lg hover:border-blue-300 transition-all cursor-pointer transform hover:scale-105"
           >
             <div className="flex items-start gap-3 mb-3">

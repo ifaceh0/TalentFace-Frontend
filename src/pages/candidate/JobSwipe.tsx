@@ -214,7 +214,7 @@ export default function JobSwipe() {
 
         setCurrentIndex((i) => i + 1);
       }, 380);
-    } catch (err: any) {
+    } catch {
       // If already swiped (409) just advance silently
       setTimeout(() => {
         setAnimatingOut(false);
